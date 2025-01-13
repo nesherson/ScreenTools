@@ -15,13 +15,14 @@ namespace ScreenTools.App
         private readonly Application _application;
 
         private TaskbarIcon? _trayIcon;
+        private GlobalHook _globalHook;
 
         public ScreenToolsTrayApp(Application application)
         {
             _application = application;
         }
 
-        public void Start()
+        public async Task StartAsync()
         {
             _trayIcon = new TaskbarIcon
             {
@@ -29,6 +30,15 @@ namespace ScreenTools.App
                 Icon = new BitmapImage(new Uri(trayIconPath)).ToIcon(),
                 ContextMenu = CreateContextMenu()
             };
+
+            await InitalizeGlobalHook();
+        }
+
+        private async Task InitalizeGlobalHook()
+        {
+            _globalHook = new GlobalHook();
+
+            await _globalHook.RunAsync();
         }
 
         private ContextMenu CreateContextMenu()
@@ -41,7 +51,7 @@ namespace ScreenTools.App
                 ItemsSource = new List<MenuItem>
                 {
                     new() { Header = "Options", Icon = optionsIcon, Command = new RelayCommand(OpenOptions) },
-                    new() { Header = "Exit", Icon = exitIcon, Command = new RelayCommand(ExitApplication)}
+                    new() { Header = "Exit", Icon = exitIcon, Command = new RelayCommand(ExitApplication) }
                 }
             };
         }
@@ -49,6 +59,7 @@ namespace ScreenTools.App
         public void Dispose()
         {
             _trayIcon?.Dispose();
+            _globalHook?.Dispose();
         }
 
         private void ExitApplication()

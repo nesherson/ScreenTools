@@ -7,20 +7,20 @@ namespace ScreenTools.App
     /// </summary>
     public partial class App : Application
     {
-        private ScreenToolsTrayApp? trayApp;
+        private ScreenToolsTrayApp? _trayApp;
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            trayApp = new ScreenToolsTrayApp(this);
+            _trayApp = new ScreenToolsTrayApp(this);
 
-            trayApp.Start();
+            await _trayApp.StartAsync();  
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
-            trayApp?.Dispose();
+            _trayApp?.Dispose();
 
             base.OnExit(e);
         }

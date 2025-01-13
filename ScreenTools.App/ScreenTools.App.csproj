@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Resources\**" />
+    <EmbeddedResource Remove="Resources\**" />
+    <None Remove="Resources\**" />
+    <Page Remove="Resources\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Icons\exit.ico" />
     <None Remove="Icons\settings.ico" />
     <None Remove="Icons\trayIcon.ico" />
@@ -23,10 +30,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Resources\" />
+    <PackageReference Include="SharpHook" Version="5.3.8" />
   </ItemGroup>
 
 </Project>
