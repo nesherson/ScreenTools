@@ -1,0 +1,29 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SystemTools.App.App"
+             xmlns:local="clr-namespace:SystemTools.App"
+             RequestedThemeVariant="Default">
+	<Application.DataContext>
+		<local:App />
+	</Application.DataContext>
+	<Design.DataContext>
+		<local:App />
+	</Design.DataContext>
+	<Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+	<TrayIcon.Icons>
+		<TrayIcons>
+			<TrayIcon Icon="/Assets/tray-icon.ico"
+					  ToolTipText="Avalonia Tray Icon ToolTip">
+				<TrayIcon.Menu>
+					<NativeMenu>
+						<NativeMenuItem Header="Options" Command="{Binding TestCommand}" />
+						<NativeMenuItemSeparator />
+						<NativeMenuItem Header="Exit" />
+					</NativeMenu>
+				</TrayIcon.Menu>
+			</TrayIcon>
+		</TrayIcons>
+	</TrayIcon.Icons>
+</Application>

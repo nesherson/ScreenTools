@@ -1,10 +1,7 @@
-﻿using System.Windows;
+using Avalonia.Controls;
 
-namespace ScreenTools.App
+namespace SystemTools.App
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
