@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace SystemTools.App
 {
-    public class ScreenCapture
+    public class ScreenCaptureService
     {
         /// <summary>
         /// Creates an Image object containing a screen shot of the entire desktop
@@ -17,17 +18,17 @@ namespace SystemTools.App
         }
 
         /// <summary>
-        /// Creates an Image object containing a screen shot of a specific window
+        /// Creates an Image object containing a screenshot of a specific window
         /// </summary>
         /// <param name="handle">The handle to the window. (In windows forms, this is obtained by the Handle property)</param>
         /// <returns></returns>
         public Image? CaptureWindow(IntPtr handle)
         {
             // get te hDC of the target window
-            IntPtr hdcSrc = User32.GetWindowDC(handle);
-            IntPtr hdcDest = IntPtr.Zero;
-            IntPtr hBitmap = IntPtr.Zero;
-            IntPtr hOld = IntPtr.Zero;
+            var hdcSrc = User32.GetWindowDC(handle);
+            var hdcDest = IntPtr.Zero;
+            var hBitmap = IntPtr.Zero;
+            var hOld = IntPtr.Zero;
 
             try
             {
@@ -51,11 +52,6 @@ namespace SystemTools.App
                 Image img = Image.FromHbitmap(hBitmap);
 
                 return img;
-            }
-            catch (Exception)
-            {
-                // Return null for now
-                return null;
             }
             finally
             {
@@ -107,7 +103,7 @@ namespace SystemTools.App
             img.Save(filename, format);
             img.Dispose();
         }
-
+        
         /// <summary>
         /// Helper class containing Gdi32 API functions
         /// </summary>
@@ -155,7 +151,6 @@ namespace SystemTools.App
             public static extern IntPtr ReleaseDC(IntPtr hWnd, IntPtr hDC);
             [DllImport("user32.dll")]
             public static extern IntPtr GetWindowRect(IntPtr hWnd, ref RECT rect);
-
         }
     }
 }

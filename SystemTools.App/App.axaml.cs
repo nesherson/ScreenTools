@@ -1,10 +1,13 @@
+using System;
 using System.Diagnostics;
-using System.Reactive;
+using System.Drawing.Imaging;
+using System.IO;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ReactiveUI;
+using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using SharpHook;
 using SharpHook.Native;
 
@@ -12,13 +15,9 @@ namespace SystemTools.App
 {
     public partial class App : Application
     {
-        private TaskPoolGlobalHook _hook;
-        
-        public App()
-        {
-            TestCommand = ReactiveCommand.Create(Test);
-        }
-        
+        private SimpleGlobalHook? _hook;
+        private WindowsToastService _toastService;
+        private ScreenCaptureService _screenCaptureService;
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -26,54 +25,95 @@ namespace SystemTools.App
         
         public override void OnFrameworkInitializationCompleted()
         {
+            var collection = new ServiceCollection();
+            
+            collection.AddCommonServices();
+            
+            var serviceProvider = collection.BuildServiceProvider();
+            
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                desktop.Exit += OnExit;
             }
             
-            _hook = new TaskPoolGlobalHook(); 
-            
-            _hook.KeyPressed += Hook_KeyPressed;
-            
-            _hook.Run();
+            ConfigureServices(serviceProvider);
         
             base.OnFrameworkInitializationCompleted();
         }
         
-        public ReactiveCommand<Unit, Unit> TestCommand { get; }
-        
-        public void CaptureScreenshot()
+        private void CaptureScreenshot()
         {
-            //var screenCapture = new ScreenCapture();
-            //var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            //    "ScreenTools",
-            //    "Captures");
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                "ScreenTools",
+                "Captures");
 
-            //if (!Directory.Exists(path))
-            //{
-            //    Directory.CreateDirectory(path);
-            //}
-
-            //screenCapture.CaptureScreenToFile(path, ImageFormat.Jpeg);
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            
+            _screenCaptureService.CaptureScreenToFile(
+                Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhss}.jpg"),
+                ImageFormat.Jpeg);
         }
-        
-        public void Test()
+
+        private void ConfigureServices(IServiceProvider serviceProvider)
         {
-            Debug.WriteLine("CLICK!!!!!");        
+            _toastService = serviceProvider.GetRequiredService<WindowsToastService>();
+            _screenCaptureService = serviceProvider.GetRequiredService<ScreenCaptureService>();
+            _hook = serviceProvider.GetRequiredService<SimpleGlobalHook>();
+            _hook.KeyPressed += Hook_KeyPressed;
+            _hook.RunAsync();
         }
-        
+
+        private void ShowOverlay()
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                var overlay = new DrawingOverlay();
+                overlay.Show();
+            });
+        }
+
         private void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
         {
-            //KeyCode->VcSlash
-            //RawEvent.Mask->LeftShift, LeftCtrl
-            Debug.WriteLine($"KeyCode -> {e.Data.KeyCode}");
-            Debug.WriteLine($"RawEvent.Mask -> {e.RawEvent.Mask}");
-
-            if (e.RawEvent.Mask == (ModifierMask.LeftShift | ModifierMask.LeftCtrl) &&
-                e.Data.KeyCode == KeyCode.VcSlash)
+            switch (e.RawEvent.Mask)
             {
-                CaptureScreenshot();
+                case ModifierMask.LeftMeta when
+                    e.Data.KeyCode == KeyCode.VcF2:
+                    try
+                    {
+                        CaptureScreenshot();
+                        _toastService.ShowMessage("Screenshot captured!");
+                    }
+                    catch (Exception)
+                    {
+                        _toastService.ShowMessage("An error occured!");
+                    }
+
+                    break;
+                case ModifierMask.LeftMeta when
+                    e.Data.KeyCode == KeyCode.VcF3:
+                    ShowOverlay();
+                    break;
             }
+        }
+        
+        private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+        {
+            _hook?.Dispose();
+        }
+
+        private void NativeMenuItem_OnClickExitApplication(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.Shutdown();
+                }
+            });
         }
     }
 }

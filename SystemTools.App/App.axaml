@@ -15,12 +15,12 @@
 	<TrayIcon.Icons>
 		<TrayIcons>
 			<TrayIcon Icon="/Assets/tray-icon.ico"
-					  ToolTipText="Avalonia Tray Icon ToolTip">
+					  ToolTipText="Test">
 				<TrayIcon.Menu>
 					<NativeMenu>
-						<NativeMenuItem Header="Options" Command="{Binding TestCommand}" />
+						<NativeMenuItem Header="Options"  />
 						<NativeMenuItemSeparator />
-						<NativeMenuItem Header="Exit" />
+						<NativeMenuItem Header="Exit" Click="NativeMenuItem_OnClickExitApplication" />
 					</NativeMenu>
 				</TrayIcon.Menu>
 			</TrayIcon>
