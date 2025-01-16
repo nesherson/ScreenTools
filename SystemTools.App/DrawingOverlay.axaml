@@ -4,16 +4,103 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SystemTools.App.DrawingOverlay"
+        xmlns:local="clr-namespace:SystemTools.App"
         WindowState="Maximized"
-        ExtendClientAreaChromeHints="NoChrome"
-        TransparencyLevelHint="Transparent"
+        TransparencyLevelHint="Transparent" 
         Background="Transparent"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="None"
+        ExtendClientAreaTitleBarHeightHint="0"
+        CanResize="False"
         IsHitTestVisible="True"
-        ExtendClientAreaToDecorationsHint="True"
-        CanResize="False">
-        <Canvas PointerPressed="Canvas_OnPointerPressed"
-                PointerReleased="Canvas_OnPointerReleased"
-                PointerMoved="Canvas_OnPointerMoved"
-                Background="Transparent">
+        >
+    <Design.DataContext>
+        <local:DrawingOverlay />
+    </Design.DataContext>
+    <Window.Styles>
+        <Style Selector="Border#PopupBorder">
+            <Setter Property="Background" Value="#E6E6E6" />
+            <Setter Property="BorderBrush" Value="#BDBDBD" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Width" Value="70" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Background" Value="#DEDEDE" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#DEDEDE" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Height" Value="30" />
+        </Style>
+    </Window.Styles>
+    <Border 
+        x:Name="WindowBorder"
+        BorderBrush="Red" 
+        BorderThickness="{Binding WindowBorderThickness}"
+        Background="Transparent">
+        <Grid RowDefinitions="1,*">
+        <Grid
+            x:Name="PartGrid"
+            Grid.Row="0">
+            <Popup x:Name="ToolsPopup" 
+                   Placement="Bottom"
+                   VerticalOffset="10"
+                   PlacementTarget="PartGrid" 
+                   IsOpen="{Binding IsPopupOpen}">
+                <Border
+                    x:Name="PopupBorder"
+                    Padding="5">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <ComboBox 
+                            ItemsSource="{Binding LineStrokes}"
+                            SelectedItem="{Binding SelectedLineStroke}" />
+                        <ComboBox 
+                            x:Name="ColorComboBox"
+                            ItemsSource="{Binding LineColors}"
+                            SelectedItem="{Binding SelectedLineColor}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                   <Panel
+                                       Margin="0">
+                                       <Border 
+                                           Padding="0"
+                                           Margin="0"
+                                           BorderBrush="{Binding}"
+                                           Height="20"
+                                           Background="{Binding}"
+                                           />
+                                   </Panel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Click="ButtonClear_OnClick">
+                            <Svg Path="/Assets/trash.svg"/>
+                        </Button>
+                        <Button Click="ButtonSave_OnClick">
+                            <Svg Path="/Assets/save.svg"/>
+                        </Button>
+                        <Button Click="ButtonClose_OnClick">
+                            <Svg Path="/Assets/x.svg"/>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Popup>
+        </Grid>
+        <Canvas
+            Grid.Row="1"
+            x:Name="Canvas"
+            PointerPressed="Canvas_OnPointerPressed"
+            PointerReleased="Canvas_OnPointerReleased"
+            PointerMoved="Canvas_OnPointerMoved"
+            Background="Transparent">
         </Canvas>
+    </Grid>
+    </Border>
 </Window>
+
+
+ 
+

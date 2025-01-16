@@ -1,24 +1,138 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Color = System.Drawing.Color;
+using Path = System.IO.Path;
+using Pen = System.Drawing.Pen;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace SystemTools.App;
 
-public partial class DrawingOverlay : Window
+public partial class DrawingOverlay : Window, INotifyPropertyChanged
 {
-    Polyline? _currentPolyline;
-    public DrawingOverlay()
+    private readonly ScreenCaptureService _screenCaptureService;
+    private readonly WindowsToastService _windowsToastService;
+    
+    private Polyline? _currentPolyline;
+    private bool _isPopupOpen;
+    private Thickness _windowBorderThickness;
+    private ObservableCollection<int> _lineStrokes;
+    private ObservableCollection<string> _lineColors;
+    private int _selectedLineStroke;
+    private string _selectedLineColor;
+    
+    public DrawingOverlay(ScreenCaptureService screenCaptureService,
+        WindowsToastService windowsToastService)
     {
         InitializeComponent();
+        this.AttachDevTools();
+
+        DataContext = this;
+        
+        _screenCaptureService = screenCaptureService;
+        _windowsToastService = windowsToastService;
+
+        IsPopupOpen = true;
+        WindowBorderThickness = new Thickness(2);
+        LineStrokes = [5, 10, 15, 20];
+        SelectedLineStroke = 5;
+        LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
+        SelectedLineColor = "#000000";
     }
 
+    public bool IsPopupOpen
+    {
+        get => _isPopupOpen;
+        set => SetField(ref _isPopupOpen, value);
+    }
+    
+    public Thickness WindowBorderThickness
+    {
+        get => _windowBorderThickness;
+        set => SetField(ref _windowBorderThickness, value);
+    }
+    
+    public ObservableCollection<int> LineStrokes
+    {
+        get => _lineStrokes;
+        set => SetField(ref _lineStrokes, value);
+    }
+    
+    public int SelectedLineStroke
+    {
+        get => _selectedLineStroke;
+        set => SetField(ref _selectedLineStroke, value);
+    }
+    
+    public ObservableCollection<string> LineColors
+    {
+        get => _lineColors;
+        set => SetField(ref _lineColors, value);
+    }
+    
+    public string SelectedLineColor
+    {
+        get => _selectedLineColor;
+        set => SetField(ref _selectedLineColor, value);
+    }
+  
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+    
+    private async Task CaptureWindow()
+    {
+        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            "ScreenTools",
+            "Captures");
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+        
+        IsPopupOpen = false;
+        WindowBorderThickness = new Thickness(0);
+        
+        await Task.Delay(100);
+        var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
+        using (var g = Graphics.FromImage(bmp))
+            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
+        
+        bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
+        
+        IsPopupOpen = true;
+        WindowBorderThickness = new Thickness(2);
+    }
+    
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        switch (e.Key)
         {
-            Close();
+            case Key.Escape:
+                Close();
+                break;
+            case Key.F5:
+                IsPopupOpen = !IsPopupOpen;
+                break;
         }
     }
 
@@ -26,20 +140,19 @@ public partial class DrawingOverlay : Window
     {
         WindowLockHook.Hook(this);
         
-        base.OnLoaded(e);
-    }
-
-    private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+        base.OnLoaded(e); 
+    } 
+    
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
-        // var point = e.GetCurrentPoint(sender as Control);
-        
-        // if (point.Properties.IsLeftButtonPressed)
-        //     _currentPoint = point.Position;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
     
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         _currentPolyline = null;
+        
+        IsPopupOpen = true;
     }
 
     private void Canvas_OnPointerMoved(object? sender, PointerEventArgs e)
@@ -57,8 +170,8 @@ public partial class DrawingOverlay : Window
             {
                 _currentPolyline = new Polyline
                 {
-                    Stroke = new SolidColorBrush(Colors.AliceBlue),
-                    StrokeThickness = 10
+                    Stroke = SolidColorBrush.Parse(SelectedLineColor),
+                    StrokeThickness = SelectedLineStroke
                 };
                 canvas.Children.Add(_currentPolyline);
             }
@@ -67,5 +180,33 @@ public partial class DrawingOverlay : Window
                 _currentPolyline.Points.Add(point.Position);
             }
         }
+    }
+
+    private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        IsPopupOpen = false;
+    }
+
+    private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+    
+    private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await CaptureWindow();
+            _windowsToastService.ShowMessage("Screenshot captured!");
+        }
+        catch (Exception)
+        {
+            _windowsToastService.ShowMessage("An error occured!");
+        }
+    }
+    
+    private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Canvas.Children.Clear();
     }
 }
