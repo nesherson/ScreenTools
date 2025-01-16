@@ -12,12 +12,19 @@
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\tray-icon.ico" />
+    <None Remove="Assets\x.svg" />
+    <AvaloniaResource Include="Assets\x.svg" />
+    <None Remove="Assets\save.svg" />
+    <AvaloniaResource Include="Assets\save.svg" />
+    <None Remove="Assets\trash.svg" />
+    <AvaloniaResource Include="Assets\trash.svg" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.1" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Svg" Version="11.2.0.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->

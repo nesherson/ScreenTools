@@ -18,6 +18,8 @@ namespace SystemTools.App
         private SimpleGlobalHook? _hook;
         private WindowsToastService _toastService;
         private ScreenCaptureService _screenCaptureService;
+        private IServiceProvider _serviceProvider;
+        private bool _isDrawingOverlayActive;
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -29,7 +31,7 @@ namespace SystemTools.App
             
             collection.AddCommonServices();
             
-            var serviceProvider = collection.BuildServiceProvider();
+            _serviceProvider = collection.BuildServiceProvider();
             
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
@@ -37,7 +39,7 @@ namespace SystemTools.App
                 desktop.Exit += OnExit;
             }
             
-            ConfigureServices(serviceProvider);
+            ConfigureServices();
         
             base.OnFrameworkInitializationCompleted();
         }
@@ -58,20 +60,22 @@ namespace SystemTools.App
                 ImageFormat.Jpeg);
         }
 
-        private void ConfigureServices(IServiceProvider serviceProvider)
+        private void ConfigureServices()
         {
-            _toastService = serviceProvider.GetRequiredService<WindowsToastService>();
-            _screenCaptureService = serviceProvider.GetRequiredService<ScreenCaptureService>();
-            _hook = serviceProvider.GetRequiredService<SimpleGlobalHook>();
+            _toastService = _serviceProvider.GetRequiredService<WindowsToastService>();
+            _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
+            _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
             _hook.KeyPressed += Hook_KeyPressed;
             _hook.RunAsync();
         }
 
-        private void ShowOverlay()
+        private void ShowDrawingOverlay()
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                var overlay = new DrawingOverlay();
+                _isDrawingOverlayActive = true;
+                var overlay = ActivatorUtilities.CreateInstance<DrawingOverlay>(_serviceProvider);
+                overlay.Closed += (_, _) => _isDrawingOverlayActive = false; 
                 overlay.Show();
             });
         }
@@ -95,7 +99,8 @@ namespace SystemTools.App
                     break;
                 case ModifierMask.LeftMeta when
                     e.Data.KeyCode == KeyCode.VcF3:
-                    ShowOverlay();
+                    if (!_isDrawingOverlayActive)
+                        ShowDrawingOverlay();
                     break;
             }
         }

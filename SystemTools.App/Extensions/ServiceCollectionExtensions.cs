@@ -8,7 +8,7 @@ public static class ServiceCollectionExtensions
 {
     public static void AddCommonServices(this IServiceCollection collection)
     {
-        collection.AddSingleton<SimpleGlobalHook>();
+        collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
         collection.AddTransient<WindowsToastService>();
         collection.AddTransient<ScreenCaptureService>();
     }
