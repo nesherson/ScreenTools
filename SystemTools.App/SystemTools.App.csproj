@@ -18,8 +18,7 @@
     <AvaloniaResource Include="Assets\save.svg" />
     <None Remove="Assets\trash.svg" />
     <AvaloniaResource Include="Assets\trash.svg" />
-    <None Remove="Assets\square.svg" />
-    <AvaloniaResource Include="Assets\square.svg" />
+    <AvaloniaResource Include="Assets\eraser.svg" />
   </ItemGroup>
 
   <ItemGroup>
