@@ -9,10 +9,12 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\tray-icon.ico" />
+    <None Remove="Assets\undo.svg" />
   </ItemGroup>
   <ItemGroup>
     <AvaloniaResource Include="Assets\tray-icon.ico" />
     <None Remove="Assets\x.svg" />
+    <AvaloniaResource Include="Assets\undo.svg" />
     <AvaloniaResource Include="Assets\x.svg" />
     <None Remove="Assets\save.svg" />
     <AvaloniaResource Include="Assets\save.svg" />

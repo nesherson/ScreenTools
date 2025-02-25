@@ -85,6 +85,9 @@
 										    ConverterParameter={x:Static local:DrawingState.Erasing}}" >
 							<Svg Path="/Assets/eraser.svg"/>
 						</Button>
+						<Button Click="ButtonUndo_OnClick">
+							<Svg Path="/Assets/undo.svg"/>
+						</Button>
                         <Button Click="ButtonClear_OnClick">
                             <Svg Path="/Assets/trash.svg"/>
                         </Button>

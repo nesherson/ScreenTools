@@ -32,6 +32,7 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     private string _selectedLineColor;
     private Point _startPoint;
     private DrawingState _drawingState;
+    private List<DrawingHistoryItem?> _drawingHistoryItems;
 
     public DrawingOverlay()
     {
@@ -57,6 +58,7 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         SelectedLineStroke = 5;
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
+        _drawingHistoryItems = new();
     }
 
     public bool IsPopupOpen
@@ -168,6 +170,7 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         switch (DrawingState)
         {
             case DrawingState.Drawing:
+                AddHistoryItem(_currentPolyline, DrawingAction.Draw);
                 _currentPolyline = null;
 
                 break;
@@ -183,6 +186,11 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
                     .Where(pl => IsInBorderArea(_eraseArea, pl))
                     .ToList();
 
+                if (polylinesToRemove.Any())
+                {
+                    AddHistoryItem(polylinesToRemove, DrawingAction.Delete);
+                }
+
                 foreach (var polylineToRemove in polylinesToRemove)
                 {
                     canvas.Children.Remove(polylineToRemove);
@@ -196,6 +204,24 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         }
 
         IsPopupOpen = true;
+    }
+
+    private void AddHistoryItem(Polyline polyline, DrawingAction drawingAction)
+    {
+        _drawingHistoryItems.Add(new DrawingHistoryItem
+        {
+            Lines = new List<Polyline> { polyline },
+            Action = drawingAction
+        });
+    }
+
+    private void AddHistoryItem(List<Polyline> polylines, DrawingAction drawingAction)
+    {
+        _drawingHistoryItems.Add(new DrawingHistoryItem
+        {
+            Lines = polylines,
+            Action = drawingAction
+        });
     }
 
     private bool IsInBorderArea(Border border, Polyline polyline)
@@ -315,7 +341,42 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     
     private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
     {
+        var polylinesToSave = Canvas.Children
+                .Where(x => x is Polyline)
+                .Cast<Polyline>()
+                .ToList();
+      
+        if (polylinesToSave.Any())
+        {
+            AddHistoryItem(polylinesToSave, DrawingAction.Clear);
+        }
+
         Canvas.Children.Clear();
+    }
+
+    private void ButtonUndo_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DrawingHistoryItem? itemToUndo = _drawingHistoryItems.LastOrDefault();
+
+        if (itemToUndo == null)
+            return;
+
+        switch (itemToUndo.Value.Action)
+        {
+            case DrawingAction.Draw:
+                Canvas.Children.Remove(itemToUndo.Value.Lines.First());
+                _drawingHistoryItems.Remove(itemToUndo.Value);
+                break;
+            case DrawingAction.Delete:
+                Canvas.Children.AddRange(itemToUndo.Value.Lines);
+                _drawingHistoryItems.Remove(itemToUndo.Value);
+                break;
+            case DrawingAction.Clear:
+                Canvas.Children.AddRange(itemToUndo.Value.Lines);
+                _drawingHistoryItems.Remove(itemToUndo.Value);
+                break;
+        }
+
     }
 
     private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
