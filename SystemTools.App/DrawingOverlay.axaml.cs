@@ -44,8 +44,6 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     {
         InitializeComponent();
 
-        this.AttachDevTools();
-
         DataContext = this;
 
         _screenCaptureService = screenCaptureService;

@@ -15,7 +15,7 @@
 	<TrayIcon.Icons>
 		<TrayIcons>
 			<TrayIcon Icon="/Assets/tray-icon.ico"
-					  ToolTipText="Test">
+					  ToolTipText="Screen Tools">
 				<TrayIcon.Menu>
 					<NativeMenu>
 						<NativeMenuItem Header="Options"  />
