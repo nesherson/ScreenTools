@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Color = System.Drawing.Color;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Path = System.IO.Path;
-using Pen = System.Drawing.Pen;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace SystemTools.App;
 
@@ -26,23 +23,33 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     private readonly WindowsToastService _windowsToastService;
     
     private Polyline? _currentPolyline;
+    private Border? _eraseArea;
     private bool _isPopupOpen;
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
     private int _selectedLineStroke;
     private string _selectedLineColor;
-    
+    private Point _startPoint;
+    private DrawingState _drawingState;
+
+    public DrawingOverlay()
+    {
+        InitializeComponent();
+    }
+
     public DrawingOverlay(ScreenCaptureService screenCaptureService,
         WindowsToastService windowsToastService)
     {
         InitializeComponent();
+
         this.AttachDevTools();
 
         DataContext = this;
-        
+
         _screenCaptureService = screenCaptureService;
         _windowsToastService = windowsToastService;
+        DrawingState = DrawingState.Drawing;
 
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
@@ -87,7 +94,14 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         get => _selectedLineColor;
         set => SetField(ref _selectedLineColor, value);
     }
-  
+
+    public DrawingState DrawingState
+    {
+        get => _drawingState;
+        set => SetField(ref _drawingState, value);
+    }
+
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -113,9 +127,9 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         WindowBorderThickness = new Thickness(0);
         
         await Task.Delay(100);
-        var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
-        using (var g = Graphics.FromImage(bmp))
-            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
+        var bmp = new System.Drawing.Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
+        using (var g = System.Drawing.Graphics.FromImage(bmp))
+            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, System.Drawing.CopyPixelOperation.SourceCopy);
         
         bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
         
@@ -150,9 +164,51 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        _currentPolyline = null;
-        
+        var canvas = sender as Canvas;
+        switch (DrawingState)
+        {
+            case DrawingState.Drawing:
+                _currentPolyline = null;
+
+                break;
+            case DrawingState.Erasing:
+                if (canvas is null)
+                {
+                    return;
+                }
+
+                var polylinesToRemove = canvas.Children
+                    .Where(x => x is Polyline)
+                    .Cast<Polyline>()
+                    .Where(pl => IsInBorderArea(_eraseArea, pl))
+                    .ToList();
+
+                foreach (var polylineToRemove in polylinesToRemove)
+                {
+                    canvas.Children.Remove(polylineToRemove);
+                }
+
+                canvas.Children.Remove(_eraseArea);
+
+                _eraseArea = null;
+                break;
+
+        }
+
         IsPopupOpen = true;
+    }
+
+    private bool IsInBorderArea(Border border, Polyline polyline)
+    {
+        return polyline.Points
+            .Any(p => p.X >= _eraseArea.Bounds.TopLeft.X &&
+                 p.X <= _eraseArea.Bounds.TopRight.X &&
+                 p.X >= _eraseArea.Bounds.BottomLeft.X &&
+                 p.X <= _eraseArea.Bounds.BottomRight.X &&
+                 p.Y >= _eraseArea.Bounds.TopLeft.Y &&
+                 p.Y <= _eraseArea.Bounds.BottomLeft.Y &&
+                 p.Y >= _eraseArea.Bounds.TopRight.Y &&
+                 p.Y <= _eraseArea.Bounds.BottomRight.Y);
     }
 
     private void Canvas_OnPointerMoved(object? sender, PointerEventArgs e)
@@ -161,23 +217,34 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
 
         if (canvas is null)
             return;
-        
+
         var point = e.GetCurrentPoint(canvas);
 
         if (point.Properties.IsLeftButtonPressed)
         {
-            if (_currentPolyline == null)
+      
+            switch (DrawingState)
             {
-                _currentPolyline = new Polyline
-                {
-                    Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                    StrokeThickness = SelectedLineStroke
-                };
-                canvas.Children.Add(_currentPolyline);
-            }
-            else
-            {
-                _currentPolyline.Points.Add(point.Position);
+                case DrawingState.Drawing:
+                    if (_currentPolyline is null)
+                        return;
+
+                    _currentPolyline.Points.Add(point.Position);
+                    break;
+                case DrawingState.Erasing:
+                    var x = Math.Min(point.Position.X, _startPoint.X);
+                    var y = Math.Min(point.Position.Y, _startPoint.Y);
+
+                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
+                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
+
+                    _eraseArea.Width = w;
+                    _eraseArea.Height = h;
+
+                    Canvas.SetLeft(_eraseArea, x);
+                    Canvas.SetTop(_eraseArea, y);
+                    break;
+
             }
         }
     }
@@ -185,6 +252,47 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         IsPopupOpen = false;
+
+        var canvas = sender as Canvas;
+
+        if (canvas is null)
+            return;
+
+        _startPoint = e.GetPosition(canvas);
+
+        switch (DrawingState)
+        {
+            case DrawingState.Drawing:
+                if (_currentPolyline == null)
+                {
+                    _currentPolyline = new Polyline
+                    {
+                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
+                        StrokeThickness = SelectedLineStroke
+                    };
+                    canvas.Children.Add(_currentPolyline);
+                }
+                break;
+            case DrawingState.Erasing:
+                if (_eraseArea == null)
+                {
+                    _eraseArea = new Border
+                    {
+                        BorderThickness = new Thickness(1),
+                        BorderBrush = new SolidColorBrush(Colors.Red)
+                    };
+
+                    Canvas.SetLeft(_eraseArea, _startPoint.X);
+                    Canvas.SetLeft(_eraseArea, _startPoint.Y);
+                    canvas.Children.Add(_eraseArea);
+                }
+                break;
+        }   
+    }
+
+    private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DrawingState = DrawingState.Erasing;
     }
 
     private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
@@ -208,5 +316,15 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
     private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
     {
         Canvas.Children.Clear();
+    }
+
+    private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        DrawingState = DrawingState.Drawing;
+    }
+
+    private void LineComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        DrawingState = DrawingState.Drawing;
     }
 }
