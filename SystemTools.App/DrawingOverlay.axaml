@@ -13,10 +13,10 @@
         ExtendClientAreaTitleBarHeightHint="0"
         CanResize="False"
         IsHitTestVisible="True"
-        >
-    <Design.DataContext>
-        <local:DrawingOverlay />
-    </Design.DataContext>
+		DataContext="{Binding $self}">
+	<Window.Resources>
+		<local:DrawingStateToBooleanConverter x:Key="DrawingStateToBooleanConverter"/>
+	</Window.Resources>
     <Window.Styles>
         <Style Selector="Border#PopupBorder">
             <Setter Property="Background" Value="#E6E6E6" />
@@ -49,18 +49,20 @@
                    Placement="Bottom"
                    VerticalOffset="10"
                    PlacementTarget="PartGrid" 
-                   IsOpen="{Binding IsPopupOpen}">
+                   IsOpen="{Binding IsPopupOpen, FallbackValue=true}">
                 <Border
                     x:Name="PopupBorder"
                     Padding="5">
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <ComboBox 
                             ItemsSource="{Binding LineStrokes}"
-                            SelectedItem="{Binding SelectedLineStroke}" />
+                            SelectedItem="{Binding SelectedLineStroke}"
+							PointerPressed="LineComboBox_PointerPressed"/>
                         <ComboBox 
                             x:Name="ColorComboBox"
                             ItemsSource="{Binding LineColors}"
-                            SelectedItem="{Binding SelectedLineColor}">
+                            SelectedItem="{Binding SelectedLineColor}"
+							PointerPressed="ColorComboBox_PointerPressed">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                    <Panel
@@ -76,6 +78,13 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+						<Button 
+							Click="ButtonEraser_OnClick" 
+							Background="{Binding DrawingState, 
+							            Converter={StaticResource DrawingStateToBooleanConverter},
+										    ConverterParameter={x:Static local:DrawingState.Erasing}}" >
+							<Svg Path="/Assets/eraser.svg"/>
+						</Button>
                         <Button Click="ButtonClear_OnClick">
                             <Svg Path="/Assets/trash.svg"/>
                         </Button>
