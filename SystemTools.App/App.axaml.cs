@@ -9,6 +9,7 @@ using SharpHook.Native;
 using System;
 using System.Drawing.Imaging;
 using System.IO;
+using SystemTools.App.Views;
 
 namespace SystemTools.App
 {
@@ -117,6 +118,15 @@ namespace SystemTools.App
                 {
                     desktop.Shutdown();
                 }
+            });
+        }
+
+        private void NativeMenuItem_OnClickOpenGallery(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                var window = ActivatorUtilities.CreateInstance<GalleryView>(_serviceProvider);
+                window.Show();
             });
         }
     }

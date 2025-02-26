@@ -1,0 +1,22 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="SystemTools.App.Views.GalleryView"
+        Title="GalleryView">
+   <Grid>
+       <ItemsControl x:Name="ImageItems" ItemsSource="{Binding Images}">
+           <ItemsControl.ItemsPanel>
+               <ItemsPanelTemplate>
+                   <WrapPanel />
+               </ItemsPanelTemplate>
+           </ItemsControl.ItemsPanel>
+           <ItemsControl.DataTemplates>
+               <DataTemplate DataType="Image">
+                   <Image Source="{Binding}"/>
+               </DataTemplate>
+           </ItemsControl.DataTemplates>
+       </ItemsControl>
+   </Grid>
+</Window>
