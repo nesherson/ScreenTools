@@ -9,7 +9,6 @@ using SharpHook.Native;
 using System;
 using System.Drawing.Imaging;
 using System.IO;
-using SystemTools.App.Views;
 
 namespace SystemTools.App
 {
