@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SharpHook;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public static class ServiceCollectionExtensions
 {

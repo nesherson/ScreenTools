@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls.Shapes;
 using System.Collections.Generic;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public struct DrawingHistoryItem
 {

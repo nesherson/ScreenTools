@@ -1,4 +1,4 @@
-﻿namespace SystemTools.App;
+﻿namespace ScreenTools.App;
 
 public enum DrawingAction
 {

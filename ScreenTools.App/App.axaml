@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="SystemTools.App.App"
-             xmlns:local="clr-namespace:SystemTools.App"
+             x:Class="ScreenTools.App.App"
+             xmlns:local="clr-namespace:ScreenTools.App"
              RequestedThemeVariant="Default">
 	<Application.DataContext>
 		<local:App />

@@ -15,7 +15,7 @@ using Avalonia.Media;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {

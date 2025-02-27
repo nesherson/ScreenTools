@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media.Imaging;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public class GalleryImage
 {

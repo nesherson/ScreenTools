@@ -1,6 +1,6 @@
 ﻿using Microsoft.Toolkit.Uwp.Notifications;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public class WindowsToastService
 {

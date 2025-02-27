@@ -10,7 +10,7 @@ using System;
 using System.Drawing.Imaging;
 using System.IO;
 
-namespace SystemTools.App
+namespace ScreenTools.App
 {
     public partial class App : Application
     {

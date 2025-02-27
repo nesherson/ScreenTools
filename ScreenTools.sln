@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemTools.App", "SystemTools.App\SystemTools.App.csproj", "{96C06531-DE0E-4A5E-8A62-A9B48040AE1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreenTools.App", "ScreenTools.App\ScreenTools.App.csproj", "{96C06531-DE0E-4A5E-8A62-A9B48040AE1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

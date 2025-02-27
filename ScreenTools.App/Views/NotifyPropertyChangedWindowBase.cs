@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public class NotifyPropertyChangedWindowBase : Window, INotifyPropertyChanged
 {

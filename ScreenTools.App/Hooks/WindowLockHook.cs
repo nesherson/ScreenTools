@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public class WindowLockHook
 {

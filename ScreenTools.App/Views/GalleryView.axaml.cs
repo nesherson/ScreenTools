@@ -10,7 +10,7 @@ using Avalonia.Input;
 using ReactiveUI;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
-namespace SystemTools.App;
+namespace ScreenTools.App;
 
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
