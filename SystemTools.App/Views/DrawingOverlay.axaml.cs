@@ -1,23 +1,23 @@
-﻿using Avalonia;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Path = System.IO.Path;
+using Point = Avalonia.Point;
 
 namespace SystemTools.App;
 
-public partial class DrawingOverlay : Window, INotifyPropertyChanged
+public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly WindowsToastService _windowsToastService;
@@ -100,17 +100,6 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         get => _drawingState;
         set => SetField(ref _drawingState, value);
     }
-
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
-    }
     
     private async Task CaptureWindow()
     {
@@ -127,9 +116,9 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         WindowBorderThickness = new Thickness(0);
         
         await Task.Delay(100);
-        var bmp = new System.Drawing.Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
-        using (var g = System.Drawing.Graphics.FromImage(bmp))
-            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, System.Drawing.CopyPixelOperation.SourceCopy);
+        var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
+        using (var g = Graphics.FromImage(bmp))
+            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
         
         bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
         
@@ -156,11 +145,6 @@ public partial class DrawingOverlay : Window, INotifyPropertyChanged
         
         base.OnLoaded(e); 
     } 
-    
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
     
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {

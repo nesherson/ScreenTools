@@ -119,5 +119,14 @@ namespace SystemTools.App
                 }
             });
         }
+
+        private void NativeMenuItem_OnClickOpenGallery(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                var window = ActivatorUtilities.CreateInstance<GalleryView>(_serviceProvider);
+                window.Show();
+            });
+        }
     }
 }

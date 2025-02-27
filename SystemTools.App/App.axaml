@@ -18,7 +18,7 @@
 					  ToolTipText="Screen Tools">
 				<TrayIcon.Menu>
 					<NativeMenu>
-						<NativeMenuItem Header="Options"  />
+						<NativeMenuItem Header="Gallery" Click="NativeMenuItem_OnClickOpenGallery" />
 						<NativeMenuItemSeparator />
 						<NativeMenuItem Header="Exit" Click="NativeMenuItem_OnClickExitApplication" />
 					</NativeMenu>
