@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using ReactiveUI;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
@@ -14,12 +15,15 @@ namespace ScreenTools.App;
 
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
+    private readonly WindowNotificationManager _notificationManager;
     private bool _isLoading;
     private int _loadingProgress;
     
     public GalleryView()
     {
         InitializeComponent();
+        
+        _notificationManager = new WindowNotificationManager(GetTopLevel(this));
 
         Images = [];
         _loadingProgress = 0;
@@ -79,11 +83,12 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             
             if (galleryImage == null)
                 return;
-
+            
             Process.Start("explorer.exe", $"/select, \"{galleryImage.Path}\"");
         }
         catch (Exception exception)
         {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
             Console.WriteLine(exception);
         }
     }
