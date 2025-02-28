@@ -7,7 +7,7 @@ using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using Avalonia.Input;
+using Avalonia.Interactivity;
 using ReactiveUI;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
@@ -18,6 +18,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
     private readonly WindowNotificationManager _notificationManager;
     private bool _isLoading;
     private int _loadingProgress;
+    private bool _hasData;
     
     public GalleryView()
     {
@@ -27,6 +28,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
 
         Images = [];
         _loadingProgress = 0;
+        HasData = IsLoading == false;
 
         RxApp.MainThreadScheduler.Schedule(LoadImages);
     }
@@ -45,12 +47,18 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         set => SetField(ref _loadingProgress, value);
     }
     
+    public bool HasData
+    {
+        get => _hasData; 
+        set => SetField(ref _hasData, value);
+    }
+    
     private async void LoadImages()
     {
         try
         {
             IsLoading = true;
-            
+
             var validExtensions = new[] { "png", "jpg", "jpeg" };
             var files = Directory.EnumerateFiles(
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Captures"),
@@ -63,33 +71,74 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             {
                 LoadingProgress += 100 / files.Length;
                 await using var fileStream = File.OpenRead(file);
-                var bitmap = await Task.Run(() => Bitmap.DecodeToWidth(fileStream, 300));
+                var bitmap = await Task.Run(() => Bitmap.DecodeToWidth(fileStream, 640));
                 Images.Add(new GalleryImage(file, bitmap));
             }
 
+            HasData = files.Length != 0;
+
             this.Get<ItemsControl>("ImageItems").ItemsSource = Images;
+        }
+        catch (Exception ex)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            Console.WriteLine(ex);
         }
         finally
         {
             IsLoading = false;
         }
     }
+    
+    private void MenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {   
+        var menuItem = sender as MenuItem;
 
-    private void GalleryImage_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+        if (menuItem is null)
+            return;
+
+        var galleryImage = menuItem.DataContext as GalleryImage;
+            
+        if (galleryImage is null)
+            return;
+
+        switch (menuItem.Name)
+        {
+            case "Preview":
+                HandlePreview(galleryImage);
+                break;
+            case "ShowInExplorer":
+                HandleShowInExplorer(galleryImage);
+                break;
+        }
+    }
+    
+    private void HandleShowInExplorer(GalleryImage galleryImage)
     {
         try
         {
-            var galleryImage = (sender as Control).DataContext as GalleryImage;
-            
-            if (galleryImage == null)
-                return;
-            
             Process.Start("explorer.exe", $"/select, \"{galleryImage.Path}\"");
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(exception);
+            Console.WriteLine(ex);
         }
+    }
+
+    private void HandlePreview(GalleryImage galleryImage)
+    {
+      var window = new Window
+      {
+        Width = 1280,
+        Height = 720,
+        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+        Content = new Image
+        {
+            Source = new Bitmap(galleryImage.Path)
+        }
+      };
+
+      window.ShowDialog(this);
     }
 }
