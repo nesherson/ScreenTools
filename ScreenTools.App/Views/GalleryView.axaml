@@ -4,31 +4,44 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ScreenTools.App.GalleryView"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
         xmlns:local="clr-namespace:ScreenTools.App"
         Title="GalleryView"
         DataContext="{Binding $self}">
-   <Grid Margin="30">
-       <ProgressBar  Margin="0 10" Height="20" 
-                     Minimum="0" Maximum="100" Value="{Binding LoadingProgress}"
-                     IsVisible="{Binding IsLoading}" />
-       <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsLoading}">
-           <ItemsControl x:Name="ImageItems" ItemsSource="{Binding Images}">
-               <ItemsControl.ItemsPanel>
-                   <ItemsPanelTemplate>
-                       <WrapPanel />
-                   </ItemsPanelTemplate>
-               </ItemsControl.ItemsPanel>
-               <ItemsControl.DataTemplates>
-                   <DataTemplate DataType="local:GalleryImage">
-                       <Image 
-                           Width="360" 
-                           Margin="2"
-                           Stretch="Uniform" 
-                           Source="{Binding Bitmap}"
-                           PointerPressed="GalleryImage_OnPointerPressed"/>
-                   </DataTemplate>
-               </ItemsControl.DataTemplates>
-           </ItemsControl>
-       </ScrollViewer>
-   </Grid>
+    <Design.DataContext>
+        <local:GalleryView />
+    </Design.DataContext>
+    <Grid Margin="30">
+           <ProgressBar  Margin="0 10" Height="20" 
+                         Minimum="0" Maximum="100" Value="{Binding LoadingProgress}"
+                         IsVisible="{Binding IsLoading}" />
+           <TextBlock Text="No images." IsVisible="{Binding !HasData}" HorizontalAlignment="Center" />
+           <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsLoading}">
+               <ItemsControl x:Name="ImageItems" ItemsSource="{Binding Images}">
+                   <ItemsControl.ItemsPanel>
+                       <ItemsPanelTemplate>
+                           <WrapPanel HorizontalAlignment="Center"/>
+                       </ItemsPanelTemplate>
+                   </ItemsControl.ItemsPanel>
+                   <ItemsControl.DataTemplates>
+                       <DataTemplate DataType="local:GalleryImage">
+                           <Border>
+                               <Border.ContextFlyout>
+                                   <MenuFlyout>
+                                       <MenuItem Name="Preview" Header="Preview" Click="MenuItem_OnClick"/>
+                                       <MenuItem Name="ShowInExplorer" Header="Show in explorer" Click="MenuItem_OnClick" />
+                                   </MenuFlyout>
+                               </Border.ContextFlyout>
+                               <Image 
+                                   Width="360" 
+                                   Margin="2"
+                                   Stretch="Uniform" 
+                                   Source="{Binding Bitmap}"/>
+                           </Border>
+                       </DataTemplate>
+                   </ItemsControl.DataTemplates>
+               </ItemsControl>
+           </ScrollViewer>
+       </Grid>
 </Window>
