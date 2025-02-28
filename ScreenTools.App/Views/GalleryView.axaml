@@ -18,7 +18,7 @@
                          IsVisible="{Binding IsLoading}" />
            <TextBlock Text="No images." IsVisible="{Binding !HasData}" HorizontalAlignment="Center" />
            <ScrollViewer VerticalScrollBarVisibility="Auto" IsVisible="{Binding !IsLoading}">
-               <ItemsControl x:Name="ImageItems" ItemsSource="{Binding Images}">
+               <ItemsControl x:Name="ImageItems" ItemsSource="{Binding GalleryImages}">
                    <ItemsControl.ItemsPanel>
                        <ItemsPanelTemplate>
                            <WrapPanel HorizontalAlignment="Center"/>
@@ -27,12 +27,12 @@
                    <ItemsControl.DataTemplates>
                        <DataTemplate DataType="local:GalleryImage">
                            <Border>
-                               <Border.ContextFlyout>
-                                   <MenuFlyout>
+                               <Border.ContextMenu>
+                                   <ContextMenu>
                                        <MenuItem Name="Preview" Header="Preview" Click="MenuItem_OnClick"/>
                                        <MenuItem Name="ShowInExplorer" Header="Show in explorer" Click="MenuItem_OnClick" />
-                                   </MenuFlyout>
-                               </Border.ContextFlyout>
+                                   </ContextMenu>
+                               </Border.ContextMenu>
                                <Image 
                                    Width="360" 
                                    Margin="2"
