@@ -16,6 +16,8 @@ namespace ScreenTools.App;
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
+
+    private ObservableCollection<GalleryImage> _galleryImages;
     private bool _isLoading;
     private int _loadingProgress;
     private bool _hasData;
@@ -25,15 +27,18 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         InitializeComponent();
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
-
-        Images = [];
+        
         _loadingProgress = 0;
         HasData = IsLoading == false;
 
         RxApp.MainThreadScheduler.Schedule(LoadImages);
     }
-    
-    public ObservableCollection<GalleryImage> Images { get; }
+
+    public ObservableCollection<GalleryImage> GalleryImages
+    {
+        get => _galleryImages;
+        set => SetField(ref _galleryImages, value); 
+    }
 
     public bool IsLoading
     {
@@ -67,17 +72,19 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
                 .Where(x => validExtensions.Contains(Path.GetExtension(x).TrimStart('.').ToLowerInvariant()))
                 .ToArray();
 
+            var galleryImages = new ObservableCollection<GalleryImage>();
+
             foreach (var file in files)
             {
                 LoadingProgress += 100 / files.Length;
                 await using var fileStream = File.OpenRead(file);
                 var bitmap = await Task.Run(() => Bitmap.DecodeToWidth(fileStream, 640));
-                Images.Add(new GalleryImage(file, bitmap));
+                galleryImages.Add(new GalleryImage(file, bitmap));
             }
 
             HasData = files.Length != 0;
 
-            this.Get<ItemsControl>("ImageItems").ItemsSource = Images;
+            GalleryImages = galleryImages;
         }
         catch (Exception ex)
         {
