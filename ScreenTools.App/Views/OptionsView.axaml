@@ -1,0 +1,39 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ScreenTools.App.OptionsView"
+        xmlns:local="clr-namespace:ScreenTools.App"
+        Width="1280"
+        Height="720"
+        Title="Options">
+        <Design.DataContext>
+                <local:OptionsView />
+        </Design.DataContext>
+        <Grid ColumnDefinitions="300,*">
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock FontSize="20" Text="Gallery paths" />
+                        <!-- <ItemsControl ItemsSource="{Binding GalleryPaths}"> -->
+                        <!--         <ItemsControl.ItemsPanel> -->
+                        <!--                 <ItemsPanelTemplate> -->
+                        <!--                         <Panel /> -->
+                        <!--                 </ItemsPanelTemplate> -->
+                        <!--         </ItemsControl.ItemsPanel> -->
+                        <!--         <ItemsControl.DataTemplates> -->
+                        <!--                 <DataTemplate DataType="x:String"> -->
+                        <!--                         <TextBox Text="{Binding}"/> -->
+                        <!--                 </DataTemplate> -->
+                        <!--         </ItemsControl.DataTemplates> -->
+                        <!-- </ItemsControl> -->
+                        <ListBox 
+                                x:Name="TestListBox"
+                                Width="300" 
+                                BorderBrush="Red"
+                                
+                                >
+                        </ListBox>
+                        <Button Content="Add path" />
+                </StackPanel>
+        </Grid>
+</Window>

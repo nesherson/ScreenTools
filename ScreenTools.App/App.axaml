@@ -19,6 +19,7 @@
 				<TrayIcon.Menu>
 					<NativeMenu>
 						<NativeMenuItem Header="Gallery" Click="NativeMenuItem_OnClickOpenGallery" />
+						<NativeMenuItem Header="Options" Click="NativeMenuItem_OnClickOpenOptions" />
 						<NativeMenuItemSeparator />
 						<NativeMenuItem Header="Exit" Click="NativeMenuItem_OnClickExitApplication" />
 					</NativeMenu>
