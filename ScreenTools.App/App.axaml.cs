@@ -128,5 +128,14 @@ namespace ScreenTools.App
                 window.Show();
             });
         }
+        
+        private void NativeMenuItem_OnClickOpenOptions(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                var window = ActivatorUtilities.CreateInstance<OptionsView>(_serviceProvider);
+                window.Show();
+            });
+        }
     }
 }
