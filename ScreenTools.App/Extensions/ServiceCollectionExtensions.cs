@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using SharpHook;
 
@@ -11,5 +12,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
         collection.AddTransient<WindowsToastService>();
         collection.AddTransient<ScreenCaptureService>();
+        collection.AddTransient<IStorageService<string>, FileStorageService>(_ => new FileStorageService(
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments ), "gallery-paths.txt")));
     }
 }
