@@ -1,39 +1,80 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Concurrency;
-using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using Avalonia.Interactivity;
 using ReactiveUI;
 
 namespace ScreenTools.App;
 
 public partial class OptionsView : NotifyPropertyChangedWindowBase
 {
-    private ObservableCollection<string> _galleryPaths;
+    private readonly IStorageService<string> _fileStorageService;
+    private readonly WindowNotificationManager _notificationManager;
+
+    private ObservableCollection<GalleryPath> _galleryPaths;
     
-    public OptionsView()
+    public OptionsView(IStorageService<string> storageService)
     {
         InitializeComponent();
 
-
-       
+        _fileStorageService = storageService;
+        _notificationManager = new WindowNotificationManager(GetTopLevel(this));
 
         RxApp.MainThreadScheduler.Schedule(LoadData);
     }
 
-    public ObservableCollection<string> GalleryPaths
+    public ObservableCollection<GalleryPath> GalleryPaths
     {
         get => _galleryPaths;
         set => SetField(ref _galleryPaths, value);
     }
-
-    private void LoadData()
+    
+    private async void LoadData()
     {
-        GalleryPaths = new ObservableCollection<string>()
+        var galleryPaths = new ObservableCollection<GalleryPath>();
+        
+        try
         {
-            "Test 1",
-            "Test 2"
-        };
-        this.Get<ListBox>("TestListBox").ItemsSource = GalleryPaths;
-       
+            var text = await _fileStorageService.LoadData();
+            var savedGalleryPaths = text
+                .Split(';')
+                .Where(x => !string.IsNullOrEmpty(x));
+
+            foreach (var savedGalleryPath in savedGalleryPaths)
+            {
+                galleryPaths.Add(new GalleryPath(savedGalleryPath));
+            }
+            
+            GalleryPaths = galleryPaths;
+        }
+        catch (Exception exception)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            Console.WriteLine(exception);
+        }
+    }
+
+    private void BtnAddPath_OnClick(object? sender, RoutedEventArgs e)
+    {
+        GalleryPaths.Add(new GalleryPath(string.Empty));
     }
     
+    private async void BtnSavePaths_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var galleryPaths = string.Join(';', GalleryPaths.Select(x => x.Path));
+
+        try
+        {
+            await _fileStorageService.SaveData(galleryPaths);
+            
+            _notificationManager.Show(new Notification("Success", "Paths are successfully saved.", NotificationType.Success));
+        }
+        catch (Exception exception)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            Console.WriteLine(exception);
+        }
+    }
 }

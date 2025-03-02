@@ -7,33 +7,25 @@
         xmlns:local="clr-namespace:ScreenTools.App"
         Width="1280"
         Height="720"
-        Title="Options">
+        Title="Options"
+        DataContext="{Binding $self}">
         <Design.DataContext>
                 <local:OptionsView />
         </Design.DataContext>
         <Grid ColumnDefinitions="300,*">
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
                         <TextBlock FontSize="20" Text="Gallery paths" />
-                        <!-- <ItemsControl ItemsSource="{Binding GalleryPaths}"> -->
-                        <!--         <ItemsControl.ItemsPanel> -->
-                        <!--                 <ItemsPanelTemplate> -->
-                        <!--                         <Panel /> -->
-                        <!--                 </ItemsPanelTemplate> -->
-                        <!--         </ItemsControl.ItemsPanel> -->
-                        <!--         <ItemsControl.DataTemplates> -->
-                        <!--                 <DataTemplate DataType="x:String"> -->
-                        <!--                         <TextBox Text="{Binding}"/> -->
-                        <!--                 </DataTemplate> -->
-                        <!--         </ItemsControl.DataTemplates> -->
-                        <!-- </ItemsControl> -->
-                        <ListBox 
-                                x:Name="TestListBox"
-                                Width="300" 
-                                BorderBrush="Red"
-                                
-                                >
-                        </ListBox>
-                        <Button Content="Add path" />
+                        <ItemsControl
+                                x:Name="TestItemsControl"
+                                ItemsSource="{Binding GalleryPaths}">
+                                <ItemsControl.DataTemplates>
+                                        <DataTemplate DataType="local:GalleryPath">
+                                                <TextBox Text="{Binding Path}" />
+                                        </DataTemplate>
+                                </ItemsControl.DataTemplates>
+                        </ItemsControl>
+                        <Button Content="Add path" Click="BtnAddPath_OnClick" />
+                        <Button Content="Save paths" Click="BtnSavePaths_OnClick" />
                 </StackPanel>
         </Grid>
 </Window>
