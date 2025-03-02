@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -16,17 +17,19 @@ namespace ScreenTools.App;
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
+    private readonly IStorageService<string> _fileStorageService;
 
     private ObservableCollection<GalleryImage> _galleryImages;
     private bool _isLoading;
     private int _loadingProgress;
     private bool _hasData;
     
-    public GalleryView()
+    public GalleryView(IStorageService<string> storageService)
     {
         InitializeComponent();
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
+        _fileStorageService = storageService;
         
         _loadingProgress = 0;
         HasData = IsLoading == false;
@@ -58,6 +61,15 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         set => SetField(ref _hasData, value);
     }
     
+    private async Task<List<string>> GetGalleryPaths()
+    {
+        var savedData = await _fileStorageService.LoadData();
+        return savedData
+            .Split(';')
+            .Where(x => !string.IsNullOrEmpty(x))
+            .ToList();            ;
+    }
+    
     private async void LoadImages()
     {
         try
@@ -65,11 +77,12 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             IsLoading = true;
 
             var validExtensions = new[] { "png", "jpg", "jpeg" };
-            var files = Directory.EnumerateFiles(
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Captures"),
+            var galleryPaths = await GetGalleryPaths();
+            var files = galleryPaths.SelectMany(gp => Directory.EnumerateFiles(
+                    gp,
                     "*.*",
                     SearchOption.AllDirectories)
-                .Where(x => validExtensions.Contains(Path.GetExtension(x).TrimStart('.').ToLowerInvariant()))
+                .Where(x => validExtensions.Contains(Path.GetExtension(x).TrimStart('.').ToLowerInvariant())))
                 .ToArray();
 
             var galleryImages = new ObservableCollection<GalleryImage>();
