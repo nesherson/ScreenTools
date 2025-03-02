@@ -12,20 +12,24 @@
         <Design.DataContext>
                 <local:OptionsView />
         </Design.DataContext>
-        <Grid ColumnDefinitions="300,*">
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                        <TextBlock FontSize="20" Text="Gallery paths" />
-                        <ItemsControl
-                                x:Name="TestItemsControl"
-                                ItemsSource="{Binding GalleryPaths}">
-                                <ItemsControl.DataTemplates>
-                                        <DataTemplate DataType="local:GalleryPath">
+        <StackPanel HorizontalAlignment="Center" Width="600" >
+                <Border BorderBrush="#f2f2f2" BorderThickness="0 0 0 1"  Margin="0 0 0 7">
+                        <TextBlock FontSize="20" Text="Gallery paths:" Margin="0 0 0 3"/>
+                </Border>
+                <ItemsControl
+                        ItemsSource="{Binding GalleryPaths}">
+                        <ItemsControl.DataTemplates>
+                                <DataTemplate DataType="local:GalleryPath">
+                                        <StackPanel Margin="0 0 0 5">
+                                                <TextBlock Text="Path" Margin="0 0 0 3"/>
                                                 <TextBox Text="{Binding Path}" />
-                                        </DataTemplate>
-                                </ItemsControl.DataTemplates>
-                        </ItemsControl>
-                        <Button Content="Add path" Click="BtnAddPath_OnClick" />
-                        <Button Content="Save paths" Click="BtnSavePaths_OnClick" />
-                </StackPanel>
-        </Grid>
+                                        </StackPanel>
+                                </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                </ItemsControl>
+         <StackPanel Orientation="Horizontal">
+                 <Button Content="Add path" Click="BtnAddPath_OnClick" />
+                 <Button Content="Save paths" Click="BtnSavePaths_OnClick" />
+         </StackPanel>
+        </StackPanel>
 </Window>
