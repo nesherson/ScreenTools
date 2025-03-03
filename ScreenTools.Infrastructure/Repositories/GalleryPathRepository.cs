@@ -26,6 +26,11 @@ public class GalleryPathRepository
     {
         return await _dbContext.GalleryPaths.ToListAsync();
     }
+    
+    public async Task<int> DeleteAllAsync()
+    {
+        return await _dbContext.GalleryPaths.ExecuteDeleteAsync();
+    }
 
     public async Task<int> SaveChangesAsync()
     {

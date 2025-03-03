@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
 using Avalonia.Controls.Notifications;
@@ -68,7 +69,14 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
             var galleryPathsToSave = GalleryPaths
                 .Select(x => new GalleryPath { Path = x.Path })
                 .ToArray();
-            
+
+            if (galleryPathsToSave.Any(x => Path.IsPathRooted(x.Path) == false))
+            {
+                _notificationManager.Show(new Notification("Error", "The given paths are not valid.", NotificationType.Error));
+                return;
+            }
+
+            await _galleryPathRepository.DeleteAllAsync();
             await _galleryPathRepository.AddRangeAsync(galleryPathsToSave);
             await _galleryPathRepository.SaveChangesAsync();
             
