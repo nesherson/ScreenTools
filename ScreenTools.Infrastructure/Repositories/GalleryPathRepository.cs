@@ -32,6 +32,14 @@ public class GalleryPathRepository
         return await _dbContext.GalleryPaths.ExecuteDeleteAsync();
     }
 
+    public async Task DeleteByIdAsync(int id)
+    {
+        var itemToRemove = await _dbContext.GalleryPaths
+            .FirstOrDefaultAsync(x => x.Id == id);
+        
+        _dbContext.GalleryPaths.Remove(itemToRemove);
+    }
+
     public async Task<int> SaveChangesAsync()
     {
         return await _dbContext.SaveChangesAsync();

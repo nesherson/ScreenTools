@@ -12,6 +12,12 @@
         <Design.DataContext>
                 <local:OptionsView />
         </Design.DataContext>
+        <Window.Styles>
+                <Style Selector="Button.BtnRemove">
+                        <Setter Property="Background" Value="#ff3333" />
+                        <Setter Property="BorderBrush" Value="#ff3333" />
+                </Style>
+        </Window.Styles>
         <StackPanel HorizontalAlignment="Center" Width="600" >
                 <Border BorderBrush="#f2f2f2" BorderThickness="0 0 0 1"  Margin="0 0 0 7">
                         <TextBlock FontSize="20" Text="Gallery paths:" Margin="0 0 0 3"/>
@@ -22,7 +28,10 @@
                                 <DataTemplate DataType="local:GalleryPathObject">
                                         <StackPanel Margin="0 0 0 5">
                                                 <TextBlock Text="Path" Margin="0 0 0 3"/>
-                                                <TextBox Text="{Binding Path}" />
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                        <TextBox Text="{Binding Path}" Margin="0 0 1 0" />
+                                                        <Button Grid.Column="1" Classes="BtnRemove" Click="BtnRemovePath_OnClick">X</Button>
+                                                </Grid>
                                         </StackPanel>
                                 </DataTemplate>
                         </ItemsControl.DataTemplates>

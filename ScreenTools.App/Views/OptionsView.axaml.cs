@@ -3,9 +3,9 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ScreenTools.Core;
 using ScreenTools.Infrastructure;
@@ -45,7 +45,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
 
             foreach (var item in result)
             {
-                galleryPaths.Add(new GalleryPathObject(item.Path));
+                galleryPaths.Add(new GalleryPathObject(item.Id, item.Path));
             }
             
             GalleryPaths = galleryPaths;
@@ -57,9 +57,9 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         }
     }
 
-    private async void BtnAddPath_OnClick(object? sender, RoutedEventArgs e)
+    private void BtnAddPath_OnClick(object? sender, RoutedEventArgs e)
     {
-        GalleryPaths.Add(new GalleryPathObject(string.Empty));
+        GalleryPaths.Add(new GalleryPathObject(0, string.Empty));
     }
     
     private async void BtnSavePaths_OnClick(object? sender, RoutedEventArgs e)
@@ -81,6 +81,28 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
             await _galleryPathRepository.SaveChangesAsync();
             
             _notificationManager.Show(new Notification("Success", "Paths are successfully saved.", NotificationType.Success));
+        }
+        catch (Exception exception)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            Console.WriteLine(exception);
+        }
+    }
+
+    private async void BtnRemovePath_OnClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var galleryPathToRemove = (sender as Control)?.DataContext as GalleryPathObject;
+
+            if (galleryPathToRemove == null)
+                return;
+            
+            await _galleryPathRepository.DeleteByIdAsync(galleryPathToRemove.Id);
+            await _galleryPathRepository.SaveChangesAsync();
+            LoadData();
+            
+            _notificationManager.Show(new Notification("Success", "Path is successfully deleted.", NotificationType.Success));
         }
         catch (Exception exception)
         {
