@@ -19,7 +19,7 @@
                 <ItemsControl
                         ItemsSource="{Binding GalleryPaths}">
                         <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:GalleryPath">
+                                <DataTemplate DataType="local:GalleryPathObject">
                                         <StackPanel Margin="0 0 0 5">
                                                 <TextBlock Text="Path" Margin="0 0 0 3"/>
                                                 <TextBox Text="{Binding Path}" />

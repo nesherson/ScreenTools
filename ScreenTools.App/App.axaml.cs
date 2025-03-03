@@ -9,6 +9,9 @@ using SharpHook.Native;
 using System;
 using System.Drawing.Imaging;
 using System.IO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using ScreenTools.Infrastructure;
 
 namespace ScreenTools.App
 {
@@ -18,6 +21,7 @@ namespace ScreenTools.App
         private WindowsToastService _toastService;
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
+        private IConfiguration _configuration;
         private bool _isDrawingOverlayActive;
         public override void Initialize()
         {

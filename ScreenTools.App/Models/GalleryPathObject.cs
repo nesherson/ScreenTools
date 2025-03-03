@@ -2,11 +2,11 @@
 
 namespace ScreenTools.App;
 
-public class GalleryPath : ReactiveObject
+public class GalleryPathObject : ReactiveObject
 {
     private string _path;
 
-    public GalleryPath(string path)
+    public GalleryPathObject(string path)
     {
         Path = path;
     }

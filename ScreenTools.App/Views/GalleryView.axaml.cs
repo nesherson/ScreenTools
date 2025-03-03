@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using ReactiveUI;
+using ScreenTools.Infrastructure;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace ScreenTools.App;
@@ -17,19 +18,19 @@ namespace ScreenTools.App;
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
-    private readonly IStorageService<string> _fileStorageService;
+    private readonly GalleryPathRepository _galleryPathRepository;
 
     private ObservableCollection<GalleryImage> _galleryImages;
     private bool _isLoading;
     private int _loadingProgress;
     private bool _hasData;
     
-    public GalleryView(IStorageService<string> storageService)
+    public GalleryView(GalleryPathRepository galleryPathRepository)
     {
         InitializeComponent();
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
-        _fileStorageService = storageService;
+        _galleryPathRepository = galleryPathRepository;
         
         _loadingProgress = 0;
         HasData = IsLoading == false;
@@ -61,15 +62,6 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         set => SetField(ref _hasData, value);
     }
     
-    private async Task<List<string>> GetGalleryPaths()
-    {
-        var savedData = await _fileStorageService.LoadData();
-        return savedData
-            .Split(';')
-            .Where(x => !string.IsNullOrEmpty(x))
-            .ToList();            ;
-    }
-    
     private async void LoadImages()
     {
         try
@@ -77,9 +69,9 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             IsLoading = true;
 
             var validExtensions = new[] { "png", "jpg", "jpeg" };
-            var galleryPaths = await GetGalleryPaths();
+            var galleryPaths = await _galleryPathRepository.GetAllAsync();
             var files = galleryPaths.SelectMany(gp => Directory.EnumerateFiles(
-                    gp,
+                    gp.Path,
                     "*.*",
                     SearchOption.AllDirectories)
                 .Where(x => validExtensions.Contains(Path.GetExtension(x).TrimStart('.').ToLowerInvariant())))
@@ -89,7 +81,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
 
             foreach (var file in files)
             {
-                LoadingProgress += 100 / files.Length;
+                LoadingProgress += Convert.ToInt32(Math.Ceiling(100.0 / files.Length));
                 await using var fileStream = File.OpenRead(file);
                 var bitmap = await Task.Run(() => Bitmap.DecodeToWidth(fileStream, 640));
                 galleryImages.Add(new GalleryImage(file, bitmap));
