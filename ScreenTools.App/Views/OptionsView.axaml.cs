@@ -1,31 +1,35 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using ReactiveUI;
+using ScreenTools.Core;
+using ScreenTools.Infrastructure;
 
 namespace ScreenTools.App;
 
 public partial class OptionsView : NotifyPropertyChangedWindowBase
 {
-    private readonly IStorageService<string> _fileStorageService;
     private readonly WindowNotificationManager _notificationManager;
+    private readonly GalleryPathRepository _galleryPathRepository;
 
-    private ObservableCollection<GalleryPath> _galleryPaths;
+    private ObservableCollection<GalleryPathObject> _galleryPaths;
     
-    public OptionsView(IStorageService<string> storageService)
+    public OptionsView(GalleryPathRepository galleryPathRepository)
     {
         InitializeComponent();
 
-        _fileStorageService = storageService;
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
+        _galleryPathRepository = galleryPathRepository;
 
         RxApp.MainThreadScheduler.Schedule(LoadData);
     }
 
-    public ObservableCollection<GalleryPath> GalleryPaths
+    public ObservableCollection<GalleryPathObject> GalleryPaths
     {
         get => _galleryPaths;
         set => SetField(ref _galleryPaths, value);
@@ -33,18 +37,15 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
     
     private async void LoadData()
     {
-        var galleryPaths = new ObservableCollection<GalleryPath>();
-        
         try
         {
-            var text = await _fileStorageService.LoadData();
-            var savedGalleryPaths = text
-                .Split(';')
-                .Where(x => !string.IsNullOrEmpty(x));
+            var galleryPaths = new ObservableCollection<GalleryPathObject>();
+            var result = await _galleryPathRepository
+                .GetAllAsync();
 
-            foreach (var savedGalleryPath in savedGalleryPaths)
+            foreach (var item in result)
             {
-                galleryPaths.Add(new GalleryPath(savedGalleryPath));
+                galleryPaths.Add(new GalleryPathObject(item.Id, item.Path));
             }
             
             GalleryPaths = galleryPaths;
@@ -58,18 +59,50 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
 
     private void BtnAddPath_OnClick(object? sender, RoutedEventArgs e)
     {
-        GalleryPaths.Add(new GalleryPath(string.Empty));
+        GalleryPaths.Add(new GalleryPathObject(0, string.Empty));
     }
     
     private async void BtnSavePaths_OnClick(object? sender, RoutedEventArgs e)
     {
-        var galleryPaths = string.Join(';', GalleryPaths.Select(x => x.Path));
-
         try
         {
-            await _fileStorageService.SaveData(galleryPaths);
+            var galleryPathsToSave = GalleryPaths
+                .Select(x => new GalleryPath { Path = x.Path })
+                .ToArray();
+
+            if (galleryPathsToSave.Any(x => Path.IsPathRooted(x.Path) == false))
+            {
+                _notificationManager.Show(new Notification("Error", "The given paths are not valid.", NotificationType.Error));
+                return;
+            }
+
+            await _galleryPathRepository.DeleteAllAsync();
+            await _galleryPathRepository.AddRangeAsync(galleryPathsToSave);
+            await _galleryPathRepository.SaveChangesAsync();
             
             _notificationManager.Show(new Notification("Success", "Paths are successfully saved.", NotificationType.Success));
+        }
+        catch (Exception exception)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            Console.WriteLine(exception);
+        }
+    }
+
+    private async void BtnRemovePath_OnClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var galleryPathToRemove = (sender as Control)?.DataContext as GalleryPathObject;
+
+            if (galleryPathToRemove == null)
+                return;
+            
+            await _galleryPathRepository.DeleteByIdAsync(galleryPathToRemove.Id);
+            await _galleryPathRepository.SaveChangesAsync();
+            LoadData();
+            
+            _notificationManager.Show(new Notification("Success", "Path is successfully deleted.", NotificationType.Success));
         }
         catch (Exception exception)
         {
