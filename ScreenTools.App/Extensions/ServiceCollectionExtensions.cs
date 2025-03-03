@@ -19,7 +19,12 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build());
 
-        collection.AddDbContext<ScreenToolsDbContext>();
+        collection.AddDbContext<ScreenToolsDbContext>((sp, opt) =>
+        {
+            opt.UseSqlite(sp
+                .GetRequiredService<IConfiguration>()
+                .GetConnectionString("ScreenToolsConnection"));
+        });
 
         collection.AddTransient<GalleryPathRepository>();
     }
