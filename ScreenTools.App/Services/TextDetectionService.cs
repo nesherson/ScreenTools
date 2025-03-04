@@ -2,7 +2,7 @@
 
 namespace ScreenTools.App;
 
-public class ImageProcessingService
+public class TextDetectionService
 {
     private const string TesseractLanguage = "eng";
     private const string TesseractDataPath = "./tessdata";
