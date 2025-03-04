@@ -78,11 +78,14 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <Button Click="ButtonTest_OnClick">
+                            Test
+                        </Button>
 						<Button 
 							Click="ButtonEraser_OnClick" 
 							Background="{Binding DrawingState, 
 							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.Erasing}}" >
+										    ConverterParameter={x:Static local:DrawingState.Erase}}" >
 							<Svg Path="/Assets/eraser.svg"/>
 						</Button>
 						<Button Click="ButtonUndo_OnClick">

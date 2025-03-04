@@ -12,18 +12,22 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ReactiveUI;
+using Image = System.Drawing.Image;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace ScreenTools.App;
 
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
-    private readonly ScreenCaptureService _screenCaptureService;
     private readonly WindowsToastService _windowsToastService;
-    
+    private readonly ImageProcessingService _imageProcessingService;
+
     private Polyline? _currentPolyline;
     private Border? _eraseArea;
+    private Border? _textDetectionArea;
     private bool _isPopupOpen;
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -33,22 +37,25 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Point _startPoint;
     private DrawingState _drawingState;
     private List<DrawingHistoryItem?> _drawingHistoryItems;
+    private Control? _arrangedControl;
+    private DrawingState? _previousDrawingState;
 
     public DrawingOverlay()
     {
         InitializeComponent();
     }
 
-    public DrawingOverlay(ScreenCaptureService screenCaptureService,
-        WindowsToastService windowsToastService)
+    public DrawingOverlay(WindowsToastService windowsToastService,
+        ImageProcessingService imageProcessingService)
     {
         InitializeComponent();
 
         DataContext = this;
 
-        _screenCaptureService = screenCaptureService;
         _windowsToastService = windowsToastService;
-        DrawingState = DrawingState.Drawing;
+        _imageProcessingService = imageProcessingService;
+
+        DrawingState = DrawingState.Draw;
 
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
@@ -64,31 +71,31 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         get => _isPopupOpen;
         set => SetField(ref _isPopupOpen, value);
     }
-    
+
     public Thickness WindowBorderThickness
     {
         get => _windowBorderThickness;
         set => SetField(ref _windowBorderThickness, value);
     }
-    
+
     public ObservableCollection<int> LineStrokes
     {
         get => _lineStrokes;
         set => SetField(ref _lineStrokes, value);
     }
-    
+
     public int SelectedLineStroke
     {
         get => _selectedLineStroke;
         set => SetField(ref _selectedLineStroke, value);
     }
-    
+
     public ObservableCollection<string> LineColors
     {
         get => _lineColors;
         set => SetField(ref _lineColors, value);
     }
-    
+
     public string SelectedLineColor
     {
         get => _selectedLineColor;
@@ -100,7 +107,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         get => _drawingState;
         set => SetField(ref _drawingState, value);
     }
-    
+
     private async Task CaptureWindow()
     {
         var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
@@ -111,21 +118,21 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             Directory.CreateDirectory(path);
         }
-        
+
         IsPopupOpen = false;
         WindowBorderThickness = new Thickness(0);
-        
+
         await Task.Delay(100);
         var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
         using (var g = Graphics.FromImage(bmp))
             g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
-        
+
         bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
-        
+
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
     }
-    
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
@@ -142,21 +149,21 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     protected override void OnLoaded(RoutedEventArgs e)
     {
         WindowLockHook.Hook(this);
-        
-        base.OnLoaded(e); 
-    } 
-    
+
+        base.OnLoaded(e);
+    }
+
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         var canvas = sender as Canvas;
         switch (DrawingState)
         {
-            case DrawingState.Drawing:
+            case DrawingState.Draw:
                 AddHistoryItem(_currentPolyline, DrawingAction.Draw);
                 _currentPolyline = null;
 
                 break;
-            case DrawingState.Erasing:
+            case DrawingState.Erase:
                 if (canvas is null)
                 {
                     return;
@@ -182,12 +189,88 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                 _eraseArea = null;
                 break;
+            case DrawingState.DrawTextDetectionArea:
+                if (canvas.Children.Any(x => x is TextBlock))
+                {
+                    IsPopupOpen = true;
+                    
+                    return;
+                }
+                
+                var bmp = new Bitmap(Convert.ToInt32(_textDetectionArea.Width),
+                    Convert.ToInt32(_textDetectionArea.Height),
+                    PixelFormat.Format32bppArgb);
+                
+                canvas.Children.Remove(_textDetectionArea);
+                _eraseArea = null;
+                
+                using (var g = Graphics.FromImage(bmp))
+                    g.CopyFromScreen(Convert.ToInt32(_startPoint.X),
+                        Convert.ToInt32(_startPoint.Y),
+                        0,
+                        0,
+                        bmp.Size,
+                        CopyPixelOperation.SourceCopy);
+                
+                var ms = new MemoryStream();
+                bmp.Save(ms, ImageFormat.Png);
 
+                var text = _imageProcessingService
+                    .ProcessImage(ms.ToArray())
+                    .Trim();
+
+                if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
+                {
+                    IsPopupOpen = true;
+                    
+                    return;
+                }
+                
+                var textBlock = new TextBlock
+                {
+                    Text = text,
+                    FontSize = 20,
+                    Foreground = new SolidColorBrush(Colors.Red),
+                    Background = new SolidColorBrush(Colors.Transparent)
+                };
+                textBlock.PointerPressed += TextBlockOnPointerPressed;
+                textBlock.PointerReleased += TextBlockOnPointerReleased;
+                
+                Canvas.SetLeft(textBlock, Width / 2);
+                Canvas.SetTop(textBlock, Height / 2);
+                
+                canvas.Children.Add(textBlock);
+                
+                break;
         }
 
         IsPopupOpen = true;
     }
 
+    private void TextBlockOnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _arrangedControl = null;
+        DrawingState = _previousDrawingState.Value;
+        _previousDrawingState = null;
+    }
+
+    private void TextBlockOnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(Canvas);
+
+        if (point.Properties.IsLeftButtonPressed)
+        {
+            _arrangedControl = sender as Control;
+            _previousDrawingState = DrawingState;
+            DrawingState = DrawingState.ArrangingControls;    
+        }
+        else if (point.Properties.IsRightButtonPressed)
+        {
+            
+        }
+        
+    }
+    
     private void AddHistoryItem(Polyline polyline, DrawingAction drawingAction)
     {
         _drawingHistoryItems.Add(new DrawingHistoryItem
@@ -210,13 +293,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         return polyline.Points
             .Any(p => p.X >= _eraseArea.Bounds.TopLeft.X &&
-                 p.X <= _eraseArea.Bounds.TopRight.X &&
-                 p.X >= _eraseArea.Bounds.BottomLeft.X &&
-                 p.X <= _eraseArea.Bounds.BottomRight.X &&
-                 p.Y >= _eraseArea.Bounds.TopLeft.Y &&
-                 p.Y <= _eraseArea.Bounds.BottomLeft.Y &&
-                 p.Y >= _eraseArea.Bounds.TopRight.Y &&
-                 p.Y <= _eraseArea.Bounds.BottomRight.Y);
+                      p.X <= _eraseArea.Bounds.TopRight.X &&
+                      p.X >= _eraseArea.Bounds.BottomLeft.X &&
+                      p.X <= _eraseArea.Bounds.BottomRight.X &&
+                      p.Y >= _eraseArea.Bounds.TopLeft.Y &&
+                      p.Y <= _eraseArea.Bounds.BottomLeft.Y &&
+                      p.Y >= _eraseArea.Bounds.TopRight.Y &&
+                      p.Y <= _eraseArea.Bounds.BottomRight.Y);
     }
 
     private void Canvas_OnPointerMoved(object? sender, PointerEventArgs e)
@@ -230,16 +313,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         if (point.Properties.IsLeftButtonPressed)
         {
-      
+
             switch (DrawingState)
             {
-                case DrawingState.Drawing:
+                case DrawingState.Draw:
                     if (_currentPolyline is null)
                         return;
 
                     _currentPolyline.Points.Add(point.Position);
                     break;
-                case DrawingState.Erasing:
+                case DrawingState.Erase:
+                {
                     var x = Math.Min(point.Position.X, _startPoint.X);
                     var y = Math.Min(point.Position.Y, _startPoint.Y);
 
@@ -252,7 +336,34 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     Canvas.SetLeft(_eraseArea, x);
                     Canvas.SetTop(_eraseArea, y);
                     break;
+                }
+                case DrawingState.DrawTextDetectionArea:
+                {
+                    if (_textDetectionArea is null)
+                        return;
+                    
+                    var x = Math.Min(point.Position.X, _startPoint.X);
+                    var y = Math.Min(point.Position.Y, _startPoint.Y);
 
+                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
+                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
+
+                    _textDetectionArea.Width = w;
+                    _textDetectionArea.Height = h;
+
+                    Canvas.SetLeft(_textDetectionArea, x);
+                    Canvas.SetTop(_textDetectionArea, y);
+                    break;
+                }
+                case DrawingState.ArrangingControls:
+                {
+                    if (point.Properties.IsLeftButtonPressed)
+                    {
+                        Canvas.SetLeft(_arrangedControl, point.Position.X);
+                        Canvas.SetTop(_arrangedControl, point.Position.Y);
+                    }
+                    break;
+                }
             }
         }
     }
@@ -270,7 +381,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         switch (DrawingState)
         {
-            case DrawingState.Drawing:
+            case DrawingState.Draw:
                 if (_currentPolyline == null)
                 {
                     _currentPolyline = new Polyline
@@ -280,8 +391,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     };
                     canvas.Children.Add(_currentPolyline);
                 }
+
                 break;
-            case DrawingState.Erasing:
+            case DrawingState.Erase:
                 if (_eraseArea == null)
                 {
                     _eraseArea = new Border
@@ -294,20 +406,35 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     Canvas.SetLeft(_eraseArea, _startPoint.Y);
                     canvas.Children.Add(_eraseArea);
                 }
+
                 break;
-        }   
+            case DrawingState.DrawTextDetectionArea:
+                if (_textDetectionArea == null)
+                {
+                    _textDetectionArea = new Border
+                    {
+                        BorderThickness = new Thickness(1),
+                        BorderBrush = new SolidColorBrush(Colors.Red)
+                    };
+
+                    Canvas.SetLeft(_textDetectionArea, _startPoint.X);
+                    Canvas.SetLeft(_textDetectionArea, _startPoint.Y);
+                    canvas.Children.Add(_textDetectionArea);
+                }
+                break;
+        }
     }
 
     private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
     {
-        DrawingState = DrawingState.Erasing;
+        DrawingState = DrawingState.Erase;
     }
 
     private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
     {
         Close();
     }
-    
+
     private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
     {
         try
@@ -320,14 +447,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             _windowsToastService.ShowMessage("An error occured!");
         }
     }
-    
+
     private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
     {
         var polylinesToSave = Canvas.Children
-                .Where(x => x is Polyline)
-                .Cast<Polyline>()
-                .ToList();
-      
+            .Where(x => x is Polyline)
+            .Cast<Polyline>()
+            .ToList();
+
         if (polylinesToSave.Any())
         {
             AddHistoryItem(polylinesToSave, DrawingAction.Clear);
@@ -358,16 +485,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 _drawingHistoryItems.Remove(itemToUndo.Value);
                 break;
         }
+    }
 
+    private void ButtonTest_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DrawingState = DrawingState.DrawTextDetectionArea;
     }
 
     private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        DrawingState = DrawingState.Drawing;
+        DrawingState = DrawingState.Draw;
     }
 
     private void LineComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        DrawingState = DrawingState.Drawing;
+        DrawingState = DrawingState.Draw;
     }
 }
