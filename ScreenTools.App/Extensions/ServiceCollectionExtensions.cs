@@ -15,6 +15,7 @@ public static class ServiceCollectionExtensions
         collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
         collection.AddTransient<WindowsToastService>();
         collection.AddTransient<ScreenCaptureService>();
+        collection.AddTransient<ImageProcessingService>();
         
         collection.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build());
