@@ -21,22 +21,23 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
     private readonly WindowsToastService _windowsToastService;
     private readonly TextDetectionService _textDetectionService;
-
-    private Polyline? _currentPolyline;
-    private Border? _eraseArea;
-    private Border? _textDetectionArea;
-    private bool _isPopupOpen;
+    
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
-    private int _selectedLineStroke;
-    private string _selectedLineColor;
-    private Point _startPoint;
+    private Polyline? _currentPolyline;
+    private Border? _eraseArea;
+    private Border? _textDetectionArea;
     private DrawingState _drawingState;
+    private Point _startPoint;
     private List<DrawingHistoryItem?> _drawingHistoryItems;
-    private Control? _arrangedControl;
+    private Point? _controlToMovePosition;
+    private bool _isDragging;
     private DrawingState? _previousDrawingState;
-
+    private bool _isPopupOpen;
+    private int _selectedLineStroke;
+    private string _selectedLineColor; 
+    
     public DrawingOverlay()
     {
         InitializeComponent();
@@ -53,14 +54,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         _textDetectionService = textDetectionService;
 
         DrawingState = DrawingState.Draw;
-
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
         LineStrokes = [5, 10, 15, 20];
         SelectedLineStroke = 5;
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
-        _drawingHistoryItems = new();
+        _drawingHistoryItems = [];
+   
+    }
+    
+    public DrawingState DrawingState
+    {
+        get => _drawingState;
+        set => SetField(ref _drawingState, value);
     }
 
     public bool IsPopupOpen
@@ -98,38 +105,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         get => _selectedLineColor;
         set => SetField(ref _selectedLineColor, value);
     }
-
-    public DrawingState DrawingState
-    {
-        get => _drawingState;
-        set => SetField(ref _drawingState, value);
-    }
-
-    private async Task CaptureWindow()
-    {
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            "ScreenTools",
-            "Captures");
-
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
-
-        IsPopupOpen = false;
-        WindowBorderThickness = new Thickness(0);
-
-        await Task.Delay(100);
-        var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
-        using (var g = Graphics.FromImage(bmp))
-            g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
-
-        bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
-
-        IsPopupOpen = true;
-        WindowBorderThickness = new Thickness(2);
-    }
-
+    
     protected override void OnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
@@ -149,13 +125,103 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         base.OnLoaded(e);
     }
-
-    private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    
+    private async Task CaptureWindow()
     {
+        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            "ScreenTools",
+            "Captures");
+
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+
         try
         {
-            var canvas = sender as Canvas;
+            IsPopupOpen = false;
+            WindowBorderThickness = new Thickness(0);
 
+            await Task.Delay(100);
+            var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
+                g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
+
+            bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            IsPopupOpen = true;
+            WindowBorderThickness = new Thickness(2); 
+        }
+    }
+    
+    private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_isDragging)
+            return;
+        
+        IsPopupOpen = false;
+
+        _startPoint = e.GetPosition(Canvas);
+
+        switch (DrawingState)
+        {
+            case DrawingState.Draw:
+                if (_currentPolyline == null)
+                {
+                    _currentPolyline = new Polyline
+                    {
+                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
+                        StrokeThickness = SelectedLineStroke
+                    };
+                    Canvas.Children.Add(_currentPolyline);
+                }
+
+                break;
+            case DrawingState.Erase:
+                if (_eraseArea == null)
+                {
+                    _eraseArea = new Border
+                    {
+                        BorderThickness = new Thickness(1),
+                        BorderBrush = new SolidColorBrush(Colors.Red)
+                    };
+
+                    Canvas.SetLeft(_eraseArea, _startPoint.X);
+                    Canvas.SetTop(_eraseArea, _startPoint.Y);
+                    Canvas.Children.Add(_eraseArea);
+                }
+
+                break;
+            case DrawingState.DetectText:
+                if (_textDetectionArea == null)
+                {
+                    _textDetectionArea = new Border
+                    {
+                        BorderThickness = new Thickness(1),
+                        BorderBrush = new SolidColorBrush(Colors.Red)
+                    };
+
+                    Canvas.SetLeft(_textDetectionArea, _startPoint.X);
+                    Canvas.SetTop(_textDetectionArea, _startPoint.Y);
+                    Canvas.Children.Add(_textDetectionArea);
+                }
+                break;
+        }
+    }
+    
+    private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_isDragging)
+            return;
+        
+        try
+        {
             switch (DrawingState)
             {
                 case DrawingState.Draw:
@@ -164,12 +230,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.Erase:
-                    if (canvas is null)
-                    {
-                        return;
-                    }
-
-                    var controlsToRemove = canvas.Children
+                    var controlsToRemove = Canvas.Children
                         .Where(x => x is Polyline or TextBlock)
                         .Where(IsInEraseArea)
                         .ToList();
@@ -181,10 +242,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     foreach (var controlToRemove in controlsToRemove)
                     {
-                        canvas.Children.Remove(controlToRemove);
+                        Canvas.Children.Remove(controlToRemove);
                     }
 
-                    canvas.Children.Remove(_eraseArea);
+                    Canvas.Children.Remove(_eraseArea);
 
                     _eraseArea = null;
                     break;
@@ -193,18 +254,26 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         Convert.ToInt32(_textDetectionArea.Height),
                         PixelFormat.Format32bppArgb);
 
-                    canvas.Children.Remove(_textDetectionArea);
+                    var startX = _textDetectionArea.Bounds.X;
+                    var startY = _textDetectionArea.Bounds.Y;
+                    
+                    Canvas.Children.Remove(_textDetectionArea);
                     _textDetectionArea = null;
-
+                    
                     using (var g = Graphics.FromImage(bmp))
-                        g.CopyFromScreen(Convert.ToInt32(_startPoint.X),
-                            Convert.ToInt32(_startPoint.Y),
+                        g.CopyFromScreen(Convert.ToInt32(startX),
+                            Convert.ToInt32(startY),
                             0,
                             0,
                             bmp.Size,
                             CopyPixelOperation.SourceCopy);
-
+                    
                     var ms = new MemoryStream();
+                    bmp.Save(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                        "ScreenTools",
+                        "Captures",
+                        "test-123.png"), ImageFormat.Png);
+
                     bmp.Save(ms, ImageFormat.Png);
 
                     var text = _textDetectionService
@@ -223,11 +292,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     };
                     textBlock.PointerPressed += TextBlockOnPointerPressed;
                     textBlock.PointerReleased += TextBlockOnPointerReleased;
+                    textBlock.PointerMoved += TextBlockOnPointerMoved;
                     
                     Canvas.SetLeft(textBlock, Width * 0.85);
                     Canvas.SetTop(textBlock, Height * 0.15);
 
-                    canvas.Children.Add(textBlock);
+                    Canvas.Children.Add(textBlock);
 
                     break;
             }
@@ -242,48 +312,58 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         }
     }
     
-    private void TextBlockOnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    private void Canvas_OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        _arrangedControl = null;
-        DrawingState = _previousDrawingState ?? DrawingState.Draw;
-        _previousDrawingState = null;
-        e.Handled = true;
-    }
-
-    private void TextBlockOnPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        var textBlock = sender as TextBlock;
-
-        if (textBlock is null)
+        if (_isDragging)
             return;
         
         var point = e.GetCurrentPoint(Canvas);
-    
+
         if (point.Properties.IsLeftButtonPressed)
         {
-            _arrangedControl = textBlock;
-            _previousDrawingState = DrawingState;
-            DrawingState = DrawingState.ArrangingControls;    
-        }
-        else if (point.Properties.IsRightButtonPressed)
-        {
-            HandleTextBlockRightBtnPressed(textBlock);
-        }
-    }
+            switch (DrawingState)
+            {
+                case DrawingState.Draw:
+                    if (_currentPolyline is null)
+                        return;
 
-    private void HandleTextBlockRightBtnPressed(TextBlock textBlock)
-    {
-        var flyout = new Flyout();
-        var textBox = new TextBox
-        {
-            Text = textBlock.Text
-        };
-        flyout.Content = textBox;
-        flyout.Closed += (_, __) =>
-        {
-            textBlock.Text = textBox.Text;
-        };
-        flyout.ShowAt(textBlock);
+                    _currentPolyline.Points.Add(point.Position);
+                    break;
+                case DrawingState.Erase:
+                {
+                    var x = Math.Min(point.Position.X, _startPoint.X);
+                    var y = Math.Min(point.Position.Y, _startPoint.Y);
+
+                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
+                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
+
+                    _eraseArea.Width = w;
+                    _eraseArea.Height = h;
+
+                    Canvas.SetLeft(_eraseArea, x);
+                    Canvas.SetTop(_eraseArea, y);
+                    break;
+                }
+                case DrawingState.DetectText:
+                {
+                    if (_textDetectionArea is null)
+                        return;
+
+                    var x = Math.Min(point.Position.X, _startPoint.X);
+                    var y = Math.Min(point.Position.Y, _startPoint.Y);
+
+                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
+                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
+
+                    _textDetectionArea.Width = w;
+                    _textDetectionArea.Height = h;
+
+                    Canvas.SetLeft(_textDetectionArea, x);
+                    Canvas.SetTop(_textDetectionArea, y);
+                    break;
+                }
+            }
+        }
     }
     
     private void AddHistoryItem(Control control, DrawingAction drawingAction)
@@ -316,7 +396,72 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             Action = drawingAction
         });
     }
+    
+    private void TextBlockOnPointerMoved(object? sender, PointerEventArgs e)
+    {
+        var textBlock = sender as TextBlock;
+        
+        if (textBlock is null)
+            return;
 
+        if (_controlToMovePosition is null)
+            return;
+            
+        
+        var point = e.GetCurrentPoint(Canvas);
+
+        if (point.Properties.IsLeftButtonPressed)
+        {
+            var posX = point.Position.X - _controlToMovePosition.Value.X;
+            var posY = point.Position.Y - _controlToMovePosition.Value.Y;
+            
+            Canvas.SetLeft(textBlock, posX);
+            Canvas.SetTop(textBlock, posY);
+        }
+    }
+
+    private void TextBlockOnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _controlToMovePosition = null;
+        _isDragging = false;
+        e.Handled = true;
+    }
+
+    private void TextBlockOnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var textBlock = sender as TextBlock;
+
+        if (textBlock is null)
+            return;
+        
+        var point = e.GetCurrentPoint(Canvas);
+    
+        if (point.Properties.IsLeftButtonPressed)
+        {   
+            _isDragging = true;
+            _controlToMovePosition = e.GetPosition(textBlock);
+        }
+        else if (point.Properties.IsRightButtonPressed)
+        {
+            HandleTextBlockRightBtnPressed(textBlock);
+        }
+    }
+
+    private void HandleTextBlockRightBtnPressed(TextBlock textBlock)
+    {
+        var flyout = new Flyout();
+        var textBox = new TextBox
+        {
+            Text = textBlock.Text
+        };
+        flyout.Content = textBox;
+        flyout.Closed += (_, __) =>
+        {
+            textBlock.Text = textBox.Text;
+        };
+        flyout.ShowAt(textBlock);
+    }
+    
     private bool IsInEraseArea(Control control)
     {
         switch (control)
@@ -344,130 +489,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         return false;
     }
-
-    private void Canvas_OnPointerMoved(object? sender, PointerEventArgs e)
-    {
-        var canvas = sender as Canvas;
-
-        if (canvas is null)
-            return;
-
-        var point = e.GetCurrentPoint(canvas);
-
-        if (point.Properties.IsLeftButtonPressed)
-        {
-
-            switch (DrawingState)
-            {
-                case DrawingState.Draw:
-                    if (_currentPolyline is null)
-                        return;
-
-                    _currentPolyline.Points.Add(point.Position);
-                    break;
-                case DrawingState.Erase:
-                {
-                    var x = Math.Min(point.Position.X, _startPoint.X);
-                    var y = Math.Min(point.Position.Y, _startPoint.Y);
-
-                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
-                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
-
-                    _eraseArea.Width = w;
-                    _eraseArea.Height = h;
-
-                    Canvas.SetLeft(_eraseArea, x);
-                    Canvas.SetTop(_eraseArea, y);
-                    break;
-                }
-                case DrawingState.DetectText:
-                {
-                    if (_textDetectionArea is null)
-                        return;
-                    
-                    var x = Math.Min(point.Position.X, _startPoint.X);
-                    var y = Math.Min(point.Position.Y, _startPoint.Y);
-
-                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
-                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
-
-                    _textDetectionArea.Width = w;
-                    _textDetectionArea.Height = h;
-
-                    Canvas.SetLeft(_textDetectionArea, x);
-                    Canvas.SetTop(_textDetectionArea, y);
-                    break;
-                }
-                case DrawingState.ArrangingControls:
-                {
-                    if (point.Properties.IsLeftButtonPressed)
-                    {
-                        Canvas.SetLeft(_arrangedControl, point.Position.X);
-                        Canvas.SetTop(_arrangedControl, point.Position.Y);
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        IsPopupOpen = false;
-
-        var canvas = sender as Canvas;
-
-        if (canvas is null)
-            return;
-
-        _startPoint = e.GetPosition(canvas);
-
-        switch (DrawingState)
-        {
-            case DrawingState.Draw:
-                if (_currentPolyline == null)
-                {
-                    _currentPolyline = new Polyline
-                    {
-                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                        StrokeThickness = SelectedLineStroke
-                    };
-                    canvas.Children.Add(_currentPolyline);
-                }
-
-                break;
-            case DrawingState.Erase:
-                if (_eraseArea == null)
-                {
-                    _eraseArea = new Border
-                    {
-                        BorderThickness = new Thickness(1),
-                        BorderBrush = new SolidColorBrush(Colors.Red)
-                    };
-
-                    Canvas.SetLeft(_eraseArea, _startPoint.X);
-                    Canvas.SetLeft(_eraseArea, _startPoint.Y);
-                    canvas.Children.Add(_eraseArea);
-                }
-
-                break;
-            case DrawingState.DetectText:
-                if (_textDetectionArea == null)
-                {
-                    _textDetectionArea = new Border
-                    {
-                        BorderThickness = new Thickness(1),
-                        BorderBrush = new SolidColorBrush(Colors.Red)
-                    };
-
-                    Canvas.SetLeft(_textDetectionArea, _startPoint.X);
-                    Canvas.SetLeft(_textDetectionArea, _startPoint.Y);
-                    canvas.Children.Add(_textDetectionArea);
-                }
-                break;
-        }
-    }
-
+    
     private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
     {
         DrawingState = DrawingState.Erase;

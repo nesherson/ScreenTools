@@ -4,6 +4,5 @@ public enum DrawingState
 {
     Draw,
     Erase,
-    DetectText,
-    ArrangingControls
+    DetectText
 }
