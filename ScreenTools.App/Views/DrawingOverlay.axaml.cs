@@ -12,6 +12,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Image = Avalonia.Controls.Image;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 
@@ -133,6 +134,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
             case Key.S when e.KeyModifiers == KeyModifiers.Control:
                 await CaptureWindow();
+                break;
+            case Key.V when e.KeyModifiers == KeyModifiers.Control:
+                var clipboard = GetTopLevel(this)?.Clipboard;
+
+                if (clipboard == null)
+                    return;
+                
+                var text = await clipboard.GetTextAsync();
+                
+                if (string.IsNullOrEmpty(text))
+                    return;
+                
+                AddTextToCanvas(text);
+                
                 break;
         }
     }
@@ -303,22 +318,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
                         return;
 
-                    var textBlock = new TextBlock
-                    {
-                        Text = text,
-                        FontSize = 20,
-                        Foreground = new SolidColorBrush(Colors.Black),
-                        Background = new SolidColorBrush(Colors.Transparent)
-                    };
-                    textBlock.PointerPressed += TextBlockOnPointerPressed;
-                    textBlock.PointerReleased += TextBlockOnPointerReleased;
-                    textBlock.PointerMoved += TextBlockOnPointerMoved;
+                    AddTextToCanvas(text);
                     
-                    Canvas.SetLeft(textBlock, Width * 0.85);
-                    Canvas.SetTop(textBlock, Height * 0.15);
-
-                    Canvas.Children.Add(textBlock);
-
                     break;
             }
         }
@@ -384,6 +385,25 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 }
             }
         }
+    }
+
+    private void AddTextToCanvas(string text)
+    {
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontSize = 20,
+            Foreground = new SolidColorBrush(Colors.Black),
+            Background = new SolidColorBrush(Colors.Transparent)
+        };
+        textBlock.PointerPressed += TextBlockOnPointerPressed;
+        textBlock.PointerReleased += TextBlockOnPointerReleased;
+        textBlock.PointerMoved += TextBlockOnPointerMoved;
+                    
+        Canvas.SetLeft(textBlock, Width * 0.85);
+        Canvas.SetTop(textBlock, Height * 0.15);
+
+        Canvas.Children.Add(textBlock);
     }
     
     private void AddHistoryItem(Control control, DrawingAction drawingAction)
