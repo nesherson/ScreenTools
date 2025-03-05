@@ -26,19 +26,25 @@
         </Style>
         <Style Selector="ComboBox">
             <Setter Property="Width" Value="70" />
-            <Setter Property="Height" Value="30" />
             <Setter Property="Background" Value="#DEDEDE" />
             <Setter Property="BorderThickness" Value="0" />
         </Style>
         <Style Selector="Button">
             <Setter Property="Background" Value="#DEDEDE" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Height" Value="30" />
+        </Style>
+        <Style Selector="Button StackPanel Svg">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="0 0 1 0" />
+        </Style>
+        <Style Selector="Button StackPanel Grid TextBlock">
+            <Setter Property="FontSize" Value="8" />
         </Style>
     </Window.Styles>
     <Border 
         x:Name="WindowBorder"
-        BorderBrush="Red" 
+        BorderBrush="CornflowerBlue" 
         BorderThickness="{Binding WindowBorderThickness}"
         Background="Transparent">
         <Grid RowDefinitions="1,*">
@@ -74,46 +80,88 @@
                                            Margin="0"
                                            BorderBrush="{Binding}"
                                            Height="20"
-                                           Background="{Binding}"
-                                           />
+                                           Background="{Binding}" />
                                    </Panel>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                        <Button 
+                            Click="ButtonPen_OnClick"
+                            Background="{Binding DrawingState, 
+							            Converter={StaticResource DrawingStateToBooleanConverter},
+										    ConverterParameter={x:Static local:DrawingState.Draw}}"
+                            ToolTip.Tip="Pen">
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/pen.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="1" />
+                                </Grid>
+                            </StackPanel>
+                        </Button>
+						<Button 
+                            Click="ButtonUndo_OnClick"
+                            ToolTip.Tip="Undo">
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/undo.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="2" />
+                                </Grid>
+                            </StackPanel>
+						</Button>
+                        <Button 
+                            Click="ButtonEraser_OnClick" 
+                            Background="{Binding DrawingState, 
+							            Converter={StaticResource DrawingStateToBooleanConverter},
+										    ConverterParameter={x:Static local:DrawingState.Erase}}"
+                            ToolTip.Tip="Erase content using area selector tool">
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/eraser.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="3" />
+                                </Grid>
+                            </StackPanel>
+                        </Button>
+                        <Button 
+                            Click="ButtonClear_OnClick"
+                            ToolTip.Tip="Clear all content">
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/trash.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="4" />
+                                </Grid>
+                            </StackPanel>
+                        </Button>
                         <Button 
                             Click="ButtonDetectText_OnClick" 
                             Background="{Binding DrawingState, 
 							            Converter={StaticResource DrawingStateToBooleanConverter},
 										    ConverterParameter={x:Static local:DrawingState.DetectText}}"
                             ToolTip.Tip="Detect text using area selector tool">
-                            <Svg Path="/Assets/type.svg"/>
-                        </Button>
-						<Button 
-							Click="ButtonEraser_OnClick" 
-							Background="{Binding DrawingState, 
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.Erase}}"
-                            ToolTip.Tip="Erase content using area selector tool">
-							<Svg Path="/Assets/eraser.svg"/>
-						</Button>
-						<Button 
-                            Click="ButtonUndo_OnClick"
-                            ToolTip.Tip="Undo">
-							<Svg Path="/Assets/undo.svg"/>
-						</Button>
-                        <Button 
-                            Click="ButtonClear_OnClick"
-                            ToolTip.Tip="Clear all content">
-                            <Svg Path="/Assets/trash.svg"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/type.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="5" />
+                                </Grid>
+                            </StackPanel>
                         </Button>
                         <Button Click="ButtonSave_OnClick"
                                 ToolTip.Tip="Save">
-                            <Svg Path="/Assets/save.svg"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/save.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="C+S" />
+                                </Grid>
+                            </StackPanel>
                         </Button>
                         <Button 
                             Click="ButtonClose_OnClick"
                             ToolTip.Tip="Close window">
-                            <Svg Path="/Assets/x.svg"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/x.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="ESC" />
+                                </Grid>
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>

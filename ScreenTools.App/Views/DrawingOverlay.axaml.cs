@@ -106,15 +106,33 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         set => SetField(ref _selectedLineColor, value);
     }
     
-    protected override void OnKeyDown(KeyEventArgs e)
+    protected override async void OnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
         {
+            case Key.D1:
+                DrawingState = DrawingState.Draw;
+                break;
+            case Key.D2:
+                Undo();
+                break;
+            case Key.D3:
+                DrawingState = DrawingState.Erase;
+                break;
+            case Key.D4:
+                ClearAllCanvasContent();
+                break;
+            case Key.D5:
+                DrawingState = DrawingState.DetectText;
+                break;
             case Key.Escape:
                 Close();
                 break;
             case Key.F5:
                 IsPopupOpen = !IsPopupOpen;
+                break;
+            case Key.S when e.KeyModifiers == KeyModifiers.Control:
+                await CaptureWindow();
                 break;
         }
     }
@@ -148,9 +166,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
 
             bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
+            _windowsToastService.ShowMessage("Screenshot captured!");
         }
         catch (Exception ex)
         {
+            _windowsToastService.ShowMessage("An error occured!");
             Console.WriteLine(ex);
         }
         finally
@@ -424,6 +444,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         _controlToMovePosition = null;
         _isDragging = false;
+        IsPopupOpen = true;
         e.Handled = true;
     }
 
@@ -437,7 +458,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         var point = e.GetCurrentPoint(Canvas);
     
         if (point.Properties.IsLeftButtonPressed)
-        {   
+        {
+            IsPopupOpen = false;
             _isDragging = true;
             _controlToMovePosition = e.GetPosition(textBlock);
         }
@@ -489,47 +511,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         return false;
     }
-    
-    private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
+
+    private void Undo()
     {
-        DrawingState = DrawingState.Erase;
-    }
-
-    private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
-    {
-        Close();
-    }
-
-    private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
-    {
-        try
-        {
-            await CaptureWindow();
-            _windowsToastService.ShowMessage("Screenshot captured!");
-        }
-        catch (Exception)
-        {
-            _windowsToastService.ShowMessage("An error occured!");
-        }
-    }
-
-    private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var controlsToSave = Canvas.Children
-            .Where(x => x is Polyline or TextBlock)
-            .ToList();
-
-        if (controlsToSave.Count != 0)
-        {
-            AddHistoryItem(controlsToSave, DrawingAction.Clear);
-        }
-
-        Canvas.Children.Clear();
-    }
-
-    private void ButtonUndo_OnClick(object? sender, RoutedEventArgs e)
-    {
-        DrawingHistoryItem? itemToUndo = _drawingHistoryItems.LastOrDefault();
+        var itemToUndo = _drawingHistoryItems.LastOrDefault();
 
         if (itemToUndo == null)
             return;
@@ -549,6 +534,50 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 _drawingHistoryItems.Remove(itemToUndo.Value);
                 break;
         }
+    }
+
+    private void ClearAllCanvasContent()
+    {
+        var controlsToSave = Canvas.Children
+            .Where(x => x is Polyline or TextBlock)
+            .ToList();
+
+        if (controlsToSave.Count != 0)
+        {
+            AddHistoryItem(controlsToSave, DrawingAction.Clear);
+        }
+
+        Canvas.Children.Clear();
+    }
+    
+    private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DrawingState = DrawingState.Erase;
+    }
+
+    private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await CaptureWindow();
+    }
+
+    private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
+    {
+        ClearAllCanvasContent();
+    }
+
+    private void ButtonUndo_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Undo();
+    }
+    
+    private void ButtonPen_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DrawingState = DrawingState.Draw;
     }
 
     private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
