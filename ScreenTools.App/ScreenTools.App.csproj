@@ -27,6 +27,8 @@
     <AvaloniaResource Include="Assets\eraser.svg" />
     <None Remove="Assets\type.svg" />
     <AvaloniaResource Include="Assets\type.svg" />
+    <None Remove="Assets\pen.svg" />
+    <AvaloniaResource Include="Assets\pen.svg" />
   </ItemGroup>
 
   <ItemGroup>
