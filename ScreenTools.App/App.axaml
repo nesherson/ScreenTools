@@ -20,6 +20,8 @@
 					<NativeMenu>
 						<NativeMenuItem Header="Gallery" Click="NativeMenuItem_OnClickOpenGallery" />
 						<NativeMenuItem Header="Options" Click="NativeMenuItem_OnClickOpenOptions" />
+						<NativeMenuItem Header="Drawing overlay" Click="NativeMenuItem_OnClickOpenDrawingOverlay" />
+						<NativeMenuItem Header="Take screenshot" Click="NativeMenuItem_OnClickCaptureScreenshot" />
 						<NativeMenuItemSeparator />
 						<NativeMenuItem Header="Exit" Click="NativeMenuItem_OnClickExitApplication" />
 					</NativeMenu>
