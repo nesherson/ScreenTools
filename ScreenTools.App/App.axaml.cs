@@ -1,3 +1,7 @@
+using System;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -6,12 +10,6 @@ using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using SharpHook;
 using SharpHook.Native;
-using System;
-using System.Drawing.Imaging;
-using System.IO;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using ScreenTools.Infrastructure;
 
 namespace ScreenTools.App
 {
@@ -21,7 +19,6 @@ namespace ScreenTools.App
         private WindowsToastService _toastService;
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
-        private IConfiguration _configuration;
         private bool _isDrawingOverlayActive;
         public override void Initialize()
         {
@@ -112,18 +109,7 @@ namespace ScreenTools.App
         {
             _hook?.Dispose();
         }
-
-        private void NativeMenuItem_OnClickExitApplication(object? sender, EventArgs e)
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    desktop.Shutdown();
-                }
-            });
-        }
-
+        
         private void NativeMenuItem_OnClickOpenGallery(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.Invoke(() =>
@@ -139,6 +125,42 @@ namespace ScreenTools.App
             {
                 var window = ActivatorUtilities.CreateInstance<OptionsView>(_serviceProvider);
                 window.Show();
+            });
+        }
+        
+        private void NativeMenuItem_OnClickOpenDrawingOverlay(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                _isDrawingOverlayActive = true;
+                var overlay = ActivatorUtilities.CreateInstance<DrawingOverlay>(_serviceProvider);
+                overlay.Closed += (_, _) => _isDrawingOverlayActive = false; 
+                overlay.Show();
+            });
+        }
+        
+        private async void NativeMenuItem_OnClickCaptureScreenshot(object? sender, EventArgs e)
+        {
+            try
+            {
+                await Task.Delay(2000);
+                CaptureScreenshot();
+                _toastService.ShowMessage("Screenshot captured!");
+            }
+            catch (Exception)
+            {
+                _toastService.ShowMessage("An error occured!");
+            }
+        }
+        
+        private void NativeMenuItem_OnClickExitApplication(object? sender, EventArgs e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.Shutdown();
+                }
             });
         }
     }
