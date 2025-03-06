@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Rider generated files
 .idea
+
+# Generated database
+ScreenTools.db
