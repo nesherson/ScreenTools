@@ -3,11 +3,35 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
 
 namespace ScreenTools.App
 {
     public class ScreenCaptureService
     {
+        private readonly IConfiguration _configuration;
+        private readonly string _captureFolder;
+        
+        public ScreenCaptureService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+            _captureFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                _configuration["ApplicationName"],
+                _configuration["DrawingOverlayCaptureFolder"]);
+        }
+        public void CaptureVisibleWindow(double width, double height, int x, int y)
+        {
+            if (!Directory.Exists(_captureFolder))
+            {
+                Directory.CreateDirectory(_captureFolder);
+            }
+            
+            var bmp = new Bitmap(Convert.ToInt32(width), Convert.ToInt32(height), PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
+                g.CopyFromScreen(x, y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
+
+            bmp.Save(Path.Combine(_captureFolder, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
+        }
         /// <summary>
         /// Creates an Image object containing a screen shot of the entire desktop
         /// </summary>

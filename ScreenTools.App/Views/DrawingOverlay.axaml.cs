@@ -8,11 +8,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Image = Avalonia.Controls.Image;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 
@@ -20,8 +20,9 @@ namespace ScreenTools.App;
 
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
-    private readonly WindowsToastService _windowsToastService;
+    private readonly WindowNotificationManager _notificationManager;
     private readonly TextDetectionService _textDetectionService;
+    private readonly ScreenCaptureService _screenCaptureService;
     
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -34,7 +35,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private List<DrawingHistoryItem?> _drawingHistoryItems;
     private Point? _controlToMovePosition;
     private bool _isDragging;
-    private DrawingState? _previousDrawingState;
     private bool _isPopupOpen;
     private int _selectedLineStroke;
     private string _selectedLineColor; 
@@ -44,15 +44,16 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         InitializeComponent();
     }
 
-    public DrawingOverlay(WindowsToastService windowsToastService,
-        TextDetectionService textDetectionService)
+    public DrawingOverlay(TextDetectionService textDetectionService,
+        ScreenCaptureService screenCaptureService)
     {
         InitializeComponent();
 
         DataContext = this;
 
-        _windowsToastService = windowsToastService;
+        _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _textDetectionService = textDetectionService;
+        _screenCaptureService = screenCaptureService;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -62,7 +63,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
         _drawingHistoryItems = [];
-   
     }
     
     public DrawingState DrawingState
@@ -138,7 +138,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case Key.V when e.KeyModifiers == KeyModifiers.Control:
                 var clipboard = GetTopLevel(this)?.Clipboard;
 
-                if (clipboard == null)
+                if (clipboard is null)
                     return;
                 
                 var text = await clipboard.GetTextAsync();
@@ -161,31 +161,18 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private async Task CaptureWindow()
     {
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            "ScreenTools",
-            "Captures");
-
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
-
         try
         {
             IsPopupOpen = false;
             WindowBorderThickness = new Thickness(0);
 
             await Task.Delay(100);
-            var bmp = new Bitmap(Convert.ToInt32(Width), Convert.ToInt32(Height), PixelFormat.Format32bppArgb);
-            using (var g = Graphics.FromImage(bmp))
-                g.CopyFromScreen(Position.X, Position.Y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
-
-            bmp.Save(Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
-            _windowsToastService.ShowMessage("Screenshot captured!");
+            _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y);
+            _notificationManager.Show(new Notification("Success", "Screenshot captured!", NotificationType.Success));
         }
         catch (Exception ex)
         {
-            _windowsToastService.ShowMessage("An error occured!");
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
             Console.WriteLine(ex);
         }
         finally
@@ -199,15 +186,19 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         if (_isDragging)
             return;
+
+        var point = e.GetCurrentPoint(Canvas);
+
+        if (!point.Properties.IsLeftButtonPressed)
+            return;
         
         IsPopupOpen = false;
-
         _startPoint = e.GetPosition(Canvas);
 
         switch (DrawingState)
         {
             case DrawingState.Draw:
-                if (_currentPolyline == null)
+                if (_currentPolyline is null)
                 {
                     _currentPolyline = new Polyline
                     {
@@ -219,7 +210,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                 break;
             case DrawingState.Erase:
-                if (_eraseArea == null)
+                if (_eraseArea is null)
                 {
                     _eraseArea = new Border
                     {
@@ -234,7 +225,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                 break;
             case DrawingState.DetectText:
-                if (_textDetectionArea == null)
+                if (_textDetectionArea is null)
                 {
                     _textDetectionArea = new Border
                     {
@@ -254,17 +245,23 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         if (_isDragging)
             return;
-        
+
         try
         {
             switch (DrawingState)
             {
                 case DrawingState.Draw:
+                    if (_currentPolyline is null)
+                        return;
+                    
                     AddHistoryItem(_currentPolyline, DrawingAction.Draw);
                     _currentPolyline = null;
 
                     break;
                 case DrawingState.Erase:
+                    if (_eraseArea is null)
+                        return;
+
                     var controlsToRemove = Canvas.Children
                         .Where(x => x is Polyline or TextBlock)
                         .Where(IsInEraseArea)
@@ -285,16 +282,24 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     _eraseArea = null;
                     break;
                 case DrawingState.DetectText:
-                    var bmp = new Bitmap(Convert.ToInt32(_textDetectionArea.Width),
-                        Convert.ToInt32(_textDetectionArea.Height),
-                        PixelFormat.Format32bppArgb);
+                    if (_textDetectionArea is null)
+                        return;
 
                     var startX = _textDetectionArea.Bounds.X;
                     var startY = _textDetectionArea.Bounds.Y;
-                    
+                    var width = _textDetectionArea.Width;
+                    var height = _textDetectionArea.Height;
+
                     Canvas.Children.Remove(_textDetectionArea);
                     _textDetectionArea = null;
-                    
+
+                    if (width == 0 || height == 0)
+                        throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
+
+                    var bmp = new Bitmap(Convert.ToInt32(width),
+                        Convert.ToInt32(height),
+                        PixelFormat.Format32bppArgb);
+
                     using (var g = Graphics.FromImage(bmp))
                         g.CopyFromScreen(Convert.ToInt32(startX),
                             Convert.ToInt32(startY),
@@ -302,7 +307,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             0,
                             bmp.Size,
                             CopyPixelOperation.SourceCopy);
-                    
+
                     var ms = new MemoryStream();
                     bmp.Save(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                         "ScreenTools",
@@ -319,13 +324,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         return;
 
                     AddTextToCanvas(text);
-                    
+
                     break;
             }
         }
-        catch (Exception exception)
+        catch (ArgumentException argEx) when (argEx.Message.Contains("TextDetectError"))
         {
-            Console.WriteLine(exception);
+            _notificationManager.Show(new Notification(
+                "Error",
+                argEx.Message[argEx.Message.IndexOf(':').. + 2],
+                NotificationType.Error));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
         }
         finally
         {
@@ -352,6 +364,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     break;
                 case DrawingState.Erase:
                 {
+                    if (_eraseArea is null)
+                        return;
+                    
                     var x = Math.Min(point.Position.X, _startPoint.X);
                     var y = Math.Min(point.Position.Y, _startPoint.Y);
 
@@ -497,7 +512,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             Text = textBlock.Text
         };
         flyout.Content = textBox;
-        flyout.Closed += (_, __) =>
+        flyout.Closed += (_, _) =>
         {
             textBlock.Text = textBox.Text;
         };
@@ -510,23 +525,23 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             case Polyline polyline:
                 return polyline.Points
-                    .Any(p => p.X >= _eraseArea.Bounds.TopLeft.X &&
-                              p.X <= _eraseArea.Bounds.TopRight.X &&
-                              p.X >= _eraseArea.Bounds.BottomLeft.X &&
-                              p.X <= _eraseArea.Bounds.BottomRight.X &&
-                              p.Y >= _eraseArea.Bounds.TopLeft.Y &&
-                              p.Y <= _eraseArea.Bounds.BottomLeft.Y &&
-                              p.Y >= _eraseArea.Bounds.TopRight.Y &&
-                              p.Y <= _eraseArea.Bounds.BottomRight.Y);
+                    .Any(p => p.X >= _eraseArea!.Bounds.TopLeft.X &&
+                              p.X <= _eraseArea!.Bounds.TopRight.X &&
+                              p.X >= _eraseArea!.Bounds.BottomLeft.X &&
+                              p.X <= _eraseArea!.Bounds.BottomRight.X &&
+                              p.Y >= _eraseArea!.Bounds.TopLeft.Y &&
+                              p.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
+                              p.Y >= _eraseArea!.Bounds.TopRight.Y &&
+                              p.Y <= _eraseArea!.Bounds.BottomRight.Y);
             case TextBlock textBlock:
-                return textBlock.Bounds.X >= _eraseArea.Bounds.TopLeft.X &&
-                       textBlock.Bounds.X <= _eraseArea.Bounds.TopRight.X &&
-                       textBlock.Bounds.X >= _eraseArea.Bounds.BottomLeft.X &&
-                       textBlock.Bounds.X <= _eraseArea.Bounds.BottomRight.X &&
-                       textBlock.Bounds.Y >= _eraseArea.Bounds.TopLeft.Y &&
-                       textBlock.Bounds.Y <= _eraseArea.Bounds.BottomLeft.Y &&
-                       textBlock.Bounds.Y >= _eraseArea.Bounds.TopRight.Y &&
-                       textBlock.Bounds.Y <= _eraseArea.Bounds.BottomRight.Y;
+                return textBlock.Bounds.X >= _eraseArea!.Bounds.TopLeft.X &&
+                       textBlock.Bounds.X <= _eraseArea!.Bounds.TopRight.X &&
+                       textBlock.Bounds.X >= _eraseArea!.Bounds.BottomLeft.X &&
+                       textBlock.Bounds.X <= _eraseArea!.Bounds.BottomRight.X &&
+                       textBlock.Bounds.Y >= _eraseArea!.Bounds.TopLeft.Y &&
+                       textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
+                       textBlock.Bounds.Y >= _eraseArea!.Bounds.TopRight.Y &&
+                       textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomRight.Y;
         }
 
         return false;
@@ -536,7 +551,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         var itemToUndo = _drawingHistoryItems.LastOrDefault();
 
-        if (itemToUndo == null)
+        if (itemToUndo is null)
             return;
 
         switch (itemToUndo.Value.Action)
