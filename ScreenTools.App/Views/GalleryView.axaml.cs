@@ -129,7 +129,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
     {
         try
         {
-            Process.Start("explorer.exe", $"/select, \"{galleryImage.Path}\"");
+            ProcessHelpers.ShowFileInFileExplorer(galleryImage.Path);
         }
         catch (Exception ex)
         {

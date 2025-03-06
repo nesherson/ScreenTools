@@ -19,18 +19,19 @@ namespace ScreenTools.App
                 _configuration["ApplicationName"],
                 _configuration["DrawingOverlayCaptureFolder"]);
         }
-        public void CaptureVisibleWindow(double width, double height, int x, int y)
+        public void CaptureVisibleWindow(double width, double height, int x, int y, out string imageSavePath)
         {
             if (!Directory.Exists(_captureFolder))
             {
                 Directory.CreateDirectory(_captureFolder);
             }
-            
+
+            imageSavePath = Path.Combine(_captureFolder, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg");
             var bmp = new Bitmap(Convert.ToInt32(width), Convert.ToInt32(height), PixelFormat.Format32bppArgb);
             using (var g = Graphics.FromImage(bmp))
                 g.CopyFromScreen(x, y, 0, 0, bmp.Size, CopyPixelOperation.SourceCopy);
 
-            bmp.Save(Path.Combine(_captureFolder, $"Capture-{DateTime.Now:dd-MM-yyyy-hhmmss}.jpg"));
+            bmp.Save(imageSavePath);
         }
         /// <summary>
         /// Creates an Image object containing a screen shot of the entire desktop

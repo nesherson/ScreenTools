@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -155,7 +156,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     protected override void OnLoaded(RoutedEventArgs e)
     {
         WindowLockHook.Hook(this);
-
         base.OnLoaded(e);
     }
     
@@ -167,8 +167,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             WindowBorderThickness = new Thickness(0);
 
             await Task.Delay(100);
-            _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y);
-            _notificationManager.Show(new Notification("Success", "Screenshot captured!", NotificationType.Success));
+            _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y, out var imageSavePath);
+            _notificationManager.Show(new Notification(
+                "Screenshot captured!",
+                "Click to show image in explorer.",
+                NotificationType.Success,
+                null,
+                () => OnNotificationClick(imageSavePath)));
         }
         catch (Exception ex)
         {
@@ -181,7 +186,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             WindowBorderThickness = new Thickness(2); 
         }
     }
-    
+
+    private void OnNotificationClick(string pathToImage)
+    {
+        ProcessHelpers.ShowFileInFileExplorer(pathToImage);
+    }
+
     private void Canvas_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (_isDragging)
