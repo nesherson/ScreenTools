@@ -366,4 +366,4 @@ FodyWeavers.xsd
 .idea
 
 # Generated database
-ScreenTools.db
+ScreenTools.Infrastructure/ScreenTools.db
