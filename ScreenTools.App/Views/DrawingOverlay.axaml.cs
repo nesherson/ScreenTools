@@ -334,6 +334,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             CopyPixelOperation.SourceCopy);
 
                     var ms = new MemoryStream();
+                    
+                    bmp.Save(ms, ImageFormat.Png);
+                    
                     var text = _textDetectionService
                         .ProcessImage(ms.ToArray())
                         .Trim();

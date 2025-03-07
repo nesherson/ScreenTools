@@ -21,6 +21,7 @@ namespace ScreenTools.App
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
         private FilePathRepository _filePathRepository;
+        private bool _isLeftMetaPressed;
         
         private bool _isDrawingOverlayActive;
         public override void Initialize()
@@ -47,6 +48,16 @@ namespace ScreenTools.App
             base.OnFrameworkInitializationCompleted();
         }
         
+        private void ConfigureServices()
+        {
+            _toastService = _serviceProvider.GetRequiredService<WindowsToastService>();
+            _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
+            _filePathRepository = _serviceProvider.GetRequiredService<FilePathRepository>();
+            _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
+            _hook.KeyPressed += Hook_KeyPressed;
+            _hook.RunAsync();
+        }
+        
         private async Task CaptureScreenshot()
         {
             var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("scr-gallery");
@@ -59,16 +70,6 @@ namespace ScreenTools.App
             _screenCaptureService.CaptureScreenToFile(
                 Path.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhss}.jpg"),
                 ImageFormat.Jpeg);
-        }
-
-        private void ConfigureServices()
-        {
-            _toastService = _serviceProvider.GetRequiredService<WindowsToastService>();
-            _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
-            _filePathRepository = _serviceProvider.GetRequiredService<FilePathRepository>();
-            _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
-            _hook.KeyPressed += Hook_KeyPressed;
-            _hook.RunAsync();
         }
 
         private void ShowDrawingOverlay()
@@ -84,10 +85,21 @@ namespace ScreenTools.App
 
         private async void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
         {
-            switch (e.RawEvent.Mask)
+            if (e.Data.KeyCode == KeyCode.VcLeftMeta)
             {
-                case ModifierMask.LeftMeta when
-                    e.Data.KeyCode == KeyCode.VcF2:
+                _isLeftMetaPressed = true;
+                return;
+            }
+
+            if (!_isLeftMetaPressed) 
+                return;
+            
+            _isLeftMetaPressed = false;
+            
+            switch (e.Data.KeyCode)
+            {
+                case 
+                    KeyCode.VcF2:
                     try
                     {
                         await CaptureScreenshot();
@@ -99,8 +111,8 @@ namespace ScreenTools.App
                     }
 
                     break;
-                case ModifierMask.LeftMeta when
-                    e.Data.KeyCode == KeyCode.VcF3:
+                case 
+                    KeyCode.VcF3:
                     if (!_isDrawingOverlayActive)
                         ShowDrawingOverlay();
                     break;
@@ -132,13 +144,7 @@ namespace ScreenTools.App
         
         private void NativeMenuItem_OnClickOpenDrawingOverlay(object? sender, EventArgs e)
         {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                _isDrawingOverlayActive = true;
-                var overlay = ActivatorUtilities.CreateInstance<DrawingOverlay>(_serviceProvider);
-                overlay.Closed += (_, _) => _isDrawingOverlayActive = false; 
-                overlay.Show();
-            });
+            ShowDrawingOverlay();
         }
         
         private async void NativeMenuItem_OnClickCaptureScreenshot(object? sender, EventArgs e)
@@ -146,7 +152,7 @@ namespace ScreenTools.App
             try
             {
                 await Task.Delay(2000);
-                CaptureScreenshot();
+                await CaptureScreenshot();
                 _toastService.ShowMessage("Screenshot captured!");
             }
             catch (Exception)
