@@ -228,7 +228,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     _currentPolyline = new Polyline
                     {
                         Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                        StrokeThickness = SelectedLineStroke
+                        StrokeThickness = SelectedLineStroke,
+                        StrokeJoin = PenLineJoin.Miter,
+                        StrokeLineCap = PenLineCap.Round
                     };
                     Canvas.Children.Add(_currentPolyline);
                 }
