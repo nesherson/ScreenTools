@@ -18,19 +18,19 @@ namespace ScreenTools.App;
 public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
-    private readonly GalleryPathRepository _galleryPathRepository;
+    private readonly FilePathRepository _filePathRepository;
 
     private ObservableCollection<GalleryImage> _galleryImages;
     private bool _isLoading;
     private int _loadingProgress;
     private bool _hasData;
     
-    public GalleryView(GalleryPathRepository galleryPathRepository)
+    public GalleryView(FilePathRepository filePathRepository)
     {
         InitializeComponent();
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
-        _galleryPathRepository = galleryPathRepository;
+        _filePathRepository = filePathRepository;
         
         _loadingProgress = 0;
         HasData = IsLoading == false;
@@ -69,7 +69,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             IsLoading = true;
 
             var validExtensions = new[] { "png", "jpg", "jpeg" };
-            var galleryPaths = await _galleryPathRepository.GetAllAsync();
+            var galleryPaths = await _filePathRepository.GetAllAsync();
             var files = galleryPaths.SelectMany(gp => Directory.EnumerateFiles(
                     gp.Path,
                     "*.*",

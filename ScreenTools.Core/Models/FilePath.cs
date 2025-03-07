@@ -9,5 +9,6 @@ public class FilePath
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
     public string Path { get; set; }
-    public FilePathType PathType { get; set; }
+    public int FilePathTypeId { get; set; }
+    public FilePathType FilePathType { get; set; }
 }

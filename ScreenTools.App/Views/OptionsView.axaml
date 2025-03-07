@@ -13,23 +13,28 @@
                 <local:OptionsView />
         </Design.DataContext>
         <Window.Styles>
+                <Style Selector="TextBox.TbPath">
+                        <Setter Property="Height" Value="40"></Setter>
+                </Style>
                 <Style Selector="Button.BtnRemove">
-                        <Setter Property="Background" Value="#ff3333" />
-                        <Setter Property="BorderBrush" Value="#ff3333" />
+                        <Setter Property="Height" Value="40"></Setter>
+                        <Setter Property="Background" Value="#ff6666" />
+                        <Setter Property="BorderBrush" Value="#ff6666" />
                 </Style>
         </Window.Styles>
         <StackPanel HorizontalAlignment="Center" Width="600" >
                 <Border BorderBrush="#f2f2f2" BorderThickness="0 0 0 1"  Margin="0 0 0 7">
-                        <TextBlock FontSize="20" Text="Gallery paths:" Margin="0 0 0 3"/>
+                        <TextBlock FontSize="20" Text="File paths:" Margin="0 0 0 3"/>
                 </Border>
                 <ItemsControl
                         ItemsSource="{Binding GalleryPaths}">
                         <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:GalleryPathObject">
+                                <DataTemplate DataType="local:FilePathModel">
                                         <StackPanel Margin="0 0 0 5">
-                                                <TextBlock Text="Path" Margin="0 0 0 3"/>
+                                                <TextBlock 
+                                                        Text="{Binding FilePathTypeName, StringFormat=Path {0:C}}" Margin="0 0 0 3"/>
                                                 <Grid ColumnDefinitions="Auto,*">
-                                                        <TextBox Text="{Binding Path}" Margin="0 0 1 0" />
+                                                        <TextBox Text="{Binding Path}" Classes="TbPath" Margin="0 0 1 0" />
                                                         <Button Grid.Column="1" Classes="BtnRemove" Click="BtnRemovePath_OnClick">X</Button>
                                                 </Grid>
                                         </StackPanel>

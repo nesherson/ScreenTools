@@ -8,6 +8,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
 
@@ -19,6 +20,8 @@ namespace ScreenTools.App
         private WindowsToastService _toastService;
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
+        private FilePathRepository _filePathRepository;
+        
         private bool _isDrawingOverlayActive;
         public override void Initialize()
         {
@@ -44,19 +47,17 @@ namespace ScreenTools.App
             base.OnFrameworkInitializationCompleted();
         }
         
-        private void CaptureScreenshot()
+        private async Task CaptureScreenshot()
         {
-            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                "ScreenTools",
-                "Captures");
+            var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("scr-gallery");
 
-            if (!Directory.Exists(path))
+            if (!Directory.Exists(filePath.Path))
             {
-                Directory.CreateDirectory(path);
+                Directory.CreateDirectory(filePath.Path);
             }
             
             _screenCaptureService.CaptureScreenToFile(
-                Path.Combine(path, $"Capture-{DateTime.Now:dd-MM-yyyy-hhss}.jpg"),
+                Path.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhss}.jpg"),
                 ImageFormat.Jpeg);
         }
 
@@ -64,6 +65,7 @@ namespace ScreenTools.App
         {
             _toastService = _serviceProvider.GetRequiredService<WindowsToastService>();
             _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
+            _filePathRepository = _serviceProvider.GetRequiredService<FilePathRepository>();
             _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
             _hook.KeyPressed += Hook_KeyPressed;
             _hook.RunAsync();
@@ -80,7 +82,7 @@ namespace ScreenTools.App
             });
         }
 
-        private void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
+        private async void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
         {
             switch (e.RawEvent.Mask)
             {
@@ -88,7 +90,7 @@ namespace ScreenTools.App
                     e.Data.KeyCode == KeyCode.VcF2:
                     try
                     {
-                        CaptureScreenshot();
+                        await CaptureScreenshot();
                         _toastService.ShowMessage("Screenshot captured!");
                     }
                     catch (Exception)

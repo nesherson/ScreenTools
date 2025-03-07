@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
                 .GetConnectionString("ScreenToolsConnection"));
         });
 
-        collection.AddTransient<GalleryPathRepository>();
+        collection.AddTransient<FilePathRepository>();
+        collection.AddTransient<FilePathTypeRepository>();
     }
 }
