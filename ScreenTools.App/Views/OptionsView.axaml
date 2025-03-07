@@ -13,32 +13,56 @@
                 <local:OptionsView />
         </Design.DataContext>
         <Window.Styles>
-                <Style Selector="Button.BtnRemove">
-                        <Setter Property="Background" Value="#ff3333" />
-                        <Setter Property="BorderBrush" Value="#ff3333" />
+                <Style Selector="Button.BtnPrimary">
+                        <Setter Property="Background" Value="#80b3ff" />
+                </Style>
+                <Style Selector="Button.BtnPrimary:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#66a3ff" />
+                </Style>
+                <Style Selector="TextBox.TbPath">
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Margin" Value="0 0 1 0" />
+                </Style>
+                <Style Selector="Button.BtnPathRemove">
+                        <Setter Property="Background" Value="#ff6666" />
+                        <Setter Property="Margin" Value="0 0 1 0" />
+                        <Setter Property="Height" Value="30" />
+                </Style>
+                <Style Selector="Button.BtnPathRemove:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#ff4d4d" />
+                </Style>
+                <Style Selector="Border.PathWrapper">
+                        <Setter Property="BorderThickness" Value="1"  />
+                        <Setter Property="BorderBrush" Value="Black"  />
+                        <Setter Property="CornerRadius" Value="5"  />
                 </Style>
         </Window.Styles>
         <StackPanel HorizontalAlignment="Center" Width="600" >
                 <Border BorderBrush="#f2f2f2" BorderThickness="0 0 0 1"  Margin="0 0 0 7">
-                        <TextBlock FontSize="20" Text="Gallery paths:" Margin="0 0 0 3"/>
+                        <TextBlock FontSize="20" Text="File paths:" Margin="0 0 0 3"/>
                 </Border>
                 <ItemsControl
                         ItemsSource="{Binding GalleryPaths}">
                         <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:GalleryPathObject">
+                                <DataTemplate DataType="local:FilePathModel">
                                         <StackPanel Margin="0 0 0 5">
-                                                <TextBlock Text="Path" Margin="0 0 0 3"/>
-                                                <Grid ColumnDefinitions="Auto,*">
-                                                        <TextBox Text="{Binding Path}" Margin="0 0 1 0" />
-                                                        <Button Grid.Column="1" Classes="BtnRemove" Click="BtnRemovePath_OnClick">X</Button>
-                                                </Grid>
+                                                <TextBlock 
+                                                        Text="{Binding FilePathTypeName, StringFormat=Path {0:C}}" Margin="0 0 0 3"/>
+                                               <Border Classes="PathWrapper">
+                                                       <Grid ColumnDefinitions="*,Auto">
+                                                               <TextBox Text="{Binding Path}" Classes="TbPath" />
+                                                               <Button Grid.Column="1" Classes="BtnPathRemove" Click="BtnRemovePath_OnClick">
+                                                                       <Svg Path="/Assets/x.svg" />
+                                                               </Button>
+                                                       </Grid>
+                                               </Border>
                                         </StackPanel>
                                 </DataTemplate>
                         </ItemsControl.DataTemplates>
                 </ItemsControl>
          <StackPanel Orientation="Horizontal">
-                 <Button Content="Add path" Click="BtnAddPath_OnClick" />
-                 <Button Content="Save paths" Click="BtnSavePaths_OnClick" />
+                 <Button Content="Add path" Click="BtnAddPath_OnClick" Classes="BtnPrimary" />
+                 <Button Content="Save paths" Click="BtnSavePaths_OnClick" Classes="BtnPrimary" />
          </StackPanel>
         </StackPanel>
 </Window>

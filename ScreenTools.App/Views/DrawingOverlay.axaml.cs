@@ -14,6 +14,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 
@@ -24,6 +25,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly WindowNotificationManager _notificationManager;
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
+    private readonly FilePathRepository _filePathRepository;
     
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -46,7 +48,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     }
 
     public DrawingOverlay(TextDetectionService textDetectionService,
-        ScreenCaptureService screenCaptureService)
+        ScreenCaptureService screenCaptureService,
+        FilePathRepository filePathRepository)
     {
         InitializeComponent();
 
@@ -55,6 +58,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
+        _filePathRepository = filePathRepository;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -167,7 +171,18 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             WindowBorderThickness = new Thickness(0);
 
             await Task.Delay(100);
-            _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y, out var imageSavePath);
+            
+            var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("draw-scr");
+
+            if (!Directory.Exists(filePath.Path))
+            {
+                Directory.CreateDirectory(filePath.Path);
+            }
+            
+            var imageSavePath = Path.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
+            var bmp = _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y);
+            
+            bmp.Save(imageSavePath, ImageFormat.Png);
             _notificationManager.Show(new Notification(
                 "Screenshot captured!",
                 "Click to show image in explorer.",
@@ -319,13 +334,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             CopyPixelOperation.SourceCopy);
 
                     var ms = new MemoryStream();
-                    bmp.Save(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                        "ScreenTools",
-                        "Captures",
-                        "test-123.png"), ImageFormat.Png);
-
-                    bmp.Save(ms, ImageFormat.Png);
-
                     var text = _textDetectionService
                         .ProcessImage(ms.ToArray())
                         .Trim();

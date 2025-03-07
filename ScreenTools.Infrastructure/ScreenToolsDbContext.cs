@@ -9,5 +9,6 @@ public class ScreenToolsDbContext : DbContext
     {
     }
     
-    public DbSet<GalleryPath> GalleryPaths { get; set; }
+    public DbSet<FilePath> FilePaths { get; set; }
+    public DbSet<FilePathType> FilePathTypes { get; set; }
 }
