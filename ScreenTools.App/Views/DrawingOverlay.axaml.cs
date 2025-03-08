@@ -120,15 +120,19 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 DrawingState = DrawingState.Draw;
                 break;
             case Key.D2:
-                Undo();
+                // open context menu with given shapes
+                // currently just implement line(same as figma)
                 break;
             case Key.D3:
-                DrawingState = DrawingState.Erase;
+                Undo();
                 break;
             case Key.D4:
-                ClearAllCanvasContent();
+                DrawingState = DrawingState.Erase;
                 break;
             case Key.D5:
+                ClearAllCanvasContent();
+                break;
+            case Key.D6:
                 DrawingState = DrawingState.DetectText;
                 break;
             case Key.Escape:
@@ -641,6 +645,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
     {
         DrawingState = DrawingState.DetectText;
+    }
+    
+    private void ButtonShapes_OnClick(object? sender, RoutedEventArgs e)
+    {
+        // open context menu with given options
+        
     }
 
     private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)

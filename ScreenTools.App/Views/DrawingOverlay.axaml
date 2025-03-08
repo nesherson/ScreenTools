@@ -98,13 +98,27 @@
                                 </Grid>
                             </StackPanel>
                         </Button>
+                        <Button 
+                            ToolTip.Tip="Current selected shape">
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem>Line</MenuItem>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/square.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="2" />
+                                </Grid>
+                            </StackPanel>
+                        </Button>
 						<Button 
                             Click="ButtonUndo_OnClick"
                             ToolTip.Tip="Undo">
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/undo.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="2" />
+                                    <TextBlock Grid.Row="1" Text="3" />
                                 </Grid>
                             </StackPanel>
 						</Button>
@@ -117,7 +131,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/eraser.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="3" />
+                                    <TextBlock Grid.Row="1" Text="4" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -127,7 +141,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/trash.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="4" />
+                                    <TextBlock Grid.Row="1" Text="5" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -140,7 +154,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/type.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="5" />
+                                    <TextBlock Grid.Row="1" Text="6" />
                                 </Grid>
                             </StackPanel>
                         </Button>
