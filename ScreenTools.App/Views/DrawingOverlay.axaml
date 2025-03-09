@@ -18,6 +18,21 @@
 		<local:DrawingStateToBooleanConverter x:Key="DrawingStateToBooleanConverter"/>
 	</Window.Resources>
     <Window.Styles>
+        <Style Selector="ContextMenu.ContextMenuShapes">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem">
+            <Setter Property="Padding" Value="0 4 0 4" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem Svg">
+            <Setter Property="Margin" Value="0 0 15 0" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem TextBlock">
+            <Setter Property="TextAlignment" Value="End" />
+            <Setter Property="FontSize" Value="14"></Setter>
+        </Style>
         <Style Selector="Border#PopupBorder">
             <Setter Property="Background" Value="#E6E6E6" />
             <Setter Property="BorderBrush" Value="#BDBDBD" />
@@ -101,8 +116,17 @@
                         <Button 
                             ToolTip.Tip="Current selected shape">
                             <Button.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem>Line</MenuItem>
+                                <ContextMenu Classes="ContextMenuShapes">
+                                    <MenuItem x:Name="Line" Click="ContextMenuItemShapes_OnClick">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Svg Path="/Assets/line.svg" />
+                                                <TextBlock>
+                                                    Line
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
                                 </ContextMenu>
                             </Button.ContextMenu>
                             <StackPanel Orientation="Horizontal">

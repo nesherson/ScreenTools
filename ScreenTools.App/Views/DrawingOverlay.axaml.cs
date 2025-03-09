@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ABI.Windows.ApplicationModel.Activation;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -41,6 +42,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private bool _isPopupOpen;
     private int _selectedLineStroke;
     private string _selectedLineColor; 
+    private Shape? _selectedShape;
     
     public DrawingOverlay()
     {
@@ -269,6 +271,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     Canvas.Children.Add(_textDetectionArea);
                 }
                 break;
+            case DrawingState.DrawShape:
+            {
+                if (_selectedShape is Line line)
+                {
+                    line.StartPoint = _startPoint;
+                    
+                    Canvas.Children.Add(_selectedShape);
+                }
+                
+                break;
+            }
         }
     }
     
@@ -352,6 +365,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     AddTextToCanvas(text);
 
+                    break;
+                case DrawingState.DrawShape:
+                    if (_selectedShape is Line line)
+                    {
+                        line.EndPoint = e.GetPosition(Canvas);
+                        _selectedShape = null;
+                    }
                     break;
             }
         }
@@ -641,16 +661,38 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         DrawingState = DrawingState.Draw;
     }
+    
+    private void ContextMenuItemShapes_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var menuItem = sender as MenuItem;
+
+        if (menuItem == null)
+            return;
+
+        switch (menuItem.Name)
+        {
+            case "Line":
+                DrawingState = DrawingState.DrawShape;
+                
+                if (_selectedShape is not Avalonia.Controls.Shapes.Line)
+                {
+                    var line = new Line
+                    {
+                        Stroke = SolidColorBrush.Parse(_selectedLineColor),
+                        StrokeThickness = SelectedLineStroke
+                    };
+                    
+                    _selectedShape = line;
+                }
+                
+                break;
+            
+        }
+    }
 
     private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
     {
         DrawingState = DrawingState.DetectText;
-    }
-    
-    private void ButtonShapes_OnClick(object? sender, RoutedEventArgs e)
-    {
-        // open context menu with given options
-        
     }
 
     private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -662,4 +704,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         DrawingState = DrawingState.Draw;
     }
+
+  
 }
