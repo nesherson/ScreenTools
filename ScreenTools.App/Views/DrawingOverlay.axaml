@@ -18,6 +18,21 @@
 		<local:DrawingStateToBooleanConverter x:Key="DrawingStateToBooleanConverter"/>
 	</Window.Resources>
     <Window.Styles>
+        <Style Selector="ContextMenu.ContextMenuShapes">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem">
+            <Setter Property="Padding" Value="0 4 0 4" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem Svg">
+            <Setter Property="Margin" Value="0 0 15 0" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem TextBlock">
+            <Setter Property="TextAlignment" Value="End" />
+            <Setter Property="FontSize" Value="14"></Setter>
+        </Style>
         <Style Selector="Border#PopupBorder">
             <Setter Property="Background" Value="#E6E6E6" />
             <Setter Property="BorderBrush" Value="#BDBDBD" />
@@ -63,14 +78,14 @@
                         <ComboBox 
                             ItemsSource="{Binding LineStrokes}"
                             SelectedItem="{Binding SelectedLineStroke}"
-							PointerPressed="LineComboBox_PointerPressed"
-                            ToolTip.Tip="Line strokes"/>
+                            SelectionChanged="StrokeWidthComboBox_OnSelectionChanged"
+                            ToolTip.Tip="Stroke width"/>
                         <ComboBox 
                             x:Name="ColorComboBox"
                             ItemsSource="{Binding LineColors}"
                             SelectedItem="{Binding SelectedLineColor}"
-							PointerPressed="ColorComboBox_PointerPressed"
-                            ToolTip.Tip="Line colors">
+                            SelectionChanged="StrokeColorComboBox_OnSelectionChanged"
+                            ToolTip.Tip="Stroke color">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                    <Panel
@@ -98,13 +113,39 @@
                                 </Grid>
                             </StackPanel>
                         </Button>
+                        <Button 
+                            ToolTip.Tip="{Binding SelectedShapeToolTip}"
+                            Background="{Binding DrawingState, 
+							            Converter={StaticResource DrawingStateToBooleanConverter},
+										    ConverterParameter={x:Static local:DrawingState.DrawShape}}">
+                            <Button.ContextMenu>
+                                <ContextMenu Classes="ContextMenuShapes">
+                                    <MenuItem x:Name="Line" Click="ContextMenuItemShapes_OnClick">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Svg Path="/Assets/line.svg" />
+                                                <TextBlock>
+                                                    Line
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <StackPanel Orientation="Horizontal">
+                                <Svg Path="/Assets/square.svg"/>
+                                <Grid RowDefinitions="*, Auto">
+                                    <TextBlock Grid.Row="1" Text="2" />
+                                </Grid>
+                            </StackPanel>
+                        </Button>
 						<Button 
                             Click="ButtonUndo_OnClick"
                             ToolTip.Tip="Undo">
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/undo.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="2" />
+                                    <TextBlock Grid.Row="1" Text="3" />
                                 </Grid>
                             </StackPanel>
 						</Button>
@@ -117,7 +158,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/eraser.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="3" />
+                                    <TextBlock Grid.Row="1" Text="4" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -127,7 +168,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/trash.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="4" />
+                                    <TextBlock Grid.Row="1" Text="5" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -140,7 +181,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/type.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="5" />
+                                    <TextBlock Grid.Row="1" Text="6" />
                                 </Grid>
                             </StackPanel>
                         </Button>
