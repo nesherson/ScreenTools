@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ABI.Windows.ApplicationModel.Activation;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -639,8 +637,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         line.EndPoint.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
                         line.EndPoint.Y >= _eraseArea!.Bounds.TopRight.Y &&
                         line.EndPoint.Y <= _eraseArea!.Bounds.BottomRight.Y);
-                       
-                break;
         }
 
         return false;
@@ -733,7 +729,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (menuItem.Name)
         {
             case "Line":
-                if (_selectedShape is not Avalonia.Controls.Shapes.Line)
+                if (_selectedShape is not AvaloniaLine)
                 {
                     _selectedShape = new Line
                     {
