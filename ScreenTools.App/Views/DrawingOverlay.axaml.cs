@@ -18,6 +18,7 @@ using Avalonia.Media;
 using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
+using AvaloniaLine = Avalonia.Controls.Shapes.Line;
 
 namespace ScreenTools.App;
 
@@ -75,7 +76,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     public DrawingState DrawingState
     {
         get => _drawingState;
-        set => SetField(ref _drawingState, value);
+        set
+        {
+            OnPropertyChanged(nameof(SelectedShapeToolTip));
+            SetField(ref _drawingState, value);
+        }
     }
 
     public bool IsPopupOpen
@@ -112,6 +117,19 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         get => _selectedLineColor;
         set => SetField(ref _selectedLineColor, value);
+    }
+
+    public string SelectedShapeToolTip
+    {
+        get
+        {
+            if (_selectedShape is Line)
+            {
+                return "Line";
+            }
+            
+            return "Shape not selected";
+        }
     }
     
     protected override async void OnKeyDown(KeyEventArgs e)
@@ -276,6 +294,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 if (_selectedShape is Line line)
                 {
                     line.StartPoint = _startPoint;
+                    line.EndPoint = _startPoint;
                     
                     Canvas.Children.Add(_selectedShape);
                 }
@@ -307,7 +326,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         return;
 
                     var controlsToRemove = Canvas.Children
-                        .Where(x => x is Polyline or TextBlock)
+                        .Where(x => x is Shape or TextBlock)
                         .Where(IsInEraseArea)
                         .ToList();
 
@@ -315,7 +334,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     {
                         AddHistoryItem(controlsToRemove, DrawingAction.Delete);
                     }
-
+                    
                     foreach (var controlToRemove in controlsToRemove)
                     {
                         Canvas.Children.Remove(controlToRemove);
@@ -367,10 +386,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.DrawShape:
-                    if (_selectedShape is Line line)
+                    if (_selectedShape is Line)
                     {
-                        line.EndPoint = e.GetPosition(Canvas);
-                        _selectedShape = null;
+                        AddHistoryItem(_selectedShape, DrawingAction.Draw);
+                        
+                        _selectedShape = new Line
+                        {
+                            Stroke = SolidColorBrush.Parse(_selectedLineColor),
+                            StrokeThickness = SelectedLineStroke
+                        };
                     }
                     break;
             }
@@ -443,6 +467,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     Canvas.SetLeft(_textDetectionArea, x);
                     Canvas.SetTop(_textDetectionArea, y);
+                    break;
+                }
+                case DrawingState.DrawShape:
+                {
+                    if (_selectedShape is Line line)
+                    {
+                        line.EndPoint = e.GetPosition(Canvas);
+                    }
+                    
                     break;
                 }
             }
@@ -589,6 +622,25 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                        textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
                        textBlock.Bounds.Y >= _eraseArea!.Bounds.TopRight.Y &&
                        textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomRight.Y;
+            case AvaloniaLine line:
+                return (line.StartPoint.X >= _eraseArea!.Bounds.TopLeft.X &&
+                        line.StartPoint.X <= _eraseArea!.Bounds.TopRight.X &&
+                        line.StartPoint.X >= _eraseArea!.Bounds.BottomLeft.X &&
+                        line.StartPoint.X <= _eraseArea!.Bounds.BottomRight.X &&
+                        line.StartPoint.Y >= _eraseArea!.Bounds.TopLeft.Y &&
+                        line.StartPoint.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
+                        line.StartPoint.Y >= _eraseArea!.Bounds.TopRight.Y &&
+                        line.StartPoint.Y <= _eraseArea!.Bounds.BottomRight.Y) ||
+                       (line.EndPoint.X >= _eraseArea!.Bounds.TopLeft.X &&
+                        line.EndPoint.X <= _eraseArea!.Bounds.TopRight.X &&
+                        line.EndPoint.X >= _eraseArea!.Bounds.BottomLeft.X &&
+                        line.EndPoint.X <= _eraseArea!.Bounds.BottomRight.X &&
+                        line.EndPoint.Y >= _eraseArea!.Bounds.TopLeft.Y &&
+                        line.EndPoint.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
+                        line.EndPoint.Y >= _eraseArea!.Bounds.TopRight.Y &&
+                        line.EndPoint.Y <= _eraseArea!.Bounds.BottomRight.Y);
+                       
+                break;
         }
 
         return false;
@@ -615,6 +667,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 Canvas.Children.AddRange(itemToUndo.Value.Lines);
                 _drawingHistoryItems.Remove(itemToUndo.Value);
                 break;
+        }
+    }
+
+    private void UpdateSelectedShape()
+    {
+        if (_selectedShape is Line line)
+        {
+            line.Stroke = SolidColorBrush.Parse(_selectedLineColor);
+            line.StrokeThickness = SelectedLineStroke;
         }
     }
 
@@ -672,18 +733,16 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (menuItem.Name)
         {
             case "Line":
-                DrawingState = DrawingState.DrawShape;
-                
                 if (_selectedShape is not Avalonia.Controls.Shapes.Line)
                 {
-                    var line = new Line
+                    _selectedShape = new Line
                     {
                         Stroke = SolidColorBrush.Parse(_selectedLineColor),
                         StrokeThickness = SelectedLineStroke
                     };
-                    
-                    _selectedShape = line;
                 }
+                
+                DrawingState = DrawingState.DrawShape;
                 
                 break;
             
@@ -695,15 +754,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         DrawingState = DrawingState.DetectText;
     }
 
-    private void ColorComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
+    private void StrokeWidthComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        DrawingState = DrawingState.Draw;
+        if (_selectedShape != null)
+            UpdateSelectedShape();
     }
-
-    private void LineComboBox_PointerPressed(object? sender, PointerPressedEventArgs e)
+    
+    private void StrokeColorComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        DrawingState = DrawingState.Draw;
+        if (_selectedShape != null)
+            UpdateSelectedShape();
     }
-
-  
 }

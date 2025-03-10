@@ -78,14 +78,14 @@
                         <ComboBox 
                             ItemsSource="{Binding LineStrokes}"
                             SelectedItem="{Binding SelectedLineStroke}"
-							PointerPressed="LineComboBox_PointerPressed"
-                            ToolTip.Tip="Line strokes"/>
+                            SelectionChanged="StrokeWidthComboBox_OnSelectionChanged"
+                            ToolTip.Tip="Stroke width"/>
                         <ComboBox 
                             x:Name="ColorComboBox"
                             ItemsSource="{Binding LineColors}"
                             SelectedItem="{Binding SelectedLineColor}"
-							PointerPressed="ColorComboBox_PointerPressed"
-                            ToolTip.Tip="Line colors">
+                            SelectionChanged="StrokeColorComboBox_OnSelectionChanged"
+                            ToolTip.Tip="Stroke color">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                    <Panel
@@ -114,7 +114,10 @@
                             </StackPanel>
                         </Button>
                         <Button 
-                            ToolTip.Tip="Current selected shape">
+                            ToolTip.Tip="{Binding SelectedShapeToolTip}"
+                            Background="{Binding DrawingState, 
+							            Converter={StaticResource DrawingStateToBooleanConverter},
+										    ConverterParameter={x:Static local:DrawingState.DrawShape}}">
                             <Button.ContextMenu>
                                 <ContextMenu Classes="ContextMenuShapes">
                                     <MenuItem x:Name="Line" Click="ContextMenuItemShapes_OnClick">
