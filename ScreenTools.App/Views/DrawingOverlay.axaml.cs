@@ -27,11 +27,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly FilePathRepository _filePathRepository;
-    
+
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
-    private Polyline? _currentPolyline;
     private Border? _eraseArea;
     private Border? _textDetectionArea;
     private DrawingState _drawingState;
@@ -41,7 +40,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private bool _isDragging;
     private bool _isPopupOpen;
     private int _selectedLineStroke;
-    private string _selectedLineColor; 
+    private string _selectedLineColor;
     private Shape? _selectedShape;
     
     public DrawingOverlay()
@@ -70,6 +69,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
         _drawingHistoryItems = [];
+        _selectedShape = CreatePolyline();
     }
     
     public DrawingState DrawingState
@@ -117,19 +117,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         get => _selectedLineColor;
         set => SetField(ref _selectedLineColor, value);
     }
+    
+    public string SelectedShapeToolTip =>
+        _selectedShape switch
 
-    public string SelectedShapeToolTip
-    {
-        get
         {
-            if (_selectedShape is AvaloniaLine)
-            {
-                return "Line";
-            }
-            
-            return "Shape not selected";
-        }
-    }
+            AvaloniaLine => "Line",
+            AvaloniaRectangle => "Rectangle",
+            _ => "Shape not selected"
+        };
     
     protected override async void OnKeyDown(KeyEventArgs e)
     {
@@ -245,16 +241,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (DrawingState)
         {
             case DrawingState.Draw:
-                if (_currentPolyline is null)
+                if (_selectedShape is Polyline polyline)
                 {
-                    _currentPolyline = new Polyline
-                    {
-                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                        StrokeThickness = SelectedLineStroke,
-                        StrokeJoin = PenLineJoin.Miter,
-                        StrokeLineCap = PenLineCap.Round
-                    };
-                    Canvas.Children.Add(_currentPolyline);
+                    polyline.Points.Add(_startPoint);
+                    Canvas.Children.Add(_selectedShape);
                 }
 
                 break;
@@ -319,12 +309,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             switch (DrawingState)
             {
                 case DrawingState.Draw:
-                    if (_currentPolyline is null)
+                    if (_selectedShape is null)
                         return;
                     
-                    AddHistoryItem([_currentPolyline], DrawingAction.Draw);
-                    _currentPolyline = null;
+                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
 
+                    _selectedShape = CreatePolyline();
+                    
                     break;
                 case DrawingState.Erase:
                     if (_eraseArea is null)
@@ -384,7 +375,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         .Trim();
 
                     if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
+                    {
+                        _notificationManager.Show(new Notification(
+                            "Information",
+                            "Text could not be detected."));
+                        
                         return;
+                    }
 
                     AddTextToCanvas(text);
 
@@ -393,17 +390,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     switch (_selectedShape)
                     {
                         case AvaloniaLine:
-                            _selectedShape = new AvaloniaLine
-                            {
-                                Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                                StrokeThickness = SelectedLineStroke
-                            };
+                            _selectedShape = CreateLine();
                             break;
                         case AvaloniaRectangle:
-                            _selectedShape = new AvaloniaRectangle
-                            {
-                                Fill = SolidColorBrush.Parse(SelectedLineColor),
-                            };
+                            _selectedShape = CreateRectangle();
                             break;
                     }
                     
@@ -440,10 +430,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             switch (DrawingState)
             {
                 case DrawingState.Draw:
-                    if (_currentPolyline is null)
-                        return;
-
-                    _currentPolyline.Points.Add(point.Position);
+                    if (_selectedShape is Polyline polyline)
+                    {
+                        polyline.Points.Add(point.Position);
+                    }
                     break;
                 case DrawingState.Erase:
                 {
@@ -541,6 +531,34 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             Action = drawingAction
         });
     }
+
+    private Polyline CreatePolyline()
+    {
+        return new Polyline
+        {
+            Stroke = SolidColorBrush.Parse(SelectedLineColor),
+            StrokeThickness = SelectedLineStroke,
+            StrokeJoin = PenLineJoin.Miter,
+            StrokeLineCap = PenLineCap.Round
+        };
+    }
+    
+    private Line CreateLine()
+    {
+        return new AvaloniaLine
+        {
+            Stroke = SolidColorBrush.Parse(SelectedLineColor),
+            StrokeThickness = SelectedLineStroke
+        };
+    }
+    
+    private AvaloniaRectangle CreateRectangle()
+    {
+        return new AvaloniaRectangle
+        {
+            Fill = SolidColorBrush.Parse(SelectedLineColor)
+        };
+    }
     
     private void TextBlockOnPointerMoved(object? sender, PointerEventArgs e)
     {
@@ -637,14 +655,19 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
     private void UpdateSelectedShape()
     {
-        if (_selectedShape is AvaloniaLine line)
+        switch (_selectedShape)
         {
-            line.Stroke = SolidColorBrush.Parse(SelectedLineColor);
-            line.StrokeThickness = SelectedLineStroke;
-        }
-        else if (_selectedShape is AvaloniaRectangle rectangle)
-        {
-            rectangle.Fill = SolidColorBrush.Parse(SelectedLineColor);
+            case AvaloniaLine line:
+                line.Stroke = SolidColorBrush.Parse(SelectedLineColor);
+                line.StrokeThickness = SelectedLineStroke;
+                break;
+            case AvaloniaRectangle rectangle:
+                rectangle.Fill = SolidColorBrush.Parse(SelectedLineColor);
+                break;
+            case Polyline polyline:
+                polyline.Stroke = SolidColorBrush.Parse(SelectedLineColor);
+                polyline.StrokeThickness = SelectedLineStroke;
+                break;
         }
     }
 
@@ -689,6 +712,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private void ButtonPen_OnClick(object? sender, RoutedEventArgs e)
     {
+        _selectedShape = CreatePolyline();
         DrawingState = DrawingState.Draw;
     }
     
@@ -704,11 +728,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case "Line":
                 if (_selectedShape is not AvaloniaLine)
                 {
-                    _selectedShape = new AvaloniaLine
-                    {
-                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
-                        StrokeThickness = SelectedLineStroke
-                    };
+                    _selectedShape = CreateLine();
                 }
                 
                 DrawingState = DrawingState.DrawShape;
@@ -716,10 +736,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case "Rectangle":
                 if (_selectedShape is not AvaloniaRectangle)
                 {
-                    _selectedShape = new AvaloniaRectangle
-                    {
-                        Fill = SolidColorBrush.Parse(SelectedLineColor)
-                    };
+                    _selectedShape = CreateRectangle();
                 }
                 
                 DrawingState = DrawingState.DrawShape;
