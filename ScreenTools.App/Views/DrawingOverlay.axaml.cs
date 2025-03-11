@@ -17,6 +17,7 @@ using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 using AvaloniaLine = Avalonia.Controls.Shapes.Line;
+using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace ScreenTools.App;
 
@@ -121,7 +122,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         get
         {
-            if (_selectedShape is Line)
+            if (_selectedShape is AvaloniaLine)
             {
                 return "Line";
             }
@@ -138,8 +139,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 DrawingState = DrawingState.Draw;
                 break;
             case Key.D2:
-                // open context menu with given shapes
-                // currently just implement line(same as figma)
+                // select currently selected shape
                 break;
             case Key.D3:
                 Undo();
@@ -289,14 +289,21 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
             case DrawingState.DrawShape:
             {
-                if (_selectedShape is Line line)
+                switch (_selectedShape)
                 {
-                    line.StartPoint = _startPoint;
-                    line.EndPoint = _startPoint;
+                    case AvaloniaLine line:
+                        line.StartPoint = _startPoint;
+                        line.EndPoint = _startPoint;
                     
-                    Canvas.Children.Add(_selectedShape);
+                        Canvas.Children.Add(_selectedShape);
+                        break;
+                    case AvaloniaRectangle rectangle:
+                        Canvas.SetLeft(rectangle, _startPoint.X);
+                        Canvas.SetTop(rectangle, _startPoint.Y);
+                        Canvas.Children.Add(rectangle);
+                        break;
                 }
-                
+
                 break;
             }
         }
@@ -315,7 +322,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (_currentPolyline is null)
                         return;
                     
-                    AddHistoryItem(_currentPolyline, DrawingAction.Draw);
+                    AddHistoryItem([_currentPolyline], DrawingAction.Draw);
                     _currentPolyline = null;
 
                     break;
@@ -324,8 +331,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         return;
 
                     var controlsToRemove = Canvas.Children
-                        .Where(x => x is Shape or TextBlock)
-                        .Where(IsInEraseArea)
+                        .Where(x => CanvasHelpers.IsInEraseArea(x, _eraseArea))
                         .ToList();
 
                     if (controlsToRemove.Any())
@@ -384,16 +390,24 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.DrawShape:
-                    if (_selectedShape is Line)
+                    switch (_selectedShape)
                     {
-                        AddHistoryItem(_selectedShape, DrawingAction.Draw);
-                        
-                        _selectedShape = new Line
-                        {
-                            Stroke = SolidColorBrush.Parse(_selectedLineColor),
-                            StrokeThickness = SelectedLineStroke
-                        };
+                        case AvaloniaLine:
+                            _selectedShape = new AvaloniaLine
+                            {
+                                Stroke = SolidColorBrush.Parse(SelectedLineColor),
+                                StrokeThickness = SelectedLineStroke
+                            };
+                            break;
+                        case AvaloniaRectangle:
+                            _selectedShape = new AvaloniaRectangle
+                            {
+                                Fill = SolidColorBrush.Parse(SelectedLineColor),
+                            };
+                            break;
                     }
+                    
+                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
                     break;
             }
         }
@@ -469,15 +483,35 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 }
                 case DrawingState.DrawShape:
                 {
-                    if (_selectedShape is Line line)
+                    switch (_selectedShape)
                     {
-                        line.EndPoint = e.GetPosition(Canvas);
+                        case AvaloniaLine line:
+                            line.EndPoint = e.GetPosition(Canvas);
+                            break;
+                        case AvaloniaRectangle rectangle:
+                            SetControlPosAndSize(_startPoint, point.Position, rectangle);
+                            break;
                     }
-                    
+
                     break;
                 }
             }
         }
+    }
+
+    private void SetControlPosAndSize(Point startPoint, Point endPoint, Control control)
+    {
+        var x = Math.Min(endPoint.X, startPoint.X);
+        var y = Math.Min(endPoint.Y, startPoint.Y);
+
+        var w = Math.Max(endPoint.X, startPoint.X) - x;
+        var h = Math.Max(endPoint.Y, startPoint.Y) - y;
+        
+        control.Width = w;
+        control.Height = h;
+        
+        Canvas.SetLeft(control, x);
+        Canvas.SetTop(control, y);
     }
 
     private void AddTextToCanvas(string text)
@@ -499,33 +533,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Canvas.Children.Add(textBlock);
     }
     
-    private void AddHistoryItem(Control control, DrawingAction drawingAction)
-    {
-        switch (control)
-        {
-            case Polyline polyline:
-                _drawingHistoryItems.Add(new DrawingHistoryItem
-                {
-                    Lines = [polyline],
-                    Action = drawingAction
-                });
-                break;
-            case TextBlock textBlock:
-                _drawingHistoryItems.Add(new DrawingHistoryItem
-                {
-                    TextBlocks = [textBlock],
-                    Action = drawingAction
-                });
-                break;
-        }
-    }
-
     private void AddHistoryItem(List<Control> controls, DrawingAction drawingAction)
     {
         _drawingHistoryItems.Add(new DrawingHistoryItem
         {
-            Lines = controls.Where(x => x is Polyline).Cast<Polyline>().ToList(),
-            TextBlocks = controls.Where(x => x is TextBlock).Cast<TextBlock>().ToList(),
+            CanvasControls = controls,
             Action = drawingAction
         });
     }
@@ -597,50 +609,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         flyout.ShowAt(textBlock);
     }
     
-    private bool IsInEraseArea(Control control)
-    {
-        switch (control)
-        {
-            case Polyline polyline:
-                return polyline.Points
-                    .Any(p => p.X >= _eraseArea!.Bounds.TopLeft.X &&
-                              p.X <= _eraseArea!.Bounds.TopRight.X &&
-                              p.X >= _eraseArea!.Bounds.BottomLeft.X &&
-                              p.X <= _eraseArea!.Bounds.BottomRight.X &&
-                              p.Y >= _eraseArea!.Bounds.TopLeft.Y &&
-                              p.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
-                              p.Y >= _eraseArea!.Bounds.TopRight.Y &&
-                              p.Y <= _eraseArea!.Bounds.BottomRight.Y);
-            case TextBlock textBlock:
-                return textBlock.Bounds.X >= _eraseArea!.Bounds.TopLeft.X &&
-                       textBlock.Bounds.X <= _eraseArea!.Bounds.TopRight.X &&
-                       textBlock.Bounds.X >= _eraseArea!.Bounds.BottomLeft.X &&
-                       textBlock.Bounds.X <= _eraseArea!.Bounds.BottomRight.X &&
-                       textBlock.Bounds.Y >= _eraseArea!.Bounds.TopLeft.Y &&
-                       textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
-                       textBlock.Bounds.Y >= _eraseArea!.Bounds.TopRight.Y &&
-                       textBlock.Bounds.Y <= _eraseArea!.Bounds.BottomRight.Y;
-            case AvaloniaLine line:
-                return (line.StartPoint.X >= _eraseArea!.Bounds.TopLeft.X &&
-                        line.StartPoint.X <= _eraseArea!.Bounds.TopRight.X &&
-                        line.StartPoint.X >= _eraseArea!.Bounds.BottomLeft.X &&
-                        line.StartPoint.X <= _eraseArea!.Bounds.BottomRight.X &&
-                        line.StartPoint.Y >= _eraseArea!.Bounds.TopLeft.Y &&
-                        line.StartPoint.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
-                        line.StartPoint.Y >= _eraseArea!.Bounds.TopRight.Y &&
-                        line.StartPoint.Y <= _eraseArea!.Bounds.BottomRight.Y) ||
-                       (line.EndPoint.X >= _eraseArea!.Bounds.TopLeft.X &&
-                        line.EndPoint.X <= _eraseArea!.Bounds.TopRight.X &&
-                        line.EndPoint.X >= _eraseArea!.Bounds.BottomLeft.X &&
-                        line.EndPoint.X <= _eraseArea!.Bounds.BottomRight.X &&
-                        line.EndPoint.Y >= _eraseArea!.Bounds.TopLeft.Y &&
-                        line.EndPoint.Y <= _eraseArea!.Bounds.BottomLeft.Y &&
-                        line.EndPoint.Y >= _eraseArea!.Bounds.TopRight.Y &&
-                        line.EndPoint.Y <= _eraseArea!.Bounds.BottomRight.Y);
-        }
-
-        return false;
-    }
+ 
 
     private void Undo()
     {
@@ -652,15 +621,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (itemToUndo.Value.Action)
         {
             case DrawingAction.Draw:
-                Canvas.Children.Remove(itemToUndo.Value.Lines.First());
+                foreach (var canvasControl in itemToUndo.Value.CanvasControls)
+                {
+                    Canvas.Children.Remove(canvasControl);
+                }
                 _drawingHistoryItems.Remove(itemToUndo.Value);
                 break;
             case DrawingAction.Delete:
-                Canvas.Children.AddRange(itemToUndo.Value.Lines);
-                _drawingHistoryItems.Remove(itemToUndo.Value);
-                break;
             case DrawingAction.Clear:
-                Canvas.Children.AddRange(itemToUndo.Value.Lines);
+                Canvas.Children.AddRange(itemToUndo.Value.CanvasControls);
                 _drawingHistoryItems.Remove(itemToUndo.Value);
                 break;
         }
@@ -668,17 +637,21 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
     private void UpdateSelectedShape()
     {
-        if (_selectedShape is Line line)
+        if (_selectedShape is AvaloniaLine line)
         {
-            line.Stroke = SolidColorBrush.Parse(_selectedLineColor);
+            line.Stroke = SolidColorBrush.Parse(SelectedLineColor);
             line.StrokeThickness = SelectedLineStroke;
+        }
+        else if (_selectedShape is AvaloniaRectangle rectangle)
+        {
+            rectangle.Fill = SolidColorBrush.Parse(SelectedLineColor);
         }
     }
 
     private void ClearAllCanvasContent()
     {
         var controlsToSave = Canvas.Children
-            .Where(x => x is Polyline or TextBlock)
+            .Where(x => x is Shape or TextBlock)
             .ToList();
 
         if (controlsToSave.Count != 0)
@@ -731,17 +704,26 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case "Line":
                 if (_selectedShape is not AvaloniaLine)
                 {
-                    _selectedShape = new Line
+                    _selectedShape = new AvaloniaLine
                     {
-                        Stroke = SolidColorBrush.Parse(_selectedLineColor),
+                        Stroke = SolidColorBrush.Parse(SelectedLineColor),
                         StrokeThickness = SelectedLineStroke
                     };
                 }
                 
                 DrawingState = DrawingState.DrawShape;
-                
                 break;
-            
+            case "Rectangle":
+                if (_selectedShape is not AvaloniaRectangle)
+                {
+                    _selectedShape = new AvaloniaRectangle
+                    {
+                        Fill = SolidColorBrush.Parse(SelectedLineColor)
+                    };
+                }
+                
+                DrawingState = DrawingState.DrawShape;
+                break;
         }
     }
 

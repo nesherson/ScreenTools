@@ -6,8 +6,6 @@ namespace ScreenTools.App;
 
 public struct DrawingHistoryItem
 {
-    public string Name { get; set; }
-    public List<Polyline> Lines { get; set; }
-    public List<TextBlock> TextBlocks { get; set; }
+    public List<Control>? CanvasControls { get; set; }
     public DrawingAction Action { get; set; }
 }
