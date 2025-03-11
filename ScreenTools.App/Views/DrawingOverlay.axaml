@@ -140,6 +140,16 @@
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
+                                    <MenuItem x:Name="Ellipse" Click="ContextMenuItemShapes_OnClick">
+                                        <MenuItem.Header>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Svg Path="/Assets/circle.svg" />
+                                                <TextBlock>
+                                                    Ellipse
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
                                 </ContextMenu>
                             </Button.ContextMenu>
                             <StackPanel Orientation="Horizontal">

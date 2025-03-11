@@ -55,6 +55,15 @@ public class CanvasHelpers
                               rectangle.Bounds.Y <= eraseArea!.Bounds.BottomLeft.Y &&
                               rectangle.Bounds.Y >= eraseArea!.Bounds.TopRight.Y &&
                               rectangle.Bounds.Y <= eraseArea!.Bounds.BottomRight.Y;
+            case Ellipse ellipse:
+                return ellipse.Bounds.X >= eraseArea!.Bounds.TopLeft.X &&
+                       ellipse.Bounds.X <= eraseArea!.Bounds.TopRight.X &&
+                       ellipse.Bounds.X >= eraseArea!.Bounds.BottomLeft.X &&
+                       ellipse.Bounds.X <= eraseArea!.Bounds.BottomRight.X &&
+                       ellipse.Bounds.Y >= eraseArea!.Bounds.TopLeft.Y &&
+                       ellipse.Bounds.Y <= eraseArea!.Bounds.BottomLeft.Y &&
+                       ellipse.Bounds.Y >= eraseArea!.Bounds.TopRight.Y &&
+                       ellipse.Bounds.Y <= eraseArea!.Bounds.BottomRight.Y;
         }
 
         return false;

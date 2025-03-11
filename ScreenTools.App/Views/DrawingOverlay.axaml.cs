@@ -18,6 +18,7 @@ using Path = System.IO.Path;
 using Point = Avalonia.Point;
 using AvaloniaLine = Avalonia.Controls.Shapes.Line;
 using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
+using AvaloniaEllipse = Avalonia.Controls.Shapes.Ellipse;
 
 namespace ScreenTools.App;
 
@@ -284,13 +285,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     case AvaloniaLine line:
                         line.StartPoint = _startPoint;
                         line.EndPoint = _startPoint;
-                    
-                        Canvas.Children.Add(_selectedShape);
+                        Canvas.Children.Add(line);
                         break;
                     case AvaloniaRectangle rectangle:
                         Canvas.SetLeft(rectangle, _startPoint.X);
                         Canvas.SetTop(rectangle, _startPoint.Y);
                         Canvas.Children.Add(rectangle);
+                        break;
+                    case AvaloniaEllipse ellipse:
+                        Canvas.SetLeft(ellipse, _startPoint.X);
+                        Canvas.SetTop(ellipse, _startPoint.Y);
+                        Canvas.Children.Add(ellipse);
                         break;
                 }
 
@@ -387,6 +392,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.DrawShape:
+                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
+
                     switch (_selectedShape)
                     {
                         case AvaloniaLine:
@@ -395,9 +402,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         case AvaloniaRectangle:
                             _selectedShape = CreateRectangle();
                             break;
+                        case AvaloniaEllipse:
+                            _selectedShape = CreateEllipse();
+                            break;
                     }
                     
-                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
                     break;
             }
         }
@@ -481,6 +490,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         case AvaloniaRectangle rectangle:
                             SetControlPosAndSize(_startPoint, point.Position, rectangle);
                             break;
+                        case AvaloniaEllipse ellipse:
+                            SetControlPosAndSize(_startPoint, point.Position, ellipse);
+                            break;
                     }
 
                     break;
@@ -555,6 +567,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private AvaloniaRectangle CreateRectangle()
     {
         return new AvaloniaRectangle
+        {
+            Fill = SolidColorBrush.Parse(SelectedLineColor)
+        };
+    }
+
+    private Ellipse CreateEllipse()
+    {
+        return new Ellipse
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
@@ -731,17 +751,22 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     _selectedShape = CreateLine();
                 }
                 
-                DrawingState = DrawingState.DrawShape;
                 break;
             case "Rectangle":
                 if (_selectedShape is not AvaloniaRectangle)
                 {
                     _selectedShape = CreateRectangle();
                 }
-                
-                DrawingState = DrawingState.DrawShape;
+                break;
+            case "Ellipse":
+                if (_selectedShape is not AvaloniaEllipse)
+                {
+                    _selectedShape = CreateEllipse();
+                }
                 break;
         }
+        
+        DrawingState = DrawingState.DrawShape;
     }
 
     private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
