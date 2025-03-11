@@ -33,6 +33,8 @@
     <AvaloniaResource Include="Assets\square.svg" />
     <None Remove="Assets\line.svg" />
     <AvaloniaResource Include="Assets\line.svg" />
+    <None Remove="Assets\circle.svg" />
+    <AvaloniaResource Include="Assets\circle.svg" />
   </ItemGroup>
 
   <ItemGroup>
