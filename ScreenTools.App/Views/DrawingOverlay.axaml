@@ -165,7 +165,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/undo.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="3" />
+                                    <TextBlock Grid.Row="1" Text="C+Z" />
                                 </Grid>
                             </StackPanel>
 						</Button>
@@ -178,7 +178,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/eraser.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="4" />
+                                    <TextBlock Grid.Row="1" Text="3" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -188,7 +188,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/trash.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="5" />
+                                    <TextBlock Grid.Row="1" Text="4" />
                                 </Grid>
                             </StackPanel>
                         </Button>
@@ -201,7 +201,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Svg Path="/Assets/type.svg"/>
                                 <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="6" />
+                                    <TextBlock Grid.Row="1" Text="5" />
                                 </Grid>
                             </StackPanel>
                         </Button>

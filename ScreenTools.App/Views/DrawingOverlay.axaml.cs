@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -139,13 +138,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case Key.D2:
                 // select currently selected shape
                 break;
-            case Key.D4:
+            case Key.D3:
                 DrawingState = DrawingState.Erase;
                 break;
-            case Key.D5:
+            case Key.D4:
                 ClearAllCanvasContent();
                 break;
-            case Key.D6:
+            case Key.D5:
                 DrawingState = DrawingState.DetectText;
                 break;
             case Key.Escape:
