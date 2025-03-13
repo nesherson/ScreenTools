@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -28,6 +27,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly FilePathRepository _filePathRepository;
+    private readonly DrawingHistoryService _drawingHistoryService;
 
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -36,7 +36,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Border? _textDetectionArea;
     private DrawingState _drawingState;
     private Point _startPoint;
-    private List<DrawingHistoryItem?> _drawingHistoryItems;
     private Point? _controlToMovePosition;
     private bool _isDragging;
     private bool _isPopupOpen;
@@ -51,7 +50,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
     public DrawingOverlay(TextDetectionService textDetectionService,
         ScreenCaptureService screenCaptureService,
-        FilePathRepository filePathRepository)
+        FilePathRepository filePathRepository,
+        DrawingHistoryService drawingHistoryService)
     {
         InitializeComponent();
 
@@ -61,6 +61,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
+        _drawingHistoryService = drawingHistoryService;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -69,7 +70,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SelectedLineStroke = 5;
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
-        _drawingHistoryItems = [];
         _selectedShape = CreatePolyline();
     }
     
@@ -139,15 +139,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 // select currently selected shape
                 break;
             case Key.D3:
-                Undo();
-                break;
-            case Key.D4:
                 DrawingState = DrawingState.Erase;
                 break;
-            case Key.D5:
+            case Key.D4:
                 ClearAllCanvasContent();
                 break;
-            case Key.D6:
+            case Key.D5:
                 DrawingState = DrawingState.DetectText;
                 break;
             case Key.Escape:
@@ -160,22 +157,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 await CaptureWindow();
                 break;
             case Key.V when e.KeyModifiers == KeyModifiers.Control:
-                var clipboard = GetTopLevel(this)?.Clipboard;
-
-                if (clipboard is null)
-                    return;
-                
-                var text = await clipboard.GetTextAsync();
-                
-                if (string.IsNullOrEmpty(text))
-                    return;
-                
-                AddTextToCanvas(text);
-                
+                await PasteLastItemFromClipboard();
+                break;
+            case Key.Z when e.KeyModifiers == KeyModifiers.Control:
+                Undo();
                 break;
         }
     }
-
     protected override void OnLoaded(RoutedEventArgs e)
     {
         WindowLockHook.Hook(this);
@@ -317,8 +305,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (_selectedShape is null)
                         return;
                     
-                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
-
+                    _drawingHistoryService.Save(_selectedShape, DrawingAction.Draw);
                     _selectedShape = CreatePolyline();
                     
                     break;
@@ -332,7 +319,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     if (controlsToRemove.Any())
                     {
-                        AddHistoryItem(controlsToRemove, DrawingAction.Delete);
+                        _drawingHistoryService.Save(controlsToRemove, DrawingAction.Delete);
                     }
                     
                     foreach (var controlToRemove in controlsToRemove)
@@ -392,8 +379,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.DrawShape:
-                    AddHistoryItem([_selectedShape], DrawingAction.Draw);
 
+                    if (_selectedShape is null)
+                    {
+                        return;
+                    }
+                    
+                    _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
+                    
                     switch (_selectedShape)
                     {
                         case AvaloniaLine:
@@ -515,6 +508,21 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Canvas.SetLeft(control, x);
         Canvas.SetTop(control, y);
     }
+    
+    private async Task PasteLastItemFromClipboard()
+    {
+        var clipboard = GetTopLevel(this)?.Clipboard;
+
+        if (clipboard is null)
+            return;
+                
+        var text = await clipboard.GetTextAsync();
+                
+        if (string.IsNullOrEmpty(text))
+            return;
+                
+        AddTextToCanvas(text);
+    }
 
     private void AddTextToCanvas(string text)
     {
@@ -535,15 +543,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Canvas.Children.Add(textBlock);
     }
     
-    private void AddHistoryItem(List<Control> controls, DrawingAction drawingAction)
-    {
-        _drawingHistoryItems.Add(new DrawingHistoryItem
-        {
-            CanvasControls = controls,
-            Action = drawingAction
-        });
-    }
-
     private Polyline CreatePolyline()
     {
         return new Polyline
@@ -647,30 +646,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         flyout.ShowAt(textBlock);
     }
     
- 
-
     private void Undo()
     {
-        var itemToUndo = _drawingHistoryItems.LastOrDefault();
-
-        if (itemToUndo is null)
-            return;
-
-        switch (itemToUndo.Value.Action)
-        {
-            case DrawingAction.Draw:
-                foreach (var canvasControl in itemToUndo.Value.CanvasControls)
-                {
-                    Canvas.Children.Remove(canvasControl);
-                }
-                _drawingHistoryItems.Remove(itemToUndo.Value);
-                break;
-            case DrawingAction.Delete:
-            case DrawingAction.Clear:
-                Canvas.Children.AddRange(itemToUndo.Value.CanvasControls);
-                _drawingHistoryItems.Remove(itemToUndo.Value);
-                break;
-        }
+        _drawingHistoryService.Undo(Canvas);
     }
 
     private void UpdateSelectedShape()
@@ -699,7 +677,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         if (controlsToSave.Count != 0)
         {
-            AddHistoryItem(controlsToSave, DrawingAction.Clear);
+            _drawingHistoryService.Save(controlsToSave, DrawingAction.Clear);
         }
 
         Canvas.Children.Clear();

@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<WindowsToastService>();
         collection.AddTransient<ScreenCaptureService>();
         collection.AddTransient<TextDetectionService>();
+        collection.AddTransient<DrawingHistoryService>();
         
         collection.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build());
