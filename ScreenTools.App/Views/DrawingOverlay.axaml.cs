@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -12,14 +14,28 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ReactiveUI;
 using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 using AvaloniaLine = Avalonia.Controls.Shapes.Line;
 using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
 using AvaloniaEllipse = Avalonia.Controls.Shapes.Ellipse;
+using Notification = Avalonia.Controls.Notifications.Notification;
 
 namespace ScreenTools.App;
+
+public class DrawingToolbarItem
+{
+    public string Name { get; set; }
+    public string ToolTip { get; set; }
+    public string IconPath { get; set; }
+    public string ShortcutText { get; set; }
+    public string Text { get; set; }
+    public ICommand OnClickCommand { get; set; }
+    public List<DrawingToolbarItem>? SubItems { get; set; }
+    public bool IsContextMenuVisible => SubItems?.Count > 0;
+}
 
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
@@ -42,6 +58,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private int _selectedLineStroke;
     private string _selectedLineColor;
     private Shape? _selectedShape;
+    private ObservableCollection<DrawingToolbarItem> _toolbarItems;
     
     public DrawingOverlay()
     {
@@ -71,8 +88,89 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
         _selectedShape = CreatePolyline();
+        SetToolbarItems();
     }
-    
+
+    private void SetToolbarItems()
+    {
+        ToolbarItems =
+        [
+            new DrawingToolbarItem
+            {
+                ShortcutText = "1",
+                IconPath = "/Assets/pen.svg",
+                ToolTip = "Pen",
+                OnClickCommand = ReactiveCommand.Create(BtnPenOnClick)
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "2",
+                IconPath = "/Assets/square.svg",
+                ToolTip = SelectedShapeToolTip,
+                OnClickCommand = ReactiveCommand.Create(BtnPenOnClick),
+                SubItems = 
+                    [
+                        new DrawingToolbarItem
+                        {
+                            Name = "Line",
+                            Text = "Line",
+                            IconPath = "/Assets/line.svg",
+                            OnClickCommand = ReactiveCommand.Create(() => CtxMenuItemShapesOnClick("Line"))
+                        },
+                        new DrawingToolbarItem
+                        {
+                            Name = "Rectangle",
+                            Text = "Rectangle",
+                            IconPath = "/Assets/square.svg",
+                            OnClickCommand = ReactiveCommand.Create(() => CtxMenuItemShapesOnClick("Rectangle"))
+                        },
+                        new DrawingToolbarItem
+                        {
+                            Name = "Ellipse",
+                            Text = "Ellipse",
+                            IconPath = "/Assets/circle.svg",
+                            OnClickCommand = ReactiveCommand.Create(() => CtxMenuItemShapesOnClick("Ellipse"))
+                        },
+                    ]
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "3",
+                IconPath = "/Assets/eraser.svg",
+                ToolTip = "Erase content using area selector tool",
+                OnClickCommand = ReactiveCommand.Create(BtnEraserOnClick)
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "4",
+                IconPath = "/Assets/trash.svg",
+                ToolTip = "Clear all content",
+                OnClickCommand = ReactiveCommand.Create(BtnClearOnClick)
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "5",
+                IconPath = "/Assets/type.svg",
+                ToolTip = "Detect text using area selector tool",
+                OnClickCommand = ReactiveCommand.Create(BtnDetectTextOnClick)
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "C+S",
+                IconPath = "/Assets/save.svg",
+                ToolTip = "Save",
+                OnClickCommand = ReactiveCommand.Create(BtnSaveOnClick)
+            },
+            new DrawingToolbarItem
+            {
+                ShortcutText = "ESC",
+                IconPath = "/Assets/x.svg",
+                ToolTip = "Close window",
+                OnClickCommand = ReactiveCommand.Create(BtnSaveOnClick)
+            }
+        ];
+    }
+
     public DrawingState DrawingState
     {
         get => _drawingState;
@@ -128,6 +226,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             _ => "Shape not selected"
         };
     
+    public ObservableCollection<DrawingToolbarItem> ToolbarItems
+    {
+        get => _toolbarItems;
+        set => SetField(ref _toolbarItems, value);
+    }
+    
     protected override async void OnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
@@ -164,6 +268,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
     }
+    
     protected override void OnLoaded(RoutedEventArgs e)
     {
         WindowLockHook.Hook(this);
@@ -683,7 +788,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Canvas.Children.Clear();
     }
     
-    private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
+    private void BtnEraserOnClick()
     {
         DrawingState = DrawingState.Erase;
     }
@@ -693,12 +798,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Close();
     }
 
-    private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
+    private async void BtnSaveOnClick()
     {
         await CaptureWindow();
     }
 
-    private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
+    private void BtnClearOnClick()
     {
         ClearAllCanvasContent();
     }
@@ -708,20 +813,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Undo();
     }
     
-    private void ButtonPen_OnClick(object? sender, RoutedEventArgs e)
+    private void BtnPenOnClick()
     {
         _selectedShape = CreatePolyline();
         DrawingState = DrawingState.Draw;
     }
     
-    private void ContextMenuItemShapes_OnClick(object? sender, RoutedEventArgs e)
+    private void CtxMenuItemShapesOnClick(string shapeName)
     {
-        var menuItem = sender as MenuItem;
-
-        if (menuItem == null)
-            return;
-
-        switch (menuItem.Name)
+        switch (shapeName)
         {
             case "Line":
                 if (_selectedShape is not AvaloniaLine)
@@ -747,7 +847,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         DrawingState = DrawingState.DrawShape;
     }
 
-    private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
+    private void BtnDetectTextOnClick()
     {
         DrawingState = DrawingState.DetectText;
     }
