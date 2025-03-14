@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ScreenTools.Infrastructure;
@@ -13,7 +11,6 @@ public static class ServiceCollectionExtensions
     public static void AddCommonServices(this IServiceCollection collection)
     {
         collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
-        collection.AddTransient<WindowsToastService>();
         collection.AddTransient<ScreenCaptureService>();
         collection.AddTransient<TextDetectionService>();
         collection.AddTransient<DrawingHistoryService>();

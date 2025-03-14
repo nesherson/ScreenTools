@@ -17,7 +17,6 @@ namespace ScreenTools.App
     public partial class App : Application
     {
         private SimpleGlobalHook? _hook;
-        private WindowsToastService _toastService;
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
         private FilePathRepository _filePathRepository;
@@ -50,7 +49,6 @@ namespace ScreenTools.App
         
         private void ConfigureServices()
         {
-            _toastService = _serviceProvider.GetRequiredService<WindowsToastService>();
             _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
             _filePathRepository = _serviceProvider.GetRequiredService<FilePathRepository>();
             _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
@@ -103,11 +101,10 @@ namespace ScreenTools.App
                     try
                     {
                         await CaptureScreenshot();
-                        _toastService.ShowMessage("Screenshot captured!");
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        _toastService.ShowMessage("An error occured!");
+                        Console.WriteLine(ex);
                     }
 
                     break;
@@ -153,11 +150,10 @@ namespace ScreenTools.App
             {
                 await Task.Delay(2000);
                 await CaptureScreenshot();
-                _toastService.ShowMessage("Screenshot captured!");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _toastService.ShowMessage("An error occured!");
+                Console.WriteLine(ex);
             }
         }
         
