@@ -12,12 +12,16 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ReactiveUI;
 using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
 using Point = Avalonia.Point;
 using AvaloniaLine = Avalonia.Controls.Shapes.Line;
 using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
 using AvaloniaEllipse = Avalonia.Controls.Shapes.Ellipse;
+using Colors = Avalonia.Media.Colors;
+using Notification = Avalonia.Controls.Notifications.Notification;
+using Shape = Avalonia.Controls.Shapes.Shape;
 
 namespace ScreenTools.App;
 
@@ -41,7 +45,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private bool _isPopupOpen;
     private int _selectedLineStroke;
     private string _selectedLineColor;
+    private Polyline? _selectedLine;
     private Shape? _selectedShape;
+    private ObservableCollection<DrawingToolbarItem> _toolbarItems;
     
     public DrawingOverlay()
     {
@@ -70,7 +76,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SelectedLineStroke = 5;
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
-        _selectedShape = CreatePolyline();
+        _selectedLine = CreatePolyline();
+        _selectedShape = CreateRectangle();
+        SetToolbarItems();
+        SetActiveItem(ToolbarItems[0]);
     }
     
     public DrawingState DrawingState
@@ -125,45 +134,39 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             AvaloniaLine => "Line",
             AvaloniaRectangle => "Rectangle",
+            AvaloniaEllipse => "Ellipse",
             _ => "Shape not selected"
         };
+    
+    public ObservableCollection<DrawingToolbarItem> ToolbarItems
+    {
+        get => _toolbarItems;
+        set => SetField(ref _toolbarItems, value);
+    }
     
     protected override async void OnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
         {
             case Key.D1:
-                DrawingState = DrawingState.Draw;
-                break;
             case Key.D2:
-                // select currently selected shape
-                break;
             case Key.D3:
-                DrawingState = DrawingState.Erase;
-                break;
             case Key.D4:
-                ClearAllCanvasContent();
-                break;
             case Key.D5:
-                DrawingState = DrawingState.DetectText;
-                break;
             case Key.Escape:
-                Close();
+            case Key.S when e.KeyModifiers == KeyModifiers.Control:
+            case Key.Z when e.KeyModifiers == KeyModifiers.Control:
+                TriggerToolbarItemOnClick(e.Key);
                 break;
             case Key.F5:
                 IsPopupOpen = !IsPopupOpen;
                 break;
-            case Key.S when e.KeyModifiers == KeyModifiers.Control:
-                await CaptureWindow();
-                break;
             case Key.V when e.KeyModifiers == KeyModifiers.Control:
                 await PasteLastItemFromClipboard();
                 break;
-            case Key.Z when e.KeyModifiers == KeyModifiers.Control:
-                Undo();
-                break;
         }
     }
+    
     protected override void OnLoaded(RoutedEventArgs e)
     {
         WindowLockHook.Hook(this);
@@ -230,11 +233,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (DrawingState)
         {
             case DrawingState.Draw:
-                if (_selectedShape is Polyline polyline)
-                {
-                    polyline.Points.Add(_startPoint);
-                    Canvas.Children.Add(_selectedShape);
-                }
+                if (_selectedLine is null)
+                    return;
+                
+                _selectedLine.Points.Add(_startPoint);
+                Canvas.Children.Add(_selectedLine);
 
                 break;
             case DrawingState.Erase:
@@ -302,11 +305,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             switch (DrawingState)
             {
                 case DrawingState.Draw:
-                    if (_selectedShape is null)
+                    if (_selectedLine is null)
                         return;
                     
-                    _drawingHistoryService.Save(_selectedShape, DrawingAction.Draw);
-                    _selectedShape = CreatePolyline();
+                    _drawingHistoryService.Save(_selectedLine, DrawingAction.Draw);
+                    _selectedLine = CreatePolyline();
                     
                     break;
                 case DrawingState.Erase:
@@ -379,7 +382,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                     break;
                 case DrawingState.DrawShape:
-
                     if (_selectedShape is null)
                     {
                         return;
@@ -432,10 +434,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             switch (DrawingState)
             {
                 case DrawingState.Draw:
-                    if (_selectedShape is Polyline polyline)
-                    {
-                        polyline.Points.Add(point.Position);
-                    }
+                    if (_selectedLine is null)
+                        return;
+                    
+                    _selectedLine.Points.Add(point.Position);
+
                     break;
                 case DrawingState.Erase:
                 {
@@ -571,9 +574,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         };
     }
 
-    private Ellipse CreateEllipse()
+    private AvaloniaEllipse CreateEllipse()
     {
-        return new Ellipse
+        return new AvaloniaEllipse
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
@@ -646,6 +649,130 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         flyout.ShowAt(textBlock);
     }
     
+    private void SetToolbarItems()
+    {
+        ToolbarItems =
+        [
+            new DrawingToolbarItem
+            {
+                Id = "item-pen",
+                ShortcutText = "1",
+                IconPath = "/Assets/pen.svg",
+                ToolTip = "Pen",
+                ShortcutKey = Key.D1,
+                CanBeActive = true
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-shape",
+                ShortcutText = "2",
+                IconPath = "/Assets/square.svg",
+                Name = "Rectangle",
+                ToolTip = SelectedShapeToolTip,
+                ShortcutKey = Key.D2,
+                CanBeActive = true,
+                SubItems = 
+                    [
+                        new DrawingToolbarItem
+                        {
+                            Id = "sub-item-line",
+                            Name = "Line",
+                            Text = "Line",
+                            IconPath = "/Assets/line.svg",
+                            CanBeActive = true
+                        },
+                        new DrawingToolbarItem
+                        {
+                            Id = "sub-item-rectangle",
+                            Name = "Rectangle",
+                            Text = "Rectangle",
+                            IconPath = "/Assets/square.svg",
+                            CanBeActive = true
+                        },
+                        new DrawingToolbarItem
+                        {
+                            Id = "sub-item-ellipse",
+                            Name = "Ellipse",
+                            Text = "Ellipse",
+                            IconPath = "/Assets/circle.svg",
+                            CanBeActive = true
+                        },
+                    ]
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-eraser",
+                ShortcutText = "3",
+                IconPath = "/Assets/eraser.svg",
+                ToolTip = "Erase content using area selector tool",
+                ShortcutKey = Key.D3,
+                CanBeActive = true,
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-clear",
+                ShortcutText = "4",
+                IconPath = "/Assets/trash.svg",
+                ToolTip = "Clear all content",
+                ShortcutKey = Key.D4,
+                CanBeActive = false,
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-detect-text",
+                ShortcutText = "5",
+                IconPath = "/Assets/type.svg",
+                ToolTip = "Detect text using area selector tool",
+                ShortcutKey = Key.D5,
+                CanBeActive = true,
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-save",
+                ShortcutText = "C+S",
+                IconPath = "/Assets/save.svg",
+                ToolTip = "Save",
+                ShortcutKey = Key.S,
+                CanBeActive = false
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-undo",
+                ShortcutText = "C+Z",
+                IconPath = "/Assets/undo.svg",
+                ToolTip = "Undo",
+                ShortcutKey = Key.Z,
+                CanBeActive = false
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-close",
+                ShortcutText = "ESC",
+                IconPath = "/Assets/x.svg",
+                ToolTip = "Close window",
+                ShortcutKey = Key.Escape,
+                CanBeActive = false
+            }
+        ];
+
+        foreach (var item in ToolbarItems)
+        {
+            item.OnClickCommand = ReactiveCommand
+                .CreateFromTask(async () => await ToolbarBtnOnClick(item));
+
+            if (item.SubItems?.Count > 0)
+            {
+                foreach (var subItem in item.SubItems)
+                {
+                    subItem.Parent = item;
+                    subItem.OnClickCommand = ReactiveCommand
+                        .CreateFromTask(async () => await ToolbarBtnOnClick(subItem));
+                }      
+            }
+                
+        }
+    }
+    
     private void Undo()
     {
         _drawingHistoryService.Undo(Canvas);
@@ -683,73 +810,112 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         Canvas.Children.Clear();
     }
     
-    private void ButtonEraser_OnClick(object? sender, RoutedEventArgs e)
+    private void SelectEraser()
     {
         DrawingState = DrawingState.Erase;
     }
-
-    private void ButtonClose_OnClick(object? sender, RoutedEventArgs e)
-    {
-        Close();
-    }
-
-    private async void ButtonSave_OnClick(object? sender, RoutedEventArgs e)
-    {
-        await CaptureWindow();
-    }
-
-    private void ButtonClear_OnClick(object? sender, RoutedEventArgs e)
-    {
-        ClearAllCanvasContent();
-    }
-
-    private void ButtonUndo_OnClick(object? sender, RoutedEventArgs e)
-    {
-        Undo();
-    }
     
-    private void ButtonPen_OnClick(object? sender, RoutedEventArgs e)
+    private void SelectPen()
     {
-        _selectedShape = CreatePolyline();
+        _selectedLine = CreatePolyline();
         DrawingState = DrawingState.Draw;
     }
     
-    private void ContextMenuItemShapes_OnClick(object? sender, RoutedEventArgs e)
+    private void SelectShape(string shapeName)
     {
-        var menuItem = sender as MenuItem;
-
-        if (menuItem == null)
-            return;
-
-        switch (menuItem.Name)
+        switch (shapeName)
         {
             case "Line":
                 if (_selectedShape is not AvaloniaLine)
-                {
                     _selectedShape = CreateLine();
-                }
                 
                 break;
             case "Rectangle":
                 if (_selectedShape is not AvaloniaRectangle)
-                {
                     _selectedShape = CreateRectangle();
-                }
+                
                 break;
             case "Ellipse":
                 if (_selectedShape is not AvaloniaEllipse)
-                {
                     _selectedShape = CreateEllipse();
-                }
+                
                 break;
         }
         
         DrawingState = DrawingState.DrawShape;
     }
 
-    private void ButtonDetectText_OnClick(object? sender, RoutedEventArgs e)
+    private void SelectDetectText()
     {
         DrawingState = DrawingState.DetectText;
+    }
+
+    private async Task ToolbarBtnOnClick(DrawingToolbarItem toolbarItem)
+    {
+        SetActiveItem(toolbarItem);
+        
+        switch (toolbarItem.Id)
+        {
+            case "item-pen":
+                SelectPen();
+                break;
+            case "item-shape":
+                SelectShape(toolbarItem.Name);
+                break;
+            case "item-eraser":
+                SelectEraser();
+                break;
+            case "item-clear":
+                ClearAllCanvasContent();
+                break;
+            case "item-detect-text":
+                SelectDetectText();
+                break;
+            case "item-save":
+                await CaptureWindow();
+                break;
+            case "item-undo":
+                Undo();
+                break;
+            case "item-close":
+                Close();
+                break;
+            case "sub-item-line":
+            case "sub-item-rectangle":
+            case "sub-item-ellipse":
+                SelectShape(toolbarItem.Name);
+                break;
+        }
+    }
+
+    private void SetActiveItem(DrawingToolbarItem toolbarItem)
+    {
+        if (!toolbarItem.CanBeActive)
+            return;
+        
+        foreach (var item in ToolbarItems)
+        {
+            if (item.IsActive)
+                item.IsActive = false;
+        }
+
+        if (toolbarItem.Parent != null)
+        {
+            toolbarItem.Parent.IsActive = true;
+            toolbarItem.Parent.IconPath = toolbarItem.IconPath;
+            toolbarItem.Parent.Name = toolbarItem.Name;
+        }
+        else
+        {
+            toolbarItem.IsActive = toolbarItem.CanBeActive;
+        }
+        
+    }
+    
+    private void TriggerToolbarItemOnClick(Key key)
+    {
+        var item = ToolbarItems.First(x => x.ShortcutKey == key);
+        item.OnClickCommand.Execute(null);
     }
 
     private void StrokeWidthComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)

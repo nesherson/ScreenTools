@@ -15,21 +15,21 @@
         IsHitTestVisible="True"
 		DataContext="{Binding $self}">
 	<Window.Resources>
-		<local:DrawingStateToBooleanConverter x:Key="DrawingStateToBooleanConverter"/>
+		<local:BooleanToSolidColorBrushConverter x:Key="BooleanToSolidColorBrushConverter"/>
 	</Window.Resources>
     <Window.Styles>
         <Style Selector="ContextMenu.ContextMenuShapes">
             <Setter Property="Margin" Value="0" />
             <Setter Property="Padding" Value="0" />
         </Style>
-        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem">
+        <Style Selector="ContextMenu.ContextMenuShapes MenuItem">
             <Setter Property="Padding" Value="0 4 0 4" />
         </Style>
-        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem Svg">
+        <Style Selector="ContextMenu.ContextMenuShapes MenuItem Svg">
             <Setter Property="Margin" Value="0 0 15 0" />
             <Setter Property="Height" Value="16" />
         </Style>
-        <Style Selector="ContextMenu.ContextMenuShapes > MenuItem TextBlock">
+        <Style Selector="ContextMenu.ContextMenuShapes MenuItem TextBlock">
             <Setter Property="TextAlignment" Value="End" />
             <Setter Property="FontSize" Value="14"></Setter>
         </Style>
@@ -75,7 +75,7 @@
                     x:Name="PopupBorder"
                     Padding="5">
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <ComboBox 
+                        <ComboBox  
                             ItemsSource="{Binding LineStrokes}"
                             SelectedItem="{Binding SelectedLineStroke}"
                             SelectionChanged="StrokeWidthComboBox_OnSelectionChanged"
@@ -100,130 +100,49 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <Button 
-                            Click="ButtonPen_OnClick"
-                            Background="{Binding DrawingState, 
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.Draw}}"
-                            ToolTip.Tip="Pen">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/pen.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="1" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-                        <Button 
-                            ToolTip.Tip="{Binding SelectedShapeToolTip}"
-                            Background="{Binding DrawingState, 
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.DrawShape}}">
-                            <Button.ContextMenu>
-                                <ContextMenu Classes="ContextMenuShapes">
-                                    <MenuItem x:Name="Line" Click="ContextMenuItemShapes_OnClick">
-                                        <MenuItem.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Svg Path="/Assets/line.svg" />
-                                                <TextBlock>
-                                                    Line
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </MenuItem.Header>
-                                    </MenuItem>
-                                    <MenuItem x:Name="Rectangle" Click="ContextMenuItemShapes_OnClick">
-                                        <MenuItem.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Svg Path="/Assets/square.svg" />
-                                                <TextBlock>
-                                                    Rectangle
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </MenuItem.Header>
-                                    </MenuItem>
-                                    <MenuItem x:Name="Ellipse" Click="ContextMenuItemShapes_OnClick">
-                                        <MenuItem.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Svg Path="/Assets/circle.svg" />
-                                                <TextBlock>
-                                                    Ellipse
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </MenuItem.Header>
-                                    </MenuItem>
-                                </ContextMenu>
-                            </Button.ContextMenu>
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/square.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="2" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-						<Button 
-                            Click="ButtonUndo_OnClick"
-                            ToolTip.Tip="Undo">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/undo.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="C+Z" />
-                                </Grid>
-                            </StackPanel>
-						</Button>
-                        <Button 
-                            Click="ButtonEraser_OnClick" 
-                            Background="{Binding DrawingState, 
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.Erase}}"
-                            ToolTip.Tip="Erase content using area selector tool">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/eraser.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="3" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-                        <Button 
-                            Click="ButtonClear_OnClick"
-                            ToolTip.Tip="Clear all content">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/trash.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="4" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-                        <Button 
-                            Click="ButtonDetectText_OnClick" 
-                            Background="{Binding DrawingState, 
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.DetectText}}"
-                            ToolTip.Tip="Detect text using area selector tool">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/type.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="5" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-                        <Button Click="ButtonSave_OnClick"
-                                ToolTip.Tip="Save">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/save.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="C+S" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
-                        <Button 
-                            Click="ButtonClose_OnClick"
-                            ToolTip.Tip="Close window">
-                            <StackPanel Orientation="Horizontal">
-                                <Svg Path="/Assets/x.svg"/>
-                                <Grid RowDefinitions="*, Auto">
-                                    <TextBlock Grid.Row="1" Text="ESC" />
-                                </Grid>
-                            </StackPanel>
-                        </Button>
+                        <ItemsControl ItemsSource="{Binding ToolbarItems}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="5"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.DataTemplates>
+                                <DataTemplate DataType="local:DrawingToolbarItem">
+                                    <Button 
+                                        Background="{Binding IsActive, 
+                                            Converter={StaticResource BooleanToSolidColorBrushConverter}}"
+                                        Command="{Binding OnClickCommand}"
+                                        ToolTip.Tip="{Binding ToolTip}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Svg Path="{Binding IconPath}"/>
+                                            <Grid RowDefinitions="*, Auto">
+                                                <TextBlock Grid.Row="1" Text="{Binding ShortcutText}" />
+                                            </Grid>
+                                        </StackPanel>
+                                        <Button.ContextMenu>
+                                            <ContextMenu 
+                                                Classes="ContextMenuShapes" 
+                                                ItemsSource="{Binding SubItems}"
+                                                IsVisible="{Binding IsContextMenuVisible}">
+                                                <ContextMenu.Styles>
+                                                    <Style Selector="MenuItem">
+                                                        <Setter Property="Header">
+                                                            <Template>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Svg Path="{Binding IconPath}" />
+                                                                    <TextBlock Text="{Binding Text}"/>
+                                                                </StackPanel>
+                                                            </Template>
+                                                        </Setter>
+                                                        <Setter Property="Command" Value="{Binding OnClickCommand}"  />
+                                                    </Style>
+                                                </ContextMenu.Styles>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.DataTemplates>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
             </Popup>
