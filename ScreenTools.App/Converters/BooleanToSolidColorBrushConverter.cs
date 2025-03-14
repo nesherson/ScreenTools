@@ -5,19 +5,16 @@ using System.Globalization;
 
 namespace ScreenTools.App;
 
-public class DrawingStateToBooleanConverter : IValueConverter
+public class BooleanToSolidColorBrushConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is null || parameter is null)
+        if (value is null)
         {
             return new SolidColorBrush(Color.Parse("#DEDEDE"));
         }
-
-        var drawingState = (DrawingState)value;
-        var drawingStateParameter = (DrawingState)parameter;
-
-        return drawingState == drawingStateParameter ?
+        
+        return (bool)value ?
             new SolidColorBrush(Color.Parse("#b3d9ff")) :
             new SolidColorBrush(Color.Parse("#DEDEDE"));
     }

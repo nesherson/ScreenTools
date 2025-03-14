@@ -15,7 +15,7 @@
         IsHitTestVisible="True"
 		DataContext="{Binding $self}">
 	<Window.Resources>
-		<local:DrawingStateToBooleanConverter x:Key="DrawingStateToBooleanConverter"/>
+		<local:BooleanToSolidColorBrushConverter x:Key="BooleanToSolidColorBrushConverter"/>
 	</Window.Resources>
     <Window.Styles>
         <Style Selector="ContextMenu.ContextMenuShapes">
@@ -109,9 +109,8 @@
                             <ItemsControl.DataTemplates>
                                 <DataTemplate DataType="local:DrawingToolbarItem">
                                     <Button 
-                                        Background="{Binding $parent[Window].DrawingState,
-							            Converter={StaticResource DrawingStateToBooleanConverter},
-										    ConverterParameter={x:Static local:DrawingState.Draw}}"
+                                        Background="{Binding IsActive, 
+                                            Converter={StaticResource BooleanToSolidColorBrushConverter}}"
                                         Command="{Binding OnClickCommand}"
                                         ToolTip.Tip="{Binding ToolTip}">
                                         <StackPanel Orientation="Horizontal">
