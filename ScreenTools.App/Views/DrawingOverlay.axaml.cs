@@ -248,10 +248,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         BorderThickness = new Thickness(1),
                         BorderBrush = new SolidColorBrush(Colors.Red)
                     };
-
-                    Canvas.SetLeft(_eraseArea, _startPoint.X);
-                    Canvas.SetTop(_eraseArea, _startPoint.Y);
-                    Canvas.Children.Add(_eraseArea);
+                    
+                    Canvas.AddToPosition(_eraseArea, _startPoint);
                 }
 
                 break;
@@ -263,10 +261,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         BorderThickness = new Thickness(1),
                         BorderBrush = new SolidColorBrush(Colors.Red)
                     };
-
-                    Canvas.SetLeft(_textDetectionArea, _startPoint.X);
-                    Canvas.SetTop(_textDetectionArea, _startPoint.Y);
-                    Canvas.Children.Add(_textDetectionArea);
+                    
+                    Canvas.AddToPosition(_textDetectionArea, _startPoint);
                 }
                 break;
             case DrawingState.DrawShape:
@@ -279,14 +275,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         Canvas.Children.Add(line);
                         break;
                     case AvaloniaRectangle rectangle:
-                        Canvas.SetLeft(rectangle, _startPoint.X);
-                        Canvas.SetTop(rectangle, _startPoint.Y);
-                        Canvas.Children.Add(rectangle);
+                        Canvas.AddToPosition(rectangle, _startPoint);
                         break;
                     case AvaloniaEllipse ellipse:
-                        Canvas.SetLeft(ellipse, _startPoint.X);
-                        Canvas.SetTop(ellipse, _startPoint.Y);
-                        Canvas.Children.Add(ellipse);
+                        Canvas.AddToPosition(ellipse, _startPoint);
                         break;
                 }
 
@@ -315,24 +307,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 case DrawingState.Erase:
                     if (_eraseArea is null)
                         return;
-
-                    var controlsToRemove = Canvas.Children
-                        .Where(x => CanvasHelpers.IsInEraseArea(x, _eraseArea))
-                        .ToList();
-
-                    if (controlsToRemove.Any())
-                    {
-                        _drawingHistoryService.Save(controlsToRemove, DrawingAction.Delete);
-                    }
                     
-                    foreach (var controlToRemove in controlsToRemove)
-                    {
-                        Canvas.Children.Remove(controlToRemove);
-                    }
-
-                    Canvas.Children.Remove(_eraseArea);
+                    Canvas.RemoveByArea(_eraseArea,_drawingHistoryService);
 
                     _eraseArea = null;
+                    
                     break;
                 case DrawingState.DetectText:
                     if (_textDetectionArea is null)
@@ -445,35 +424,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (_eraseArea is null)
                         return;
                     
-                    var x = Math.Min(point.Position.X, _startPoint.X);
-                    var y = Math.Min(point.Position.Y, _startPoint.Y);
-
-                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
-                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
-
-                    _eraseArea.Width = w;
-                    _eraseArea.Height = h;
-
-                    Canvas.SetLeft(_eraseArea, x);
-                    Canvas.SetTop(_eraseArea, y);
+                    Canvas.SetPositionAndSize(_eraseArea, point.Position, _startPoint);
+                    
                     break;
                 }
                 case DrawingState.DetectText:
                 {
                     if (_textDetectionArea is null)
                         return;
-
-                    var x = Math.Min(point.Position.X, _startPoint.X);
-                    var y = Math.Min(point.Position.Y, _startPoint.Y);
-
-                    var w = Math.Max(point.Position.X, _startPoint.X) - x;
-                    var h = Math.Max(point.Position.Y, _startPoint.Y) - y;
-
-                    _textDetectionArea.Width = w;
-                    _textDetectionArea.Height = h;
-
-                    Canvas.SetLeft(_textDetectionArea, x);
-                    Canvas.SetTop(_textDetectionArea, y);
+                    
+                    Canvas.SetPositionAndSize(_textDetectionArea, point.Position, _startPoint);
+                    
                     break;
                 }
                 case DrawingState.DrawShape:
@@ -482,12 +443,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     {
                         case AvaloniaLine line:
                             line.EndPoint = e.GetPosition(Canvas);
+                            
                             break;
                         case AvaloniaRectangle rectangle:
-                            SetControlPosAndSize(_startPoint, point.Position, rectangle);
+                            Canvas.SetPositionAndSize(rectangle, point.Position, _startPoint);
+                            
                             break;
                         case AvaloniaEllipse ellipse:
-                            SetControlPosAndSize(_startPoint, point.Position, ellipse);
+                            Canvas.SetPositionAndSize(ellipse, point.Position, _startPoint);
+
                             break;
                     }
 
@@ -495,21 +459,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 }
             }
         }
-    }
-
-    private void SetControlPosAndSize(Point startPoint, Point endPoint, Control control)
-    {
-        var x = Math.Min(endPoint.X, startPoint.X);
-        var y = Math.Min(endPoint.Y, startPoint.Y);
-
-        var w = Math.Max(endPoint.X, startPoint.X) - x;
-        var h = Math.Max(endPoint.Y, startPoint.Y) - y;
-        
-        control.Width = w;
-        control.Height = h;
-        
-        Canvas.SetLeft(control, x);
-        Canvas.SetTop(control, y);
     }
     
     private async Task PasteLastItemFromClipboard()
@@ -539,11 +488,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         textBlock.PointerPressed += TextBlockOnPointerPressed;
         textBlock.PointerReleased += TextBlockOnPointerReleased;
         textBlock.PointerMoved += TextBlockOnPointerMoved;
-                    
-        Canvas.SetLeft(textBlock, Width * 0.85);
-        Canvas.SetTop(textBlock, Height * 0.15);
-
-        Canvas.Children.Add(textBlock);
+        
+        Canvas.AddToPosition(textBlock, Width * 0.85, Height * 0.15);
     }
     
     private Polyline CreatePolyline()
@@ -591,17 +537,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         if (_controlToMovePosition is null)
             return;
-            
         
         var point = e.GetCurrentPoint(Canvas);
 
         if (point.Properties.IsLeftButtonPressed)
         {
-            var posX = point.Position.X - _controlToMovePosition.Value.X;
-            var posY = point.Position.Y - _controlToMovePosition.Value.Y;
-            
-            Canvas.SetLeft(textBlock, posX);
-            Canvas.SetTop(textBlock, posY);
+            Canvas.SetPosition(textBlock,
+                point.Position.X - _controlToMovePosition.Value.X,
+                point.Position.Y - _controlToMovePosition.Value.Y);
         }
     }
 
@@ -795,20 +738,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
     }
-
-    private void ClearAllCanvasContent()
-    {
-        var controlsToSave = Canvas.Children
-            .Where(x => x is Shape or TextBlock)
-            .ToList();
-
-        if (controlsToSave.Count != 0)
-        {
-            _drawingHistoryService.Save(controlsToSave, DrawingAction.Clear);
-        }
-
-        Canvas.Children.Clear();
-    }
     
     private void SelectEraser()
     {
@@ -866,7 +795,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 SelectEraser();
                 break;
             case "item-clear":
-                ClearAllCanvasContent();
+                Canvas.ClearAll();
                 break;
             case "item-detect-text":
                 SelectDetectText();

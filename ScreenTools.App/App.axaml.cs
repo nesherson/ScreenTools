@@ -112,7 +112,7 @@ namespace ScreenTools.App
 
                     break;
                 case 
-                    KeyCode.VcF3:
+                    KeyCode.VcBackQuote:
                     if (!_isDrawingOverlayActive)
                         ShowDrawingOverlay();
                     break;
