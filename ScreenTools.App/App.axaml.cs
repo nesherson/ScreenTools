@@ -8,6 +8,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
@@ -20,6 +21,8 @@ namespace ScreenTools.App
         private ScreenCaptureService _screenCaptureService;
         private IServiceProvider _serviceProvider;
         private FilePathRepository _filePathRepository;
+        private ILogger<App> _logger;
+        
         private bool _isLeftMetaPressed;
         
         private bool _isDrawingOverlayActive;
@@ -51,6 +54,7 @@ namespace ScreenTools.App
         {
             _screenCaptureService = _serviceProvider.GetRequiredService<ScreenCaptureService>();
             _filePathRepository = _serviceProvider.GetRequiredService<FilePathRepository>();
+            _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
             _hook = _serviceProvider.GetRequiredService<SimpleGlobalHook>();
             _hook.KeyPressed += Hook_KeyPressed;
             _hook.RunAsync();
@@ -104,7 +108,7 @@ namespace ScreenTools.App
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        _logger.LogError(ex.Message);
                     }
 
                     break;
@@ -153,7 +157,7 @@ namespace ScreenTools.App
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                _logger.LogError(ex.Message);
             }
         }
         

@@ -12,6 +12,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
 using Path = System.IO.Path;
@@ -32,6 +33,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly FilePathRepository _filePathRepository;
     private readonly DrawingHistoryService _drawingHistoryService;
+    private readonly ILogger<DrawingOverlay> _logger;
 
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -57,7 +59,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     public DrawingOverlay(TextDetectionService textDetectionService,
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
-        DrawingHistoryService drawingHistoryService)
+        DrawingHistoryService drawingHistoryService,
+        ILogger<DrawingOverlay> logger)
     {
         InitializeComponent();
 
@@ -68,6 +71,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
+        _logger = logger;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -203,7 +207,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
         finally
         {
@@ -390,10 +394,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 "Error",
                 argEx.Message[argEx.Message.IndexOf(':').. + 2],
                 NotificationType.Error));
+            _logger.LogError(argEx.Message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
         finally
         {

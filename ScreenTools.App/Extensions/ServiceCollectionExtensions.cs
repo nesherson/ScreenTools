@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ScreenTools.Infrastructure;
 using SharpHook;
 
@@ -14,6 +15,7 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<ScreenCaptureService>();
         collection.AddTransient<TextDetectionService>();
         collection.AddTransient<DrawingHistoryService>();
+        collection.AddLogging(builder => builder.AddFile("Logs/ScreenTools-{Date}.txt"));
         
         collection.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build());
