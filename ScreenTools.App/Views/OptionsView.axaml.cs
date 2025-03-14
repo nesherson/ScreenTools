@@ -53,10 +53,10 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
             
             GalleryPaths = galleryPaths;
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(exception);
+            Console.WriteLine(ex);
         }
     }
 
@@ -92,10 +92,10 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
             
             _notificationManager.Show(new Notification("Success", "Paths are successfully saved.", NotificationType.Success));
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(exception);
+            Console.WriteLine(ex);
         }
     }
 
@@ -114,10 +114,10 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
             
             _notificationManager.Show(new Notification("Success", "Path is successfully deleted.", NotificationType.Success));
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(exception);
+            Console.WriteLine(ex);
         }
     }
 }
