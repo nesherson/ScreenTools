@@ -87,6 +87,20 @@ namespace ScreenTools.App
 
         private async void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
         {
+            if (e.Data.KeyCode == KeyCode.VcF6)
+            {
+                try
+                {
+                    await CaptureScreenshot();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex.Message);
+                }
+
+                return;
+            }
+            
             if (e.Data.KeyCode == KeyCode.VcLeftMeta)
             {
                 _isLeftMetaPressed = true;
