@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
+using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
+using Tmds.DBus.Protocol;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace ScreenTools.App;
@@ -19,18 +21,21 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
     private readonly FilePathRepository _filePathRepository;
+    private readonly ILogger<GalleryView> _logger;
 
     private ObservableCollection<GalleryImage> _galleryImages;
     private bool _isLoading;
     private int _loadingProgress;
     private bool _hasData;
     
-    public GalleryView(FilePathRepository filePathRepository)
+    public GalleryView(FilePathRepository filePathRepository,
+        ILogger<GalleryView> logger)
     {
         InitializeComponent();
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _filePathRepository = filePathRepository;
+        _logger = logger;
         
         _loadingProgress = 0;
         HasData = IsLoading == false;
@@ -94,7 +99,8 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
+            
         }
         finally
         {
@@ -134,7 +140,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 

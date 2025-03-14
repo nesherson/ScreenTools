@@ -6,6 +6,7 @@ using System.Reactive.Concurrency;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
+using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
 using ScreenTools.Infrastructure;
@@ -17,17 +18,20 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
     private readonly WindowNotificationManager _notificationManager;
     private readonly FilePathRepository _filePathRepository;
     private readonly FilePathTypeRepository _filePathTypeRepository;
+    private readonly ILogger<OptionsView> _logger;
 
     private ObservableCollection<FilePathModel> _galleryPaths;
     
     public OptionsView(FilePathRepository filePathRepository,
-        FilePathTypeRepository filePathTypeRepository)
+        FilePathTypeRepository filePathTypeRepository,
+        ILogger<OptionsView> logger)
     {
         InitializeComponent();
 
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _filePathRepository = filePathRepository;
         _filePathTypeRepository = filePathTypeRepository;
+        _logger = logger;
 
         RxApp.MainThreadScheduler.Schedule(LoadData);
     }
@@ -56,7 +60,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 
@@ -95,7 +99,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 
@@ -117,7 +121,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            Console.WriteLine(ex);
+            _logger.LogError(ex.Message);
         }
     }
 }
