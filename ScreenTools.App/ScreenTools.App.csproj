@@ -4,9 +4,9 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Assets\tray-icon.ico" />
     <None Remove="Assets\undo.svg" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -16,7 +16,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <AvaloniaResource Include="Assets\tray-icon.ico" />
     <None Remove="Assets\x.svg" />
     <AvaloniaResource Include="Assets\undo.svg" />
     <AvaloniaResource Include="Assets\x.svg" />
@@ -37,6 +36,9 @@
     <AvaloniaResource Include="Assets\circle.svg" />
     <None Remove="Assets\monitor.svg" />
     <AvaloniaResource Include="Assets\monitor.svg" />
+    <None Remove="Assets\tray-icon.ico" />
+    <None Remove="Assets\app-icon.ico" />
+    <AvaloniaResource Include="Assets\app-icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
