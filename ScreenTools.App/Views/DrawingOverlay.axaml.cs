@@ -10,7 +10,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
@@ -158,6 +157,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case Key.D4:
             case Key.D5:
             case Key.Escape:
+            case Key.F11:
             case Key.S when e.KeyModifiers == KeyModifiers.Control:
             case Key.Z when e.KeyModifiers == KeyModifiers.Control:
                 TriggerToolbarItemOnClick(e.Key);
@@ -169,12 +169,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 await PasteLastItemFromClipboard();
                 break;
         }
-    }
-    
-    protected override void OnLoaded(RoutedEventArgs e)
-    {
-        WindowLockHook.Hook(this);
-        base.OnLoaded(e);
     }
     
     private async Task CaptureWindow()
@@ -694,6 +688,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             },
             new DrawingToolbarItem
             {
+                Id = "item-change-monitor",
+                ShortcutText = "F11",
+                IconPath = "/Assets/monitor.svg",
+                ToolTip = "Change monitor",
+                ShortcutKey = Key.F11,
+                CanBeActive = false
+            },
+            new DrawingToolbarItem
+            {
                 Id = "item-close",
                 ShortcutText = "ESC",
                 IconPath = "/Assets/x.svg",
@@ -819,7 +822,32 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case "sub-item-ellipse":
                 SelectShape(toolbarItem.Name);
                 break;
+            case "item-change-monitor":
+                ChangeMonitor();
+                break;
         }
+    }
+
+    private void ChangeMonitor()
+    {
+        var currentScreen = Screens.ScreenFromWindow(this);
+        var targetScreen = Screens.All.FirstOrDefault(x => x != currentScreen);
+
+        if (targetScreen is null)
+            return;
+        
+        Canvas.ClearAll();
+        
+        var rect = targetScreen.WorkingArea;
+        
+        WindowState = WindowState.Normal;
+        CanResize = true;
+        Position = new PixelPoint(rect.X, rect.Y);
+        Width = rect.Width;
+        Height = rect.Height;
+
+        WindowState = WindowState.Maximized;
+        CanResize = false;
     }
 
     private void SetActiveItem(DrawingToolbarItem toolbarItem)
