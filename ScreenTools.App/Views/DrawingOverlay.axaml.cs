@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -24,6 +25,17 @@ using Notification = Avalonia.Controls.Notifications.Notification;
 using Shape = Avalonia.Controls.Shapes.Shape;
 
 namespace ScreenTools.App;
+
+public class SavedPoint
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+}
+public class SavedShape
+{
+    public string ShapeName { get; set; }
+    public SavedPoint[] Points { get; set; }
+}
 
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
@@ -70,6 +82,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
+        
+        Closed += OnClosed;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -82,7 +96,60 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SetToolbarItems();
         SetActiveItem(ToolbarItems[0]);
     }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        var data = Canvas.Children.ToList();
+
+        foreach (var item in data)
+        {
+            if (item is Polyline polyline)
+            {
+                var savedShape = new SavedShape();
+                savedShape.ShapeName = "polyline";
+                savedShape.Points = polyline.Points
+                    .Select(p => new SavedPoint { X = p.X, Y = p.Y })
+                    .ToArray();
+                var str = JsonSerializer.Serialize(savedShape);
+                using (var streamWriter = new StreamWriter(@"C:\Users\Nesherson\Documents\test-123.txt"))
+                {
+                    streamWriter.WriteLine(str);
+                }
+            }
+        }
+    }
     
+    private void Canvas_OnInitialized(object? sender, EventArgs e)
+    {
+        var canvas = sender as Canvas;
+
+        if (canvas == null)
+            return;
+        
+        var readLine = "";
+                
+        using (StreamReader sr = new StreamReader(@"C:\\Users\\Nesherson\\Documents\\test-123.txt"))
+        {
+            readLine = sr.ReadLine();
+
+            if (string.IsNullOrEmpty(readLine))
+                return;
+                    
+            var des = JsonSerializer.Deserialize<SavedShape>(readLine);
+
+            if (des.ShapeName == "polyline")
+            {
+                var polyline = new Polyline
+                {
+                    StrokeThickness = 5,
+                    Stroke = SolidColorBrush.Parse("#ff0000"),
+                    Points = des.Points.Select(p => new Point(p.X, p.Y)).ToArray()
+                };
+                canvas.Children.Add(polyline);
+            }
+        }
+    }
+
     public DrawingState DrawingState
     {
         get => _drawingState;
