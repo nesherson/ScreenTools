@@ -75,8 +75,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
-        LineStrokes = [5, 10, 15, 20];
-        SelectedLineStroke = 5;
+        LineStrokes = [2, 5, 10, 15, 20];
+        SelectedLineStroke = LineStrokes[0];
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
         _selectedLine = CreatePolyline();
