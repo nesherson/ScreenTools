@@ -46,7 +46,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private bool _isPopupOpen;
     private int _selectedLineStroke;
     private string _selectedLineColor;
-    private Polyline? _selectedLine;
     private Shape? _selectedShape;
     private ObservableCollection<DrawingToolbarItem> _toolbarItems;
     
@@ -79,8 +78,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SelectedLineStroke = LineStrokes[0];
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
         SelectedLineColor = "#000000";
-        _selectedLine = CreatePolyline();
-        _selectedShape = CreateRectangle();
+        SelectPen();
         SetToolbarItems();
         SetActiveItem(ToolbarItems[0]);
     }
@@ -133,7 +131,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     public string SelectedShapeToolTip =>
         _selectedShape switch
-
         {
             AvaloniaLine => "Line",
             AvaloniaRectangle => "Rectangle",
@@ -230,14 +227,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         switch (DrawingState)
         {
-            case DrawingState.Draw:
-                if (_selectedLine is null)
-                    return;
-                
-                _selectedLine.Points.Add(_startPoint);
-                Canvas.Children.Add(_selectedLine);
-
-                break;
             case DrawingState.Erase:
                 if (_eraseArea is null)
                 {
@@ -263,10 +252,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     Canvas.AddToPosition(_textDetectionArea, _startPoint);
                 }
                 break;
-            case DrawingState.DrawShape:
+            case DrawingState.Draw:
             {
                 switch (_selectedShape)
                 {
+                    case Polyline polyline:
+                        polyline.Points.Add(_startPoint);
+                        Canvas.Children.Add(polyline);
+                        break;
                     case AvaloniaLine line:
                         line.StartPoint = _startPoint;
                         line.EndPoint = _startPoint;
@@ -294,14 +287,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                case DrawingState.Draw:
-                    if (_selectedLine is null)
-                        return;
-                    
-                    _drawingHistoryService.Save(_selectedLine, DrawingAction.Draw);
-                    _selectedLine = CreatePolyline();
-                    
-                    break;
+                // case DrawingState.Draw:
+                //     if (_selectedLine is null)
+                //         return;
+                //     
+                //     _drawingHistoryService.Save(_selectedLine, DrawingAction.Draw);
+                //     _selectedLine = CreatePolyline();
+                //     
+                //     break;
                 case DrawingState.Erase:
                     if (_eraseArea is null)
                         return;
@@ -358,7 +351,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     AddTextToCanvas(text);
 
                     break;
-                case DrawingState.DrawShape:
+                case DrawingState.Draw:
                     if (_selectedShape is null)
                     {
                         return;
@@ -366,8 +359,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     
                     _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
                     
+                    
                     switch (_selectedShape)
                     {
+                        case Polyline:
+                            _selectedShape = CreatePolyline();
+                            break;
                         case AvaloniaLine:
                             _selectedShape = CreateLine();
                             break;
@@ -411,13 +408,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                case DrawingState.Draw:
-                    if (_selectedLine is null)
-                        return;
-                    
-                    _selectedLine.Points.Add(point.Position);
-
-                    break;
+                // case DrawingState.Draw:
+                //     if (_selectedLine is null)
+                //         return;
+                //     
+                //     _selectedLine.Points.Add(point.Position);
+                //
+                //     break;
                 case DrawingState.Erase:
                 {
                     if (_eraseArea is null)
@@ -436,10 +433,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     
                     break;
                 }
-                case DrawingState.DrawShape:
+                case DrawingState.Draw:
                 {
                     switch (_selectedShape)
                     {
+                        case Polyline polyline:
+                            polyline.Points.Add(point.Position);
+
+                            break;
                         case AvaloniaLine line:
                             line.EndPoint = e.GetPosition(Canvas);
                             
@@ -754,7 +755,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private void SelectPen()
     {
-        _selectedLine = CreatePolyline();
+        _selectedShape = CreatePolyline();
         DrawingState = DrawingState.Draw;
     }
     
@@ -779,7 +780,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
         
-        DrawingState = DrawingState.DrawShape;
+        DrawingState = DrawingState.Draw;
     }
 
     private void SelectDetectText()
