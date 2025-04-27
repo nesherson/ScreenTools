@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,6 +12,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
@@ -33,6 +35,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly FilePathRepository _filePathRepository;
     private readonly DrawingHistoryService _drawingHistoryService;
     private readonly ILogger<DrawingOverlay> _logger;
+    private readonly IConfiguration _configuration;
 
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -58,18 +61,22 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
         DrawingHistoryService drawingHistoryService,
-        ILogger<DrawingOverlay> logger)
+        ILogger<DrawingOverlay> logger,
+        IConfiguration configuration)
     {
-        InitializeComponent();
-
-        DataContext = this;
-
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
+        _configuration = configuration;
+        
+        InitializeComponent();
+
+        DataContext = this;
+        
+        Closed += OnClosed;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -82,7 +89,22 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SetToolbarItems();
         SetActiveItem(ToolbarItems[0]);
     }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
+    }
     
+    private void Canvas_OnInitialized(object? sender, EventArgs e)
+    {
+        var canvas = sender as Canvas;
+
+        if (canvas == null)
+            return;
+        
+        CanvasHelpers.LoadCanvasFromFile(canvas, _configuration["CanvasFilePath"]);
+    }
+
     public DrawingState DrawingState
     {
         get => _drawingState;
@@ -287,14 +309,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                // case DrawingState.Draw:
-                //     if (_selectedLine is null)
-                //         return;
-                //     
-                //     _drawingHistoryService.Save(_selectedLine, DrawingAction.Draw);
-                //     _selectedLine = CreatePolyline();
-                //     
-                //     break;
                 case DrawingState.Erase:
                     if (_eraseArea is null)
                         return;
@@ -359,7 +373,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     
                     _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
                     
-                    
                     switch (_selectedShape)
                     {
                         case Polyline:
@@ -408,13 +421,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                // case DrawingState.Draw:
-                //     if (_selectedLine is null)
-                //         return;
-                //     
-                //     _selectedLine.Points.Add(point.Position);
-                //
-                //     break;
                 case DrawingState.Erase:
                 {
                     if (_eraseArea is null)

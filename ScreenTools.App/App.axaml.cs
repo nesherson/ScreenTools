@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ScreenTools.Infrastructure;
@@ -136,6 +137,9 @@ namespace ScreenTools.App
         
         private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
         {
+            CanvasHelpers.DeleteSavedCanvas(_serviceProvider
+                .GetRequiredService<IConfiguration>()["CanvasFilePath"]);
+            
             _hook?.Dispose();
         }
         

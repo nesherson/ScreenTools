@@ -153,7 +153,8 @@
             PointerPressed="Canvas_OnPointerPressed"
             PointerReleased="Canvas_OnPointerReleased"
             PointerMoved="Canvas_OnPointerMoved"
-            Background="Transparent">
+            Background="Transparent"
+            Initialized="Canvas_OnInitialized">
         </Canvas>
     </Grid>
     </Border>
