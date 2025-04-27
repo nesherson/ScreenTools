@@ -12,6 +12,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
@@ -26,17 +27,6 @@ using Shape = Avalonia.Controls.Shapes.Shape;
 
 namespace ScreenTools.App;
 
-public class SavedPoint
-{
-    public double X { get; set; }
-    public double Y { get; set; }
-}
-public class SavedShape
-{
-    public string ShapeName { get; set; }
-    public SavedPoint[] Points { get; set; }
-}
-
 public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 {
     private readonly WindowNotificationManager _notificationManager;
@@ -45,6 +35,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private readonly FilePathRepository _filePathRepository;
     private readonly DrawingHistoryService _drawingHistoryService;
     private readonly ILogger<DrawingOverlay> _logger;
+    private readonly IConfiguration _configuration;
 
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
@@ -70,18 +61,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
         DrawingHistoryService drawingHistoryService,
-        ILogger<DrawingOverlay> logger)
+        ILogger<DrawingOverlay> logger,
+        IConfiguration configuration)
     {
-        InitializeComponent();
-
-        DataContext = this;
-
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
+        _configuration = configuration;
+        
+        InitializeComponent();
+
+        DataContext = this;
         
         Closed += OnClosed;
 
@@ -99,24 +92,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
     private void OnClosed(object? sender, EventArgs e)
     {
-        var data = Canvas.Children.ToList();
-
-        foreach (var item in data)
-        {
-            if (item is Polyline polyline)
-            {
-                var savedShape = new SavedShape();
-                savedShape.ShapeName = "polyline";
-                savedShape.Points = polyline.Points
-                    .Select(p => new SavedPoint { X = p.X, Y = p.Y })
-                    .ToArray();
-                var str = JsonSerializer.Serialize(savedShape);
-                using (var streamWriter = new StreamWriter(@"C:\Users\Nesherson\Documents\test-123.txt"))
-                {
-                    streamWriter.WriteLine(str);
-                }
-            }
-        }
+        CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
     }
     
     private void Canvas_OnInitialized(object? sender, EventArgs e)
@@ -126,28 +102,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         if (canvas == null)
             return;
         
-        var readLine = "";
-                
-        using (StreamReader sr = new StreamReader(@"C:\\Users\\Nesherson\\Documents\\test-123.txt"))
-        {
-            readLine = sr.ReadLine();
-
-            if (string.IsNullOrEmpty(readLine))
-                return;
-                    
-            var des = JsonSerializer.Deserialize<SavedShape>(readLine);
-
-            if (des.ShapeName == "polyline")
-            {
-                var polyline = new Polyline
-                {
-                    StrokeThickness = 5,
-                    Stroke = SolidColorBrush.Parse("#ff0000"),
-                    Points = des.Points.Select(p => new Point(p.X, p.Y)).ToArray()
-                };
-                canvas.Children.Add(polyline);
-            }
-        }
+        CanvasHelpers.LoadCanvasFromFile(canvas, _configuration["CanvasFilePath"]);
     }
 
     public DrawingState DrawingState
@@ -354,14 +309,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                // case DrawingState.Draw:
-                //     if (_selectedLine is null)
-                //         return;
-                //     
-                //     _drawingHistoryService.Save(_selectedLine, DrawingAction.Draw);
-                //     _selectedLine = CreatePolyline();
-                //     
-                //     break;
                 case DrawingState.Erase:
                     if (_eraseArea is null)
                         return;
@@ -426,7 +373,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     
                     _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
                     
-                    
                     switch (_selectedShape)
                     {
                         case Polyline:
@@ -475,13 +421,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             switch (DrawingState)
             {
-                // case DrawingState.Draw:
-                //     if (_selectedLine is null)
-                //         return;
-                //     
-                //     _selectedLine.Points.Add(point.Position);
-                //
-                //     break;
                 case DrawingState.Erase:
                 {
                     if (_eraseArea is null)

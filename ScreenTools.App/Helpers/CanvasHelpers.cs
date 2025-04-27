@@ -1,6 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Media;
 
 namespace ScreenTools.App;
 
@@ -67,5 +72,138 @@ public class CanvasHelpers
         }
 
         return false;
+    }
+    
+    public static void SaveCanvasToFile(Canvas canvas, string fileName)
+    {
+        var canvasItems = canvas.Children.ToList();
+        var itemsToSave = new List<SavedShape>();
+
+        foreach (var item in canvasItems)
+        {
+            var shapeToSave = new SavedShape();
+            
+            switch (item)
+            {
+                case Polyline polyline:
+                {
+                    shapeToSave.ShapeName = "polyline";
+                    shapeToSave.StrokeColor = polyline.Stroke?.ToString();
+                    shapeToSave.StrokeWidth = polyline.StrokeThickness;
+                    shapeToSave.Points = polyline.Points
+                        .Select(p => new SavedPoint(p.X, p.Y))
+                        .ToArray();
+                    break;
+                }
+                case Rectangle rectangle:
+                    shapeToSave.ShapeName = "rectangle";
+                    shapeToSave.FillColor = rectangle.Fill?.ToString();
+                    shapeToSave.StartPoint = new SavedPoint(rectangle.Bounds.X, rectangle.Bounds.Y);
+                    shapeToSave.Width = rectangle.Width;
+                    shapeToSave.Height = rectangle.Height;
+                    break;
+                case Line line:
+                    shapeToSave.ShapeName = "line";
+                    shapeToSave.StrokeColor = line.Stroke?.ToString();
+                    shapeToSave.StrokeWidth = line.StrokeThickness;
+                    shapeToSave.StartPoint = new SavedPoint(line.StartPoint.X, line.StartPoint.Y);
+                    shapeToSave.EndPoint = new SavedPoint(line.EndPoint.X, line.EndPoint.Y);
+                    break;
+                case Ellipse ellipse:
+                    shapeToSave.ShapeName = "ellipse";
+                    shapeToSave.FillColor = ellipse.Fill?.ToString();
+                    shapeToSave.StartPoint = new SavedPoint(ellipse.Bounds.X, ellipse.Bounds.Y);
+                    shapeToSave.Width = ellipse.Bounds.Width;
+                    shapeToSave.Height = ellipse.Bounds.Height;
+                    break;
+            }
+            
+            itemsToSave.Add(shapeToSave);
+        }
+        
+        var serializedShape = JsonSerializer.Serialize(itemsToSave);
+        using var streamWriter = new StreamWriter(fileName);
+            
+        streamWriter.WriteLine(serializedShape);
+    }
+
+    public static void LoadCanvasFromFile(Canvas canvas, string fileName)
+    {
+        if (!File.Exists(fileName))
+        {
+            File.Create(fileName);
+        }
+        
+        using var sr = new StreamReader(fileName);
+        var readLine = sr.ReadLine();
+
+        if (string.IsNullOrEmpty(readLine))
+            return;
+                    
+        var savedItems = JsonSerializer.Deserialize<SavedShape[]>(readLine);
+        
+        if (savedItems == null)
+            return;
+        
+        foreach (var savedItem in savedItems)
+        {
+            switch (savedItem.ShapeName)
+            {
+                case "polyline":
+                {
+                    var polyline = new Polyline
+                    {
+                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
+                        Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToArray()
+                    };
+                    
+                    canvas.Children.Add(polyline);
+                    break;
+                }
+                case "rectangle":
+                    var rectangle = new Rectangle
+                    {
+                        Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
+                        Width = savedItem.Width.GetValueOrDefault(100),
+                        Height = savedItem.Height.GetValueOrDefault(100),
+                    };
+                    
+                    canvas.AddToPosition(rectangle, savedItem.StartPoint.X, savedItem.StartPoint.Y);
+                    
+                    break;
+                case "line":
+                    var line = new Line
+                    {
+                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
+                        StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
+                        EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
+                    };
+                    
+                    canvas.Children.Add(line);
+
+                    break;
+                case "ellipse":
+                    var ellipse = new Ellipse
+                    {
+                        Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
+                        Width = savedItem.Width.GetValueOrDefault(100),
+                        Height = savedItem.Height.GetValueOrDefault(100)
+                    };
+                    
+                    canvas.AddToPosition(ellipse, savedItem.StartPoint.X, savedItem.StartPoint.Y);
+                    
+                    break;
+            }
+        }
+    }
+
+    public static void DeleteSavedCanvas(string fileName)
+    {
+        if (File.Exists(fileName))
+        {
+            File.Delete(fileName);
+        }
     }
 }

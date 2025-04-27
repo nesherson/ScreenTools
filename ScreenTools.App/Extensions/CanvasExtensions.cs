@@ -10,9 +10,9 @@ public static class CanvasExtensions
 {
     public static void AddToPosition(this Canvas canvas, Control control, Point point)
     {
-        Canvas.SetLeft(canvas, point.X);
-        Canvas.SetTop(canvas, point.Y);
         canvas.Children.Add(control);
+        Canvas.SetLeft(control, point.X);
+        Canvas.SetTop(control, point.Y);
     }
     
     public static void AddToPosition(this Canvas canvas, Control control, double x, double y)
@@ -20,7 +20,7 @@ public static class CanvasExtensions
         AddToPosition(canvas, control, new Point(x, y));
     }
 
-    public static void SetPositionAndSize(this Canvas canvas, Control control, Point currentPoint, Point startPoint)
+    public static void SetPositionAndSize(this Canvas _, Control control, Point currentPoint, Point startPoint)
     {
         var x = Math.Min(currentPoint.X, startPoint.X);
         var y = Math.Min(currentPoint.Y, startPoint.Y);
@@ -35,7 +35,7 @@ public static class CanvasExtensions
         Canvas.SetTop(control, y);
     }
 
-    public static void SetPosition(this Canvas canvas, Control control, Point point)
+    public static void SetPosition(this Canvas _, Control control, Point point)
     {
         Canvas.SetLeft(control, point.X);
         Canvas.SetTop(control, point.Y);
