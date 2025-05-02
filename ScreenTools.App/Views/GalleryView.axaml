@@ -31,6 +31,7 @@
                                    <ContextMenu>
                                        <MenuItem Name="Preview" Header="Preview" Click="MenuItem_OnClick"/>
                                        <MenuItem Name="ShowInExplorer" Header="Show in explorer" Click="MenuItem_OnClick" />
+                                       <MenuItem Name="CopyToClipboard" Header="Copy to clipboard" Click="MenuItem_OnClick" />
                                    </ContextMenu>
                                </Border.ContextMenu>
                                <Image 

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
@@ -9,10 +7,10 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
+using Clowd.Clipboard;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
-using Tmds.DBus.Protocol;
 using Bitmap = Avalonia.Media.Imaging.Bitmap;
 
 namespace ScreenTools.App;
@@ -128,9 +126,27 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
             case "ShowInExplorer":
                 HandleShowInExplorer(galleryImage);
                 break;
+            case "CopyToClipboard":
+                HandleCopyToClipBoard(galleryImage);
+                break;
         }
     }
-    
+
+    private async void HandleCopyToClipBoard(GalleryImage galleryImage)
+    {
+        try
+        {
+            var bitmap = new Bitmap(galleryImage.Path);
+
+            await ClipboardAvalonia.SetImageAsync(bitmap);
+        }
+        catch (Exception ex)
+        {
+            _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            _logger.LogError(ex.Message);
+        }
+    }
+
     private void HandleShowInExplorer(GalleryImage galleryImage)
     {
         try

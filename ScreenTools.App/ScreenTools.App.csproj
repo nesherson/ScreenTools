@@ -42,17 +42,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.1" />
+    <PackageReference Include="Avalonia" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.0" />
     <PackageReference Include="Avalonia.Svg" Version="11.2.0.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.0" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1">
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.0">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Clowd.Clipboard.Avalonia" Version="1.1.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
