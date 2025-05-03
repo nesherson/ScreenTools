@@ -62,6 +62,7 @@
                 </ItemsControl>
          <StackPanel Orientation="Horizontal">
                  <Button Content="Add path" Click="BtnAddPath_OnClick" Classes="BtnPrimary" />
+                 <Button Content="Choose path" Click="BtnChoosePath_OnClick" Classes="BtnPrimary" />
                  <Button Content="Save paths" Click="BtnSavePaths_OnClick" Classes="BtnPrimary" />
          </StackPanel>
         </StackPanel>

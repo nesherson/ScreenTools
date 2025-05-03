@@ -6,6 +6,7 @@ using System.Reactive.Concurrency;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
@@ -67,6 +68,27 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
     private void BtnAddPath_OnClick(object? sender, RoutedEventArgs e)
     {
         GalleryPaths.Add(new FilePathModel(0, string.Empty));
+    }
+    
+    private async void BtnChoosePath_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = GetTopLevel(this);
+
+        if (topLevel is null)
+            return;
+        
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
+        {
+            Title = "Choose path",
+            AllowMultiple = false
+        });
+        
+        var path = folders.FirstOrDefault()?.Path.AbsolutePath;
+        
+        if (string.IsNullOrEmpty(path))
+            return;
+        
+        GalleryPaths.Add(new FilePathModel(0, Uri.UnescapeDataString(path.Replace("/", "\\"))));
     }
     
     private async void BtnSavePaths_OnClick(object? sender, RoutedEventArgs e)
