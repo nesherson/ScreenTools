@@ -111,6 +111,13 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
 
             if (galleryPathToRemove == null)
                 return;
+
+            if (galleryPathToRemove.Id == 0)
+            {
+                LoadData();
+                
+                return;
+            }
             
             await _filePathRepository.DeleteByIdAsync(galleryPathToRemove.Id);
             await _filePathRepository.SaveChangesAsync();
