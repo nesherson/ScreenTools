@@ -39,6 +39,8 @@
     <None Remove="Assets\tray-icon.ico" />
     <None Remove="Assets\app-icon.ico" />
     <AvaloniaResource Include="Assets\app-icon.ico" />
+    <None Remove="Assets\detect.svg" />
+    <AvaloniaResource Include="Assets\detect.svg" />
   </ItemGroup>
 
   <ItemGroup>

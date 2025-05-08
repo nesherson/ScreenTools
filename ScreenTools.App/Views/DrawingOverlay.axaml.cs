@@ -175,6 +175,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case Key.D3:
             case Key.D4:
             case Key.D5:
+            case Key.D6:
             case Key.Escape:
             case Key.F11:
             case Key.S when e.KeyModifiers == KeyModifiers.Control:
@@ -297,6 +298,33 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                 break;
             }
+            case DrawingState.AddText:
+                var flyout = new Flyout();
+                var textBox = new TextBox
+                {
+                    Width = 220,
+                    Height = 30
+                };
+                flyout.Content = textBox;
+                flyout.Closed += (_, _) =>
+                {
+                    var text = textBox.Text;
+
+                    if (string.IsNullOrEmpty(text))
+                        return;
+
+                    var textBlock = new TextBlock
+                    {
+                        Text = text,
+                        FontSize = 20,
+                        Foreground = new SolidColorBrush(Colors.Black),
+                        Background = new SolidColorBrush(Colors.Transparent)
+                    };
+
+                    Canvas.AddToPosition(textBlock, _startPoint.X, _startPoint.Y);
+                };
+                flyout.ShowAt(Canvas, true);
+                break;
         }
     }
     
@@ -670,9 +698,18 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             {
                 Id = "item-detect-text",
                 ShortcutText = "5",
-                IconPath = "/Assets/type.svg",
+                IconPath = "/Assets/detect.svg",
                 ToolTip = "Detect text using area selector tool",
                 ShortcutKey = Key.D5,
+                CanBeActive = true,
+            },
+            new DrawingToolbarItem
+            {
+                Id = "item-add-text",
+                ShortcutText = "6",
+                IconPath = "/Assets/type.svg",
+                ToolTip = "Add text",
+                ShortcutKey = Key.D6,
                 CanBeActive = true,
             },
             new DrawingToolbarItem
@@ -794,6 +831,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         DrawingState = DrawingState.DetectText;
     }
 
+    private void SelectAddText()
+    {
+        DrawingState = DrawingState.AddText;
+    }
+
     private async Task ToolbarBtnOnClick(DrawingToolbarItem toolbarItem)
     {
         SetActiveItem(toolbarItem);
@@ -814,6 +856,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
             case "item-detect-text":
                 SelectDetectText();
+                break;
+            case "item-add-text":
+                SelectAddText();
                 break;
             case "item-save":
                 await CaptureWindow();
@@ -883,8 +928,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private void TriggerToolbarItemOnClick(Key key)
     {
-        var item = ToolbarItems.First(x => x.ShortcutKey == key);
-        item.OnClickCommand.Execute(null);
+        ToolbarItems.FirstOrDefault(x => x.ShortcutKey == key)
+            ?.OnClickCommand
+            .Execute(null);
     }
 
     private void StrokeWidthComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
