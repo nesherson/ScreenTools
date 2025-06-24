@@ -11,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -77,6 +78,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         DataContext = this;
         
         Closed += OnClosed;
+        Deactivated += OnDeactivated;
+        Activated += OnActivated;
 
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
@@ -88,21 +91,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         SelectPen();
         SetToolbarItems();
         SetActiveItem(ToolbarItems[0]);
-    }
-
-    private void OnClosed(object? sender, EventArgs e)
-    {
-        CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
-    }
-    
-    private void Canvas_OnInitialized(object? sender, EventArgs e)
-    {
-        var canvas = sender as Canvas;
-
-        if (canvas == null)
-            return;
-        
-        CanvasHelpers.LoadCanvasFromFile(canvas, _configuration["CanvasFilePath"]);
     }
 
     public DrawingState DrawingState
@@ -834,6 +822,31 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private void SelectAddText()
     {
         DrawingState = DrawingState.AddText;
+    }
+    
+    private void OnActivated(object? sender, EventArgs e)
+    {
+        IsPopupOpen = true;
+    }
+
+    private void OnDeactivated(object? sender, EventArgs e)
+    {
+        IsPopupOpen = false;
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
+    }
+
+    private void Canvas_OnInitialized(object? sender, EventArgs e)
+    {
+        var canvas = sender as Canvas;
+
+        if (canvas == null)
+            return;
+        
+        CanvasHelpers.LoadCanvasFromFile(canvas, _configuration["CanvasFilePath"]);
     }
 
     private async Task ToolbarBtnOnClick(DrawingToolbarItem toolbarItem)
