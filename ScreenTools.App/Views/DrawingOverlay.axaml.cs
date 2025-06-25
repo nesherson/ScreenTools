@@ -209,7 +209,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to capture window. Exception: {ex}");
         }
         finally
         {
@@ -414,11 +414,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 "Error",
                 argEx.Message[argEx.Message.IndexOf(':').. + 2],
                 NotificationType.Error));
-            _logger.LogError(argEx.Message);
+            _logger.LogError($"Failed to detect text. Exception: {argEx.Message}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to draw a shape: Exception: {ex.Message}");
         }
         finally
         {
@@ -841,12 +841,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
     private void Canvas_OnInitialized(object? sender, EventArgs e)
     {
-        var canvas = sender as Canvas;
-
-        if (canvas == null)
+        if (sender is not Canvas canvas)
             return;
+
+        var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
         
-        CanvasHelpers.LoadCanvasFromFile(canvas, _configuration["CanvasFilePath"]);
+        CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
     }
 
     private async Task ToolbarBtnOnClick(DrawingToolbarItem toolbarItem)

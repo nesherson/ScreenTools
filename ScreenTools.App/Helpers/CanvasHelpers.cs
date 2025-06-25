@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -6,10 +7,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
+using Microsoft.Extensions.Logging;
 
 namespace ScreenTools.App;
 
-public class CanvasHelpers
+public static class CanvasHelpers
 {
     public static bool IsInEraseArea(Control control, Border eraseArea)
     {
@@ -127,15 +129,24 @@ public class CanvasHelpers
         streamWriter.WriteLine(serializedShape);
     }
 
-    public static void LoadCanvasFromFile(Canvas canvas, string fileName)
+    public static void LoadCanvasFromFile(Canvas canvas, string fileName, ILogger logger)
     {
         if (!File.Exists(fileName))
         {
             File.Create(fileName);
         }
-        
-        using var sr = new StreamReader(fileName);
-        var readLine = sr.ReadLine();
+
+        var readLine = "";
+
+        try
+        {
+            using var sr = new StreamReader(fileName);
+            readLine = sr.ReadLine();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to read line from file '{fileName}'. Exception: {ex}");
+        }
 
         if (string.IsNullOrEmpty(readLine))
             return;

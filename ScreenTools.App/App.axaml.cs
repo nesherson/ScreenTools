@@ -96,7 +96,7 @@ namespace ScreenTools.App
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex.Message);
+                    _logger.LogError($"Failed to capture screenshot. Exception: {ex}");
                 }
 
                 return;
@@ -123,7 +123,7 @@ namespace ScreenTools.App
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex.Message);
+                        _logger.LogError($"Failed to capture screenshot. Exception: {ex}");
                     }
 
                     break;
@@ -175,7 +175,7 @@ namespace ScreenTools.App
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
+                _logger.LogError($"Failed to capture screenshot. Exception: {ex}");
             }
         }
         

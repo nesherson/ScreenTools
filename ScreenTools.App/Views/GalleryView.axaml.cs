@@ -97,7 +97,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to load images to the gallery. Exception: {ex}");
             
         }
         finally
@@ -143,7 +143,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to copy image to the clipboard. Exception: {ex}");
         }
     }
 
@@ -156,7 +156,7 @@ public partial class GalleryView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to show image in explorer. Exception: {ex}");
         }
     }
 

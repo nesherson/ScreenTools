@@ -61,7 +61,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to load gallery paths. Exception: {ex}");
         }
     }
 
@@ -121,7 +121,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to save gallery paths. Exception: {ex}");
         }
     }
 
@@ -150,7 +150,7 @@ public partial class OptionsView : NotifyPropertyChangedWindowBase
         catch (Exception ex)
         {
             _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
-            _logger.LogError(ex.Message);
+            _logger.LogError($"Failed to remove gallery path. Exception: {ex}");
         }
     }
 }
