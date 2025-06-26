@@ -120,7 +120,8 @@
                                             </Grid>
                                         </StackPanel>
                                         <Button.ContextMenu>
-                                            <ContextMenu 
+                                            <ContextMenu
+                                                Placement="BottomEdgeAlignedLeft"
                                                 Classes="ContextMenuShapes" 
                                                 ItemsSource="{Binding SubItems}"
                                                 IsVisible="{Binding IsContextMenuVisible}">
