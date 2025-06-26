@@ -4,14 +4,12 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -45,7 +43,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Border? _textDetectionArea;
     private DrawingState _drawingState;
     private Point _startPoint;
-    private Point? _controlToMovePosition;
+    private Point? _dragPosition;
     private bool _isDragging;
     private bool _isPopupOpen;
     private int _selectedLineStroke;
@@ -85,12 +83,12 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
         LineStrokes = [2, 5, 10, 15, 20];
-        SelectedLineStroke = LineStrokes[0];
-        LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff"];
-        SelectedLineColor = "#000000";
+        SelectedLineStroke = LineStrokes.First();
+        LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff", "#47d147"];
+        SelectedLineColor = LineColors.First();
         SelectPen();
         SetToolbarItems();
-        SetActiveItem(ToolbarItems[0]);
+        SetActiveItem(ToolbarItems.First());
     }
 
     public DrawingState DrawingState
@@ -557,18 +555,26 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private AvaloniaRectangle CreateRectangle()
     {
-        return new AvaloniaRectangle
+        var rectangle = new AvaloniaRectangle
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
-    }
 
+        AssignDraggingToShape(rectangle);
+        
+        return rectangle;
+    }
+    
     private AvaloniaEllipse CreateEllipse()
     {
-        return new AvaloniaEllipse
+        var ellipse = new AvaloniaEllipse
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
+        
+        AssignDraggingToShape(ellipse);
+        
+        return ellipse;
     }
     
     private void TextBlockOnPointerMoved(object? sender, PointerEventArgs e)
@@ -578,7 +584,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         if (textBlock is null)
             return;
 
-        if (_controlToMovePosition is null)
+        if (_dragPosition is null)
             return;
         
         var point = e.GetCurrentPoint(Canvas);
@@ -586,14 +592,14 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         if (point.Properties.IsLeftButtonPressed)
         {
             Canvas.SetPosition(textBlock,
-                point.Position.X - _controlToMovePosition.Value.X,
-                point.Position.Y - _controlToMovePosition.Value.Y);
+                point.Position.X - _dragPosition.Value.X,
+                point.Position.Y - _dragPosition.Value.Y);
         }
     }
 
     private void TextBlockOnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        _controlToMovePosition = null;
+        _dragPosition = null;
         _isDragging = false;
         IsPopupOpen = true;
         e.Handled = true;
@@ -612,7 +618,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         {
             IsPopupOpen = false;
             _isDragging = true;
-            _controlToMovePosition = e.GetPosition(textBlock);
+            _dragPosition = e.GetPosition(textBlock);
         }
         else if (point.Properties.IsRightButtonPressed)
         {
@@ -968,6 +974,54 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         ToolbarItems.FirstOrDefault(x => x.ShortcutKey == key)
             ?.OnClickCommand
             .Execute(null);
+    }
+    
+    private void AssignDraggingToShape(Shape shape)
+    {
+        shape.PointerPressed += ShapeOnPointerPressed;
+        shape.PointerReleased += ShapeOnPointerReleased;
+        shape.PointerMoved += ShapeOnPointerMoved;
+    }
+    
+    private void ShapeOnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Shape shape)
+            return;
+        
+        var point = e.GetCurrentPoint(Canvas);
+
+        if (point.Properties.IsLeftButtonPressed)
+        {
+            IsPopupOpen = false;
+            _isDragging = true; 
+            _dragPosition = e.GetPosition(shape);
+        }
+    }
+    
+    private void ShapeOnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _dragPosition = null;
+        _isDragging = false;
+        IsPopupOpen = true;
+        e.Handled = true;
+    }
+    
+    private void ShapeOnPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (sender is not Shape shape)
+            return;
+
+        if (_dragPosition is null)
+            return;
+        
+        var point = e.GetCurrentPoint(Canvas);
+
+        if (point.Properties.IsLeftButtonPressed)
+        {
+            Canvas.SetPosition(shape,
+                point.Position.X - _dragPosition.Value.X,
+                point.Position.Y - _dragPosition.Value.Y);
+        }
     }
 
     private void StrokeWidthComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
