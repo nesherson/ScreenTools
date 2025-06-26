@@ -797,6 +797,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 polyline.Stroke = SolidColorBrush.Parse(SelectedLineColor);
                 polyline.StrokeThickness = SelectedLineStroke;
                 break;
+            case AvaloniaEllipse ellipse:
+                ellipse.Fill = SolidColorBrush.Parse(SelectedLineColor);
+                break;
         }
     }
     
