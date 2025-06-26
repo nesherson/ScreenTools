@@ -178,7 +178,28 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
     }
-    
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) 
+            return;
+
+        var deltaY = Convert.ToInt32(e.Delta.Y);
+        var nextColorIndex = LineColors.IndexOf(SelectedLineColor) + deltaY;
+        
+        if (nextColorIndex < 0)
+        {
+            nextColorIndex = LineColors.Count - 1;
+        }
+        
+        if (nextColorIndex >= LineColors.Count)
+        {
+            nextColorIndex = 0;
+        }
+        
+        SelectedLineColor = LineColors[nextColorIndex];
+    }
+
     private async Task CaptureWindow()
     {
         try
