@@ -23,10 +23,11 @@ namespace ScreenTools.App
         private IServiceProvider _serviceProvider;
         private FilePathRepository _filePathRepository;
         private ILogger<App> _logger;
+        private DrawingOverlay? _drawingOverlay;
         
         private bool _isLeftMetaPressed;
         
-        private bool _isDrawingOverlayActive;
+        private bool _isDrawingOverlayHidden;
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -79,10 +80,18 @@ namespace ScreenTools.App
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                _isDrawingOverlayActive = true;
-                var overlay = ActivatorUtilities.CreateInstance<DrawingOverlay>(_serviceProvider);
-                overlay.Closed += (_, _) => _isDrawingOverlayActive = false; 
-                overlay.Show();
+                if (_drawingOverlay is not null && _isDrawingOverlayHidden)
+                {
+                    _drawingOverlay.Show();
+
+                    return;
+                }
+                
+                _drawingOverlay = ActivatorUtilities.CreateInstance<DrawingOverlay>(_serviceProvider);
+                _drawingOverlay.Activated += (_, _) => _isDrawingOverlayHidden = false; 
+                _drawingOverlay.Hidden += (_, _) => _isDrawingOverlayHidden = true;
+                
+                _drawingOverlay.Show();
             });
         }
 
@@ -129,8 +138,7 @@ namespace ScreenTools.App
                     break;
                 case 
                     KeyCode.VcBackQuote:
-                    if (!_isDrawingOverlayActive)
-                        ShowDrawingOverlay();
+                    ShowDrawingOverlay();
                     break;
             }
         }

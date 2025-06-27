@@ -11,6 +11,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
@@ -75,7 +76,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         DataContext = this;
         
-        Closed += OnClosed;
+        Hidden += OnHiddenSaveCanvas;
         Deactivated += OnDeactivated;
         Activated += OnActivated;
 
@@ -146,10 +147,20 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             _ => "Shape not selected"
         };
     
+    
     public ObservableCollection<DrawingToolbarItem> ToolbarItems
     {
         get => _toolbarItems;
         set => SetField(ref _toolbarItems, value);
+    }
+    
+    public event EventHandler? Hidden;
+    
+    public override void Hide()
+    {
+        base.Hide();
+        
+        OnHidden(EventArgs.Empty);
     }
     
     protected override async void OnKeyDown(KeyEventArgs e)
@@ -175,6 +186,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 await PasteLastItemFromClipboard();
                 break;
         }
+    }
+    
+    private void OnHidden(EventArgs e)
+    {
+        Dispatcher.UIThread.Invoke(() => Hidden?.Invoke(this, e));
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
@@ -545,13 +561,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     }
     
     private Line CreateLine()
-    {
-        return new AvaloniaLine
-        {
-            Stroke = SolidColorBrush.Parse(SelectedLineColor),
-            StrokeThickness = SelectedLineStroke
-        };
-    }
+         {
+             return new AvaloniaLine
+             {
+                 Stroke = SolidColorBrush.Parse(SelectedLineColor),
+                 StrokeThickness = SelectedLineStroke
+             };
+         }
     
     private AvaloniaRectangle CreateRectangle()
     {
@@ -864,7 +880,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         IsPopupOpen = false;
     }
 
-    private void OnClosed(object? sender, EventArgs e)
+    private void OnHiddenSaveCanvas(object? sender, EventArgs e)
     {
         CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
     }
@@ -873,7 +889,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         if (sender is not Canvas canvas)
             return;
-
+        
         var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
         
         CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
@@ -910,7 +926,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 Undo();
                 break;
             case "item-close":
-                Close();
+                Hide();
                 break;
             case "sub-item-line":
             case "sub-item-rectangle":
@@ -922,7 +938,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
     }
-
+    
     private void ChangeMonitor()
     {
         var currentScreen = Screens.ScreenFromWindow(this);
