@@ -11,6 +11,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
@@ -22,6 +23,7 @@ using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
 using AvaloniaEllipse = Avalonia.Controls.Shapes.Ellipse;
 using Colors = Avalonia.Media.Colors;
 using Notification = Avalonia.Controls.Notifications.Notification;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using Shape = Avalonia.Controls.Shapes.Shape;
 
 namespace ScreenTools.App;
