@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -11,7 +12,6 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
@@ -292,6 +292,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         polyline.Points.Add(_startPoint);
                         Canvas.Children.Add(polyline);
                         break;
+                    case MyCustomShape myCustomShape:
+                        myCustomShape.Points.Add(_startPoint);
+                        Canvas.Children.Add(myCustomShape);
+                        break;
                     case AvaloniaLine line:
                         line.StartPoint = _startPoint;
                         line.EndPoint = _startPoint;
@@ -415,6 +419,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         case Polyline:
                             _selectedShape = CreatePolyline();
                             break;
+                        case MyCustomShape:
+                            _selectedShape = CreateMyCustomShape();
+                            break;
                         case AvaloniaLine:
                             _selectedShape = CreateLine();
                             break;
@@ -484,6 +491,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             polyline.Points.Add(point.Position);
 
                             break;
+                        case MyCustomShape myCustomShape:
+                            myCustomShape.Points.Add(point.Position);
+
+                            break;
                         case AvaloniaLine line:
                             line.EndPoint = e.GetPosition(Canvas);
                             
@@ -538,6 +549,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Polyline CreatePolyline()
     {
         return new Polyline
+        {
+            Stroke = SolidColorBrush.Parse(SelectedLineColor),
+            StrokeThickness = SelectedLineStroke,
+            StrokeJoin = PenLineJoin.Miter,
+            StrokeLineCap = PenLineCap.Round
+        };
+    }
+    
+    private MyCustomShape CreateMyCustomShape()
+    {
+        return new MyCustomShape
         {
             Stroke = SolidColorBrush.Parse(SelectedLineColor),
             StrokeThickness = SelectedLineStroke,
@@ -818,7 +840,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private void SelectPen()
     {
-        _selectedShape = CreatePolyline();
+        // _selectedShape = CreatePolyline();
+        _selectedShape = CreateMyCustomShape();
         DrawingState = DrawingState.Draw;
     }
     

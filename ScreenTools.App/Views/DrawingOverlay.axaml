@@ -156,9 +156,16 @@
             PointerMoved="Canvas_OnPointerMoved"
             Background="Transparent"
             Initialized="Canvas_OnInitialized">
-            <local:MyCustomShape Width="100" Height="100"
-                                 Canvas.Left="50" Canvas.Top="50"
-                                 ShapeColor="Purple"/>
+            <!-- <local:MyCustomShape -->
+            <!--     Canvas.Left="50" -->
+            <!--     Canvas.Top="50" -->
+            <!--     Width="200" -->
+            <!--     Height="200" -->
+            <!--     ShapeColor="LightGreen" -->
+            <!--     Stroke="Black" -->
+            <!--     StrokeThickness="2" -->
+            <!--     Fill="Purple"> -->
+            <!-- </local:MyCustomShape> -->
         </Canvas>
     </Grid>
     </Border>
