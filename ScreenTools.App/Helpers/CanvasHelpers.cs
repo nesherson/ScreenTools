@@ -13,7 +13,7 @@ namespace ScreenTools.App;
 
 public static class CanvasHelpers
 {
-    public static bool IsInEraseArea(Control control, Border eraseArea)
+    public static bool IsInEraseArea(Control control, Rectangle eraseArea)
     {
         switch (control)
         {

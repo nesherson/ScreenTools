@@ -40,7 +40,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
-    private Border? _eraseArea;
+    private AvaloniaRectangle? _eraseArea;
     private Border? _textDetectionArea;
     private DrawingState _drawingState;
     private Point _startPoint;
@@ -276,10 +276,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case DrawingState.Erase:
                 if (_eraseArea is null)
                 {
-                    _eraseArea = new Border
+                    _eraseArea = new AvaloniaRectangle
                     {
-                        BorderThickness = new Thickness(1),
-                        BorderBrush = new SolidColorBrush(Colors.Red)
+                        StrokeThickness = 1,
+                        Stroke = new SolidColorBrush(Colors.Red)
                     };
                     
                     Canvas.AddToPosition(_eraseArea, _startPoint);

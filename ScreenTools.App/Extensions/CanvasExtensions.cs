@@ -60,7 +60,7 @@ public static class CanvasExtensions
         canvas.Children.Clear();
     }
 
-    public static void RemoveByArea(this Canvas canvas, Border area, DrawingHistoryService? drawingHistoryService = null)
+    public static void RemoveByArea(this Canvas canvas, Rectangle area, DrawingHistoryService? drawingHistoryService = null)
     {
         var controlsToRemove = canvas.Children
             .Where(x => CanvasHelpers.IsInEraseArea(x, area))
