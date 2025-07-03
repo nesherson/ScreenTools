@@ -41,7 +41,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
     private AvaloniaRectangle? _eraseArea;
-    private Border? _textDetectionArea;
+    private AvaloniaRectangle? _textDetectionArea;
     private DrawingState _drawingState;
     private Point _startPoint;
     private Point? _dragPosition;
@@ -289,10 +289,10 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case DrawingState.DetectText:
                 if (_textDetectionArea is null)
                 {
-                    _textDetectionArea = new Border
+                    _textDetectionArea = new AvaloniaRectangle
                     {
-                        BorderThickness = new Thickness(1),
-                        BorderBrush = new SolidColorBrush(Colors.Red)
+                        StrokeThickness = 1,
+                        Stroke = new SolidColorBrush(Colors.Purple)
                     };
                     
                     Canvas.AddToPosition(_textDetectionArea, _startPoint);
