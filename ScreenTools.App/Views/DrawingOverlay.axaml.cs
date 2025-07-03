@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -16,14 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
-using Path = System.IO.Path;
-using Point = Avalonia.Point;
-using AvaloniaLine = Avalonia.Controls.Shapes.Line;
-using AvaloniaRectangle = Avalonia.Controls.Shapes.Rectangle;
-using AvaloniaEllipse = Avalonia.Controls.Shapes.Ellipse;
-using Colors = Avalonia.Media.Colors;
-using Notification = Avalonia.Controls.Notifications.Notification;
-using Shape = Avalonia.Controls.Shapes.Shape;
+using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
 
@@ -40,8 +32,8 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private Thickness _windowBorderThickness;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
-    private AvaloniaRectangle? _eraseArea;
-    private AvaloniaRectangle? _textDetectionArea;
+    private Rectangle? _eraseArea;
+    private Rectangle? _textDetectionArea;
     private DrawingState _drawingState;
     private Point _startPoint;
     private Point? _dragPosition;
@@ -141,9 +133,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     public string SelectedShapeToolTip =>
         _selectedShape switch
         {
-            AvaloniaLine => "Line",
-            AvaloniaRectangle => "Rectangle",
-            AvaloniaEllipse => "Ellipse",
+            Line => "Line",
+            Rectangle => "Rectangle",
+            Ellipse => "Ellipse",
             _ => "Shape not selected"
         };
     
@@ -230,7 +222,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 Directory.CreateDirectory(filePath.Path);
             }
             
-            var imageSavePath = Path.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
+            var imageSavePath = SystemIOPath.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
             var bmp = _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y);
             
             bmp.Save(imageSavePath, ImageFormat.Png);
@@ -276,7 +268,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case DrawingState.Erase:
                 if (_eraseArea is null)
                 {
-                    _eraseArea = new AvaloniaRectangle
+                    _eraseArea = new Rectangle
                     {
                         StrokeThickness = 1,
                         Stroke = new SolidColorBrush(Colors.Red)
@@ -289,7 +281,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case DrawingState.DetectText:
                 if (_textDetectionArea is null)
                 {
-                    _textDetectionArea = new AvaloniaRectangle
+                    _textDetectionArea = new Rectangle
                     {
                         StrokeThickness = 1,
                         Stroke = new SolidColorBrush(Colors.Purple)
@@ -306,15 +298,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         polyline.Points.Add(_startPoint);
                         Canvas.Children.Add(polyline);
                         break;
-                    case AvaloniaLine line:
+                    case Line line:
                         line.StartPoint = _startPoint;
                         line.EndPoint = _startPoint;
                         Canvas.Children.Add(line);
                         break;
-                    case AvaloniaRectangle rectangle:
+                    case Rectangle rectangle:
                         Canvas.AddToPosition(rectangle, _startPoint);
                         break;
-                    case AvaloniaEllipse ellipse:
+                    case Ellipse ellipse:
                         Canvas.AddToPosition(ellipse, _startPoint);
                         break;
                 }
@@ -384,17 +376,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (width == 0 || height == 0)
                         throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
 
-                    var bmp = new Bitmap(Convert.ToInt32(width),
+                    var bmp = new System.Drawing.Bitmap(Convert.ToInt32(width),
                         Convert.ToInt32(height),
                         PixelFormat.Format32bppArgb);
 
-                    using (var g = Graphics.FromImage(bmp))
+                    using (var g = System.Drawing.Graphics.FromImage(bmp))
                         g.CopyFromScreen(Convert.ToInt32(startX),
                             Convert.ToInt32(startY),
                             0,
                             0,
                             bmp.Size,
-                            CopyPixelOperation.SourceCopy);
+                            System.Drawing.CopyPixelOperation.SourceCopy);
 
                     var ms = new MemoryStream();
                     
@@ -429,13 +421,13 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         case Polyline:
                             _selectedShape = CreatePolyline();
                             break;
-                        case AvaloniaLine:
+                        case Line:
                             _selectedShape = CreateLine();
                             break;
-                        case AvaloniaRectangle:
+                        case Rectangle:
                             _selectedShape = CreateRectangle();
                             break;
-                        case AvaloniaEllipse:
+                        case Ellipse:
                             _selectedShape = CreateEllipse();
                             break;
                     }
@@ -498,15 +490,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             polyline.Points.Add(point.Position);
 
                             break;
-                        case AvaloniaLine line:
+                        case Line line:
                             line.EndPoint = e.GetPosition(Canvas);
                             
                             break;
-                        case AvaloniaRectangle rectangle:
+                        case Rectangle rectangle:
                             Canvas.SetPositionAndSize(rectangle, point.Position, _startPoint);
                             
                             break;
-                        case AvaloniaEllipse ellipse:
+                        case Ellipse ellipse:
                             Canvas.SetPositionAndSize(ellipse, point.Position, _startPoint);
 
                             break;
@@ -562,16 +554,16 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     
     private Line CreateLine()
          {
-             return new AvaloniaLine
+             return new Line
              {
                  Stroke = SolidColorBrush.Parse(SelectedLineColor),
                  StrokeThickness = SelectedLineStroke
              };
          }
     
-    private AvaloniaRectangle CreateRectangle()
+    private Rectangle CreateRectangle()
     {
-        var rectangle = new AvaloniaRectangle
+        var rectangle = new Rectangle
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
@@ -581,9 +573,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         return rectangle;
     }
     
-    private AvaloniaEllipse CreateEllipse()
+    private Ellipse CreateEllipse()
     {
-        var ellipse = new AvaloniaEllipse
+        var ellipse = new Ellipse
         {
             Fill = SolidColorBrush.Parse(SelectedLineColor)
         };
@@ -808,18 +800,18 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     {
         switch (_selectedShape)
         {
-            case AvaloniaLine line:
+            case Line line:
                 line.Stroke = SolidColorBrush.Parse(SelectedLineColor);
                 line.StrokeThickness = SelectedLineStroke;
                 break;
-            case AvaloniaRectangle rectangle:
+            case Rectangle rectangle:
                 rectangle.Fill = SolidColorBrush.Parse(SelectedLineColor);
                 break;
             case Polyline polyline:
                 polyline.Stroke = SolidColorBrush.Parse(SelectedLineColor);
                 polyline.StrokeThickness = SelectedLineStroke;
                 break;
-            case AvaloniaEllipse ellipse:
+            case Ellipse ellipse:
                 ellipse.Fill = SolidColorBrush.Parse(SelectedLineColor);
                 break;
         }
@@ -841,17 +833,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
         switch (shapeName)
         {
             case "Line":
-                if (_selectedShape is not AvaloniaLine)
+                if (_selectedShape is not Line)
                     _selectedShape = CreateLine();
                 
                 break;
             case "Rectangle":
-                if (_selectedShape is not AvaloniaRectangle)
+                if (_selectedShape is not Rectangle)
                     _selectedShape = CreateRectangle();
                 
                 break;
             case "Ellipse":
-                if (_selectedShape is not AvaloniaEllipse)
+                if (_selectedShape is not Ellipse)
                     _selectedShape = CreateEllipse();
                 
                 break;
