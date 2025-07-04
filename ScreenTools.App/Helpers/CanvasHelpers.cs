@@ -8,11 +8,13 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Microsoft.Extensions.Logging;
+using ReactiveUI;
 
 namespace ScreenTools.App;
 
 public static class CanvasHelpers
 {
+    private const double POSITION_OFFSET = 10;
     public static bool IsInArea(Control control, Rectangle eraseArea)
     {
         switch (control)
@@ -223,8 +225,6 @@ public static class CanvasHelpers
         Point newPos, 
         Point selectedAreaPos)
     {
-       canvas.AddDebugDot(newPos);
-        
         switch (controlToCopy)
         {
             case Polyline polyline:
@@ -237,22 +237,34 @@ public static class CanvasHelpers
                     StrokeLineCap = polyline.StrokeLineCap
                 };
                 
-                var firstPoint = new Point(
-                    newPos.X + polyline.Points.First().X - selectedAreaPos.X,
-                    newPos.Y + polyline.Points.First().Y - selectedAreaPos.Y);
-                var lastPosition = new Point(firstPoint.X, firstPoint.Y);
-                
-                newPolyline.Points.Add(firstPoint);
-                
-                for (var i = 0; i < polyline.Points.Count - 1; i++)
+                var newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                var outOfCanvasWidthPoints = newPolylinePoints
+                    .Where(p => p.X > canvas.Bounds.Width)
+                    .ToList();
+
+                if (outOfCanvasWidthPoints.Count > 0)
                 {
-                    var diffX = polyline.Points[i + 1].X - polyline.Points[i].X;
-                    var diffY = polyline.Points[i + 1].Y - polyline.Points[i].Y;
-                    var tempPos = new Point(lastPosition.X + diffX, lastPosition.Y + diffY);
+                    var furthestPoint = outOfCanvasWidthPoints.MaxBy(p => p.X);
+                    var outOfCanvasDistance = new Point(furthestPoint.X - canvas.Bounds.Width, furthestPoint.Y);
                     
-                    newPolyline.Points.Add(tempPos);
-                    lastPosition = new Point(tempPos.X, tempPos.Y);
+                    newPos = new Point(newPos.X - outOfCanvasDistance.X - POSITION_OFFSET, newPos.Y);
+                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
                 }
+                
+                var outOfCanvasHeightPoints = newPolylinePoints
+                    .Where(p => p.Y > canvas.Bounds.Height)
+                    .ToList();
+
+                if (outOfCanvasHeightPoints.Count > 0)
+                {
+                    var furthestPoint = outOfCanvasHeightPoints.MaxBy(p => p.Y);
+                    var outOfCanvasDistance = new Point(furthestPoint.X, furthestPoint.Y - canvas.Bounds.Height);
+                    
+                    newPos = new Point(newPos.X, newPos.Y - outOfCanvasDistance.Y - POSITION_OFFSET);
+                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                }
+                
+                newPolyline.Points = newPolylinePoints;
                 
                 canvas.Children.Add(newPolyline);
                 
@@ -269,6 +281,16 @@ public static class CanvasHelpers
                 
                 var pos = new Point(newPos.X + rectangle.Bounds.X - selectedAreaPos.X,
                     newPos.Y + rectangle.Bounds.Y - selectedAreaPos.Y);
+
+                if (pos.X + newRectangle.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + newRectangle.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + newRectangle.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + newRectangle.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
                 
                 canvas.SetPosition(newRectangle, pos);
                 canvas.Children.Add(newRectangle);
@@ -286,6 +308,16 @@ public static class CanvasHelpers
                 
                 var pos = new Point(newPos.X + ellipse.Bounds.X - selectedAreaPos.X,
                     newPos.Y + ellipse.Bounds.Y - selectedAreaPos.Y);
+
+                if (pos.X + newEllipse.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + newEllipse.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + newEllipse.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + newEllipse.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
                 
                 canvas.SetPosition(newEllipse, pos);
                 canvas.Children.Add(newEllipse);
@@ -304,6 +336,18 @@ public static class CanvasHelpers
                         newPos.Y + line.EndPoint.Y - selectedAreaPos.Y)
                 };
 
+                if (newLine.EndPoint.X > canvas.Bounds.Width)
+                {
+                    newLine.StartPoint = new Point(newLine.StartPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.StartPoint.Y);
+                    newLine.EndPoint = new Point(newLine.EndPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.EndPoint.Y);
+                }
+                
+                if (newLine.EndPoint.Y > canvas.Bounds.Height)
+                {
+                    newLine.StartPoint = new Point(newLine.StartPoint.X, newLine.StartPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
+                    newLine.EndPoint = new Point(newLine.EndPoint.X, newLine.EndPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
+
                 canvas.Children.Add(newLine);
                 break;
             }
@@ -314,11 +358,21 @@ public static class CanvasHelpers
                     Text = textBlock.Text,
                     FontSize = textBlock.FontSize,
                     Foreground = textBlock.Foreground,
-                    Background = textBlock.Background
+                    Background = textBlock.Background,
                 };
                 
                 var pos = new Point(newPos.X + textBlock.Bounds.X - selectedAreaPos.X,
                     newPos.Y + textBlock.Bounds.Y - selectedAreaPos.Y);
+                
+                if (pos.X + textBlock.Bounds.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + textBlock.Bounds.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + textBlock.Bounds.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + textBlock.Bounds.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
                 
                 canvas.SetPosition(newTextBlock, pos);
                 canvas.Children.Add(newTextBlock);
@@ -326,5 +380,28 @@ public static class CanvasHelpers
                 break;
             }
         }
+    }
+    
+    private static List<Point> CalculateNewPolylinePoints(Polyline oldPolyline, Point selectedAreaPos, Point newPos)
+    {
+        var points = new List<Point>();
+        var currentPoint = new Point(
+            newPos.X + oldPolyline.Points.First().X - selectedAreaPos.X,
+            newPos.Y + oldPolyline.Points.First().Y - selectedAreaPos.Y);
+                
+        points.Add(currentPoint);
+                
+        for (var i = 0; i < oldPolyline.Points.Count - 1; i++)
+        {
+            var diffX = oldPolyline.Points[i + 1].X - oldPolyline.Points[i].X;
+            var diffY = oldPolyline.Points[i + 1].Y - oldPolyline.Points[i].Y;
+            var nextPoint = new Point(currentPoint.X + diffX, currentPoint.Y + diffY);
+                    
+            currentPoint = new Point(nextPoint.X, nextPoint.Y);
+                    
+            points.Add(nextPoint);
+        }
+
+        return points;
     }
 }
