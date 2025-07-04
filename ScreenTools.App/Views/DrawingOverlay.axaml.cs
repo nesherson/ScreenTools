@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing.Imaging;
@@ -45,6 +46,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private string _selectedLineColor;
     private Shape? _selectedShape;
     private ObservableCollection<DrawingToolbarItem> _toolbarItems;
+    private List<Control>? _itemsToCopy;
     
     public DrawingOverlay()
     {
@@ -260,6 +262,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         var point = e.GetCurrentPoint(Canvas);
 
+        if (point.Properties.IsRightButtonPressed)
+        {
+            HandleCanvasOnRightMouseButtonPressed(e.GetPosition(Canvas));
+        }
+
         if (!point.Properties.IsLeftButtonPressed)
             return;
         
@@ -358,7 +365,37 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 break;
         }
     }
-    
+
+    private void HandleCanvasOnRightMouseButtonPressed(Point position)
+    {
+        var flyout = new MenuFlyout();
+        var pasteMenuItem = new MenuItem
+        {
+            Header = "Paste",
+            IsEnabled = _itemsToCopy != null
+        };
+
+        pasteMenuItem.Click += (_, _) =>
+        {
+            if (_itemsToCopy?.Count > 0)
+            {
+                foreach (var itemToCopy in _itemsToCopy)
+                {
+                    CanvasHelpers.CopyControlToPosition(Canvas,
+                        itemToCopy,
+                        new Point(position.X, position.Y),
+                        new Point(_startPoint.X, _startPoint.Y));
+                }
+
+                _itemsToCopy = null;
+            }
+        };
+        
+        flyout.Items.Add(pasteMenuItem);
+        
+        flyout.ShowAt(Canvas, true);
+    }
+
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_isDragging)
@@ -454,14 +491,26 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         return;
                     
                     var items = Canvas.GetItemsByArea(_copyShapesArea);
-                    
-                    foreach (var item in items)
+
+                    if (items.Count == 0)
                     {
-                        CanvasHelpers.CopyControlToPosition(Canvas,
-                            item,
-                            new Point(Canvas.Bounds.Width * 0.8, Canvas.Bounds.Height * 0.2),
-                            new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y));
+                        Canvas.Children.Remove(_copyShapesArea);
+                        _copyShapesArea = null;
+
+                        return;
                     }
+                    
+                    _itemsToCopy = items;
+                    _startPoint = new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y);
+                    
+                    //
+                    // foreach (var item in items)
+                    // {
+                    //     CanvasHelpers.CopyControlToPosition(Canvas,
+                    //         item,
+                    //         new Point(Canvas.Bounds.Width * 0.8, Canvas.Bounds.Height * 0.2),
+                    //         new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y));
+                    // }
 
                     Canvas.Children.Remove(_copyShapesArea);
                     _copyShapesArea = null;
