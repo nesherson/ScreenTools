@@ -64,6 +64,7 @@ public static class CanvasExtensions
     {
         var controlsToRemove = canvas.Children
             .Where(x => CanvasHelpers.IsInEraseArea(x, area))
+            .Where(x => CanvasHelpers.IsInArea(x, area))
             .ToList();
 
         if (drawingHistoryService != null && controlsToRemove.Any())
