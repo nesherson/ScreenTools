@@ -217,4 +217,114 @@ public static class CanvasHelpers
             File.Delete(fileName);
         }
     }
+
+    public static void CopyControlToPosition(Canvas canvas, 
+        Control controlToCopy, 
+        Point newPos, 
+        Point selectedAreaPos)
+    {
+       canvas.AddDebugDot(newPos);
+        
+        switch (controlToCopy)
+        {
+            case Polyline polyline:
+            {
+                var newPolyline = new Polyline
+                {
+                    Stroke = polyline.Stroke,
+                    StrokeThickness = polyline.StrokeThickness,
+                    StrokeJoin = polyline.StrokeJoin,
+                    StrokeLineCap = polyline.StrokeLineCap
+                };
+                
+                var firstPoint = new Point(
+                    newPos.X + polyline.Points.First().X - selectedAreaPos.X,
+                    newPos.Y + polyline.Points.First().Y - selectedAreaPos.Y);
+                var lastPosition = new Point(firstPoint.X, firstPoint.Y);
+                
+                newPolyline.Points.Add(firstPoint);
+                
+                for (var i = 0; i < polyline.Points.Count - 1; i++)
+                {
+                    var diffX = polyline.Points[i + 1].X - polyline.Points[i].X;
+                    var diffY = polyline.Points[i + 1].Y - polyline.Points[i].Y;
+                    var tempPos = new Point(lastPosition.X + diffX, lastPosition.Y + diffY);
+                    
+                    newPolyline.Points.Add(tempPos);
+                    lastPosition = new Point(tempPos.X, tempPos.Y);
+                }
+                
+                canvas.Children.Add(newPolyline);
+                
+                break;
+            }
+            case Rectangle rectangle:
+            {
+                var newRectangle = new Rectangle
+                {
+                    Fill = rectangle.Fill,
+                    Width = rectangle.Width,
+                    Height = rectangle.Height
+                };
+                
+                var pos = new Point(newPos.X + rectangle.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + rectangle.Bounds.Y - selectedAreaPos.Y);
+                
+                canvas.SetPosition(newRectangle, pos);
+                canvas.Children.Add(newRectangle);
+                
+                break;
+            }
+            case Ellipse ellipse:
+            {
+                var newEllipse = new Ellipse
+                {
+                    Fill = ellipse.Fill,
+                    Width = ellipse.Width,
+                    Height = ellipse.Height
+                };
+                
+                var pos = new Point(newPos.X + ellipse.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + ellipse.Bounds.Y - selectedAreaPos.Y);
+                
+                canvas.SetPosition(newEllipse, pos);
+                canvas.Children.Add(newEllipse);
+                
+                break;
+            }
+            case Line line:
+            {
+                var newLine = new Line
+                {
+                    Stroke = line.Stroke,
+                    StrokeThickness = line.StrokeThickness,
+                    StartPoint = new Point(newPos.X + line.StartPoint.X - selectedAreaPos.X,
+                        newPos.Y + line.StartPoint.Y - selectedAreaPos.Y),
+                    EndPoint = new Point(newPos.X + line.EndPoint.X - selectedAreaPos.X,
+                        newPos.Y + line.EndPoint.Y - selectedAreaPos.Y)
+                };
+
+                canvas.Children.Add(newLine);
+                break;
+            }
+            case TextBlock textBlock:
+            {
+                var newTextBlock = new TextBlock
+                {
+                    Text = textBlock.Text,
+                    FontSize = textBlock.FontSize,
+                    Foreground = textBlock.Foreground,
+                    Background = textBlock.Background
+                };
+                
+                var pos = new Point(newPos.X + textBlock.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + textBlock.Bounds.Y - selectedAreaPos.Y);
+                
+                canvas.SetPosition(newTextBlock, pos);
+                canvas.Children.Add(newTextBlock);
+                
+                break;
+            }
+        }
+    }
 }
