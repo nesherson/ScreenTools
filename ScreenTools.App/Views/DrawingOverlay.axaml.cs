@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -17,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
+using Point = Avalonia.Point;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
@@ -386,8 +388,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                         new Point(position.X, position.Y),
                         new Point(_startPoint.X, _startPoint.Y));
                 }
-
-                _itemsToCopy = null;
             }
         };
         
@@ -429,17 +429,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (width == 0 || height == 0)
                         throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
 
-                    var bmp = new System.Drawing.Bitmap(Convert.ToInt32(width),
+                    var bmp = new Bitmap(Convert.ToInt32(width),
                         Convert.ToInt32(height),
                         PixelFormat.Format32bppArgb);
 
-                    using (var g = System.Drawing.Graphics.FromImage(bmp))
+                    using (var g = Graphics.FromImage(bmp))
                         g.CopyFromScreen(Convert.ToInt32(startX),
                             Convert.ToInt32(startY),
                             0,
                             0,
                             bmp.Size,
-                            System.Drawing.CopyPixelOperation.SourceCopy);
+                            CopyPixelOperation.SourceCopy);
 
                     var ms = new MemoryStream();
                     
@@ -502,15 +502,6 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     
                     _itemsToCopy = items;
                     _startPoint = new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y);
-                    
-                    //
-                    // foreach (var item in items)
-                    // {
-                    //     CanvasHelpers.CopyControlToPosition(Canvas,
-                    //         item,
-                    //         new Point(Canvas.Bounds.Width * 0.8, Canvas.Bounds.Height * 0.2),
-                    //         new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y));
-                    // }
 
                     Canvas.Children.Remove(_copyShapesArea);
                     _copyShapesArea = null;
