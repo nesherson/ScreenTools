@@ -41,6 +41,8 @@
     <AvaloniaResource Include="Assets\app-icon.ico" />
     <None Remove="Assets\detect.svg" />
     <AvaloniaResource Include="Assets\detect.svg" />
+    <None Remove="Assets\copy.svg" />
+    <AvaloniaResource Include="Assets\copy.svg" />
   </ItemGroup>
 
   <ItemGroup>

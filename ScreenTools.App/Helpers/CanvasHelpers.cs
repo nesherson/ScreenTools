@@ -8,12 +8,14 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Microsoft.Extensions.Logging;
+using ReactiveUI;
 
 namespace ScreenTools.App;
 
 public static class CanvasHelpers
 {
-    public static bool IsInEraseArea(Control control, Rectangle eraseArea)
+    private const double POSITION_OFFSET = 10;
+    public static bool IsInArea(Control control, Rectangle eraseArea)
     {
         switch (control)
         {
@@ -216,5 +218,190 @@ public static class CanvasHelpers
         {
             File.Delete(fileName);
         }
+    }
+
+    public static void CopyControlToPosition(Canvas canvas, 
+        Control controlToCopy, 
+        Point newPos, 
+        Point selectedAreaPos)
+    {
+        switch (controlToCopy)
+        {
+            case Polyline polyline:
+            {
+                var newPolyline = new Polyline
+                {
+                    Stroke = polyline.Stroke,
+                    StrokeThickness = polyline.StrokeThickness,
+                    StrokeJoin = polyline.StrokeJoin,
+                    StrokeLineCap = polyline.StrokeLineCap
+                };
+                
+                var newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                var outOfCanvasWidthPoints = newPolylinePoints
+                    .Where(p => p.X > canvas.Bounds.Width)
+                    .ToList();
+
+                if (outOfCanvasWidthPoints.Count > 0)
+                {
+                    var furthestPoint = outOfCanvasWidthPoints.MaxBy(p => p.X);
+                    var outOfCanvasDistance = new Point(furthestPoint.X - canvas.Bounds.Width, furthestPoint.Y);
+                    
+                    newPos = new Point(newPos.X - outOfCanvasDistance.X - POSITION_OFFSET, newPos.Y);
+                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                }
+                
+                var outOfCanvasHeightPoints = newPolylinePoints
+                    .Where(p => p.Y > canvas.Bounds.Height)
+                    .ToList();
+
+                if (outOfCanvasHeightPoints.Count > 0)
+                {
+                    var furthestPoint = outOfCanvasHeightPoints.MaxBy(p => p.Y);
+                    var outOfCanvasDistance = new Point(furthestPoint.X, furthestPoint.Y - canvas.Bounds.Height);
+                    
+                    newPos = new Point(newPos.X, newPos.Y - outOfCanvasDistance.Y - POSITION_OFFSET);
+                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                }
+                
+                newPolyline.Points = newPolylinePoints;
+                
+                canvas.Children.Add(newPolyline);
+                
+                break;
+            }
+            case Rectangle rectangle:
+            {
+                var newRectangle = new Rectangle
+                {
+                    Fill = rectangle.Fill,
+                    Width = rectangle.Width,
+                    Height = rectangle.Height
+                };
+                
+                var pos = new Point(newPos.X + rectangle.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + rectangle.Bounds.Y - selectedAreaPos.Y);
+
+                if (pos.X + newRectangle.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + newRectangle.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + newRectangle.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + newRectangle.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
+                
+                canvas.SetPosition(newRectangle, pos);
+                canvas.Children.Add(newRectangle);
+                
+                break;
+            }
+            case Ellipse ellipse:
+            {
+                var newEllipse = new Ellipse
+                {
+                    Fill = ellipse.Fill,
+                    Width = ellipse.Width,
+                    Height = ellipse.Height
+                };
+                
+                var pos = new Point(newPos.X + ellipse.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + ellipse.Bounds.Y - selectedAreaPos.Y);
+
+                if (pos.X + newEllipse.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + newEllipse.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + newEllipse.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + newEllipse.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
+                
+                canvas.SetPosition(newEllipse, pos);
+                canvas.Children.Add(newEllipse);
+                
+                break;
+            }
+            case Line line:
+            {
+                var newLine = new Line
+                {
+                    Stroke = line.Stroke,
+                    StrokeThickness = line.StrokeThickness,
+                    StartPoint = new Point(newPos.X + line.StartPoint.X - selectedAreaPos.X,
+                        newPos.Y + line.StartPoint.Y - selectedAreaPos.Y),
+                    EndPoint = new Point(newPos.X + line.EndPoint.X - selectedAreaPos.X,
+                        newPos.Y + line.EndPoint.Y - selectedAreaPos.Y)
+                };
+
+                if (newLine.EndPoint.X > canvas.Bounds.Width)
+                {
+                    newLine.StartPoint = new Point(newLine.StartPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.StartPoint.Y);
+                    newLine.EndPoint = new Point(newLine.EndPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.EndPoint.Y);
+                }
+                
+                if (newLine.EndPoint.Y > canvas.Bounds.Height)
+                {
+                    newLine.StartPoint = new Point(newLine.StartPoint.X, newLine.StartPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
+                    newLine.EndPoint = new Point(newLine.EndPoint.X, newLine.EndPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
+
+                canvas.Children.Add(newLine);
+                break;
+            }
+            case TextBlock textBlock:
+            {
+                var newTextBlock = new TextBlock
+                {
+                    Text = textBlock.Text,
+                    FontSize = textBlock.FontSize,
+                    Foreground = textBlock.Foreground,
+                    Background = textBlock.Background,
+                };
+                
+                var pos = new Point(newPos.X + textBlock.Bounds.X - selectedAreaPos.X,
+                    newPos.Y + textBlock.Bounds.Y - selectedAreaPos.Y);
+                
+                if (pos.X + textBlock.Bounds.Width > canvas.Bounds.Width)
+                {
+                    pos = new Point(pos.X - (pos.X + textBlock.Bounds.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                }
+                
+                if (pos.Y + textBlock.Bounds.Height > canvas.Bounds.Height)
+                {
+                    pos = new Point(pos.X, pos.Y - (pos.Y + textBlock.Bounds.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                }
+                
+                canvas.SetPosition(newTextBlock, pos);
+                canvas.Children.Add(newTextBlock);
+                
+                break;
+            }
+        }
+    }
+    
+    private static List<Point> CalculateNewPolylinePoints(Polyline oldPolyline, Point selectedAreaPos, Point newPos)
+    {
+        var points = new List<Point>();
+        var currentPoint = new Point(
+            newPos.X + oldPolyline.Points.First().X - selectedAreaPos.X,
+            newPos.Y + oldPolyline.Points.First().Y - selectedAreaPos.Y);
+                
+        points.Add(currentPoint);
+                
+        for (var i = 0; i < oldPolyline.Points.Count - 1; i++)
+        {
+            var diffX = oldPolyline.Points[i + 1].X - oldPolyline.Points[i].X;
+            var diffY = oldPolyline.Points[i + 1].Y - oldPolyline.Points[i].Y;
+            var nextPoint = new Point(currentPoint.X + diffX, currentPoint.Y + diffY);
+                    
+            currentPoint = new Point(nextPoint.X, nextPoint.Y);
+                    
+            points.Add(nextPoint);
+        }
+
+        return points;
     }
 }

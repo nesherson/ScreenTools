@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Media;
+using Point = Avalonia.Point;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace ScreenTools.App;
 
@@ -63,7 +66,7 @@ public static class CanvasExtensions
     public static void RemoveByArea(this Canvas canvas, Rectangle area, DrawingHistoryService? drawingHistoryService = null)
     {
         var controlsToRemove = canvas.Children
-            .Where(x => CanvasHelpers.IsInEraseArea(x, area))
+            .Where(x => CanvasHelpers.IsInArea(x, area))
             .ToList();
 
         if (drawingHistoryService != null && controlsToRemove.Any())
@@ -77,5 +80,28 @@ public static class CanvasExtensions
         }
 
         canvas.Children.Remove(area);
+    }
+    
+    public static List<Control> GetItemsByArea(this Canvas canvas, Rectangle area)
+    {
+        var items = canvas.Children
+            .Where(x => CanvasHelpers.IsInArea(x, area) && x != area)
+            .ToList();
+        
+        return items;
+    }
+
+    public static void AddDebugDot(this Canvas canvas, Point position)
+    {
+        var debugDot = new Rectangle
+        {
+            Fill = Brushes.Red,
+            Width = 3,
+            Height = 3
+        };
+        
+        canvas.SetPosition(debugDot, position);
+        canvas.Children.Remove(debugDot);
+        canvas.Children.Add(debugDot);
     }
 }

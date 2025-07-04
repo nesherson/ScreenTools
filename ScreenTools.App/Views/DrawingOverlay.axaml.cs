@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -15,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Infrastructure;
+using Point = Avalonia.Point;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
@@ -34,6 +38,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private ObservableCollection<string> _lineColors;
     private Rectangle? _eraseArea;
     private Rectangle? _textDetectionArea;
+    private Rectangle? _copyShapesArea;
     private DrawingState _drawingState;
     private Point _startPoint;
     private Point? _dragPosition;
@@ -43,6 +48,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
     private string _selectedLineColor;
     private Shape? _selectedShape;
     private ObservableCollection<DrawingToolbarItem> _toolbarItems;
+    private List<Control>? _itemsToCopy;
     
     public DrawingOverlay()
     {
@@ -165,6 +171,7 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case Key.D4:
             case Key.D5:
             case Key.D6:
+            case Key.D7:
             case Key.Escape:
             case Key.F11:
             case Key.S when e.KeyModifiers == KeyModifiers.Control:
@@ -257,6 +264,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
         var point = e.GetCurrentPoint(Canvas);
 
+        if (point.Properties.IsRightButtonPressed)
+        {
+            HandleCanvasOnRightMouseButtonPressed(e.GetPosition(Canvas));
+        }
+
         if (!point.Properties.IsLeftButtonPressed)
             return;
         
@@ -340,9 +352,50 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 };
                 flyout.ShowAt(Canvas, true);
                 break;
+            case DrawingState.CopyShapes:
+                if (_copyShapesArea is null)
+                {
+                    _copyShapesArea = new Rectangle()
+                    {
+                        Stroke = new SolidColorBrush(Colors.Blue),
+                        StrokeThickness = 1,
+                        Name = "CopyShapes"
+                    };
+                    
+                    Canvas.AddToPosition(_copyShapesArea, _startPoint);
+                }
+                break;
         }
     }
-    
+
+    private void HandleCanvasOnRightMouseButtonPressed(Point position)
+    {
+        var flyout = new MenuFlyout();
+        var pasteMenuItem = new MenuItem
+        {
+            Header = "Paste",
+            IsEnabled = _itemsToCopy != null
+        };
+
+        pasteMenuItem.Click += (_, _) =>
+        {
+            if (_itemsToCopy?.Count > 0)
+            {
+                foreach (var itemToCopy in _itemsToCopy)
+                {
+                    CanvasHelpers.CopyControlToPosition(Canvas,
+                        itemToCopy,
+                        new Point(position.X, position.Y),
+                        new Point(_startPoint.X, _startPoint.Y));
+                }
+            }
+        };
+        
+        flyout.Items.Add(pasteMenuItem);
+        
+        flyout.ShowAt(Canvas, true);
+    }
+
     private void Canvas_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_isDragging)
@@ -376,17 +429,17 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                     if (width == 0 || height == 0)
                         throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
 
-                    var bmp = new System.Drawing.Bitmap(Convert.ToInt32(width),
+                    var bmp = new Bitmap(Convert.ToInt32(width),
                         Convert.ToInt32(height),
                         PixelFormat.Format32bppArgb);
 
-                    using (var g = System.Drawing.Graphics.FromImage(bmp))
+                    using (var g = Graphics.FromImage(bmp))
                         g.CopyFromScreen(Convert.ToInt32(startX),
                             Convert.ToInt32(startY),
                             0,
                             0,
                             bmp.Size,
-                            System.Drawing.CopyPixelOperation.SourceCopy);
+                            CopyPixelOperation.SourceCopy);
 
                     var ms = new MemoryStream();
                     
@@ -432,6 +485,26 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                             break;
                     }
                     
+                    break;
+                case DrawingState.CopyShapes:
+                    if (_copyShapesArea is null)
+                        return;
+                    
+                    var items = Canvas.GetItemsByArea(_copyShapesArea);
+
+                    if (items.Count == 0)
+                    {
+                        Canvas.Children.Remove(_copyShapesArea);
+                        _copyShapesArea = null;
+
+                        return;
+                    }
+                    
+                    _itemsToCopy = items;
+                    _startPoint = new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y);
+
+                    Canvas.Children.Remove(_copyShapesArea);
+                    _copyShapesArea = null;
                     break;
             }
         }
@@ -503,7 +576,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
 
                             break;
                     }
-
+                    break;
+                }
+                case DrawingState.CopyShapes:
+                {
+                    if (_copyShapesArea is null)
+                        return;
+                    
+                    Canvas.SetPositionAndSize(_copyShapesArea, point.Position, _startPoint);
+                    
                     break;
                 }
             }
@@ -737,6 +818,15 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             },
             new DrawingToolbarItem
             {
+                Id = "item-copy-shapes",
+                ShortcutText = "7",
+                IconPath = "/Assets/copy.svg",
+                ToolTip = "Copy selected shapes",
+                ShortcutKey = Key.D7,
+                CanBeActive = true,
+            },
+            new DrawingToolbarItem
+            {
                 Id = "item-save",
                 ShortcutText = "C+S",
                 IconPath = "/Assets/save.svg",
@@ -911,6 +1001,9 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
             case "item-add-text":
                 SelectAddText();
                 break;
+            case "item-copy-shapes":
+                SelectedCopyShapes();
+                 break;
             case "item-save":
                 await CaptureWindow();
                 break;
@@ -929,6 +1022,11 @@ public partial class DrawingOverlay : NotifyPropertyChangedWindowBase
                 ChangeMonitor();
                 break;
         }
+    }
+
+    private void SelectedCopyShapes()
+    {
+        DrawingState = DrawingState.CopyShapes;
     }
     
     private void ChangeMonitor()

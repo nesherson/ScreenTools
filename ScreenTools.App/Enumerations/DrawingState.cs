@@ -5,5 +5,6 @@ public enum DrawingState
     Draw,
     Erase,
     DetectText,
-    AddText
+    AddText,
+    CopyShapes
 }
