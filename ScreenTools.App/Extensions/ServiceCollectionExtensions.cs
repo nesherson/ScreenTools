@@ -29,5 +29,7 @@ public static class ServiceCollectionExtensions
 
         collection.AddTransient<FilePathRepository>();
         collection.AddTransient<FilePathTypeRepository>();
+        
+        collection.AddTransient<DrawingOverlayViewModel>();
     }
 }

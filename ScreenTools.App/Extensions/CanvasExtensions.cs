@@ -63,34 +63,6 @@ public static class CanvasExtensions
         canvas.Children.Clear();
     }
 
-    public static void RemoveByArea(this Canvas canvas, Rectangle area, DrawingHistoryService? drawingHistoryService = null)
-    {
-        var controlsToRemove = canvas.Children
-            .Where(x => CanvasHelpers.IsInArea(x, area))
-            .ToList();
-
-        if (drawingHistoryService != null && controlsToRemove.Any())
-        {
-            drawingHistoryService.Save(controlsToRemove, DrawingAction.Delete);
-        }
-                    
-        foreach (var controlToRemove in controlsToRemove)
-        {
-            canvas.Children.Remove(controlToRemove);
-        }
-
-        canvas.Children.Remove(area);
-    }
-    
-    public static List<Control> GetItemsByArea(this Canvas canvas, Rectangle area)
-    {
-        var items = canvas.Children
-            .Where(x => CanvasHelpers.IsInArea(x, area) && x != area)
-            .ToList();
-        
-        return items;
-    }
-
     public static void AddDebugDot(this Canvas canvas, Point position)
     {
         var debugDot = new Rectangle

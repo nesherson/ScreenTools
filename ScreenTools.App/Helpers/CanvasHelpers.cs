@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -7,75 +9,80 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
+using DynamicData;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
 public static class CanvasHelpers
 {
     private const double POSITION_OFFSET = 10;
-    public static bool IsInArea(Control control, Rectangle eraseArea)
+    public static bool IsInArea(ShapeViewModelBase shape, RectangleViewModel eraseArea)
     {
-        switch (control)
+        switch (shape)
         {
-            case Polyline polyline:
-                return polyline.Points
-                    .Any(p => p.X >= eraseArea.Bounds.TopLeft.X &&
-                              p.X <= eraseArea.Bounds.TopRight.X &&
-                              p.X >= eraseArea.Bounds.BottomLeft.X &&
-                              p.X <= eraseArea.Bounds.BottomRight.X &&
-                              p.Y >= eraseArea.Bounds.TopLeft.Y &&
-                              p.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                              p.Y >= eraseArea.Bounds.TopRight.Y &&
-                              p.Y <= eraseArea.Bounds.BottomRight.Y);
-            case TextBlock textBlock:
-                return textBlock.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                       textBlock.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                       textBlock.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                       textBlock.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                       textBlock.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                       textBlock.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                       textBlock.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                       textBlock.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
-            case Line line:
-                return (line.StartPoint.X >= eraseArea.Bounds.TopLeft.X &&
-                        line.StartPoint.X <= eraseArea.Bounds.TopRight.X &&
-                        line.StartPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-                        line.StartPoint.X <= eraseArea.Bounds.BottomRight.X &&
-                        line.StartPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-                        line.StartPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                        line.StartPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-                        line.StartPoint.Y <= eraseArea.Bounds.BottomRight.Y) ||
-                       (line.EndPoint.X >= eraseArea.Bounds.TopLeft.X &&
-                        line.EndPoint.X <= eraseArea.Bounds.TopRight.X &&
-                        line.EndPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-                        line.EndPoint.X <= eraseArea.Bounds.BottomRight.X &&
-                        line.EndPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-                        line.EndPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                        line.EndPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-                        line.EndPoint.Y <= eraseArea.Bounds.BottomRight.Y);
-            case Rectangle rectangle:
-                return rectangle.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                              rectangle.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                              rectangle.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                              rectangle.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                              rectangle.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                              rectangle.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                              rectangle.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                              rectangle.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
-            case Ellipse ellipse:
-                return ellipse.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                       ellipse.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                       ellipse.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                       ellipse.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                       ellipse.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                       ellipse.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                       ellipse.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                       ellipse.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
+            case PolylineViewModel polylineViewModel:
+                return CheckOverlap(polylineViewModel, eraseArea);
+            // case TextBlockViewModel textBlockViewModel:
+            //     return CheckOverlap(textBlockViewModel, eraseArea);
+            // case Line line:
+            //     return (line.StartPoint.X >= eraseArea.Bounds.TopLeft.X &&
+            //             line.StartPoint.X <= eraseArea.Bounds.TopRight.X &&
+            //             line.StartPoint.X >= eraseArea.Bounds.BottomLeft.X &&
+            //             line.StartPoint.X <= eraseArea.Bounds.BottomRight.X &&
+            //             line.StartPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
+            //             line.StartPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
+            //             line.StartPoint.Y >= eraseArea.Bounds.TopRight.Y &&
+            //             line.StartPoint.Y <= eraseArea.Bounds.BottomRight.Y) ||
+            //            (line.EndPoint.X >= eraseArea.Bounds.TopLeft.X &&
+            //             line.EndPoint.X <= eraseArea.Bounds.TopRight.X &&
+            //             line.EndPoint.X >= eraseArea.Bounds.BottomLeft.X &&
+            //             line.EndPoint.X <= eraseArea.Bounds.BottomRight.X &&
+            //             line.EndPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
+            //             line.EndPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
+            //             line.EndPoint.Y >= eraseArea.Bounds.TopRight.Y &&
+            //             line.EndPoint.Y <= eraseArea.Bounds.BottomRight.Y);
+            case RectangleViewModel rectangleViewModel:
+                return CheckOverlap(rectangleViewModel, eraseArea);
+            // case Ellipse ellipse:
+            //     return ellipse.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
+            //            ellipse.Bounds.X <= eraseArea.Bounds.TopRight.X &&
+            //            ellipse.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
+            //            ellipse.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
+            //            ellipse.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
+            //            ellipse.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
+            //            ellipse.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
+            //            ellipse.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
         }
 
         return false;
+    }
+    
+    private static bool CheckOverlap(RectangleViewModel rectA, RectangleViewModel rectB)
+    {
+        var rectARight = rectA.X + rectA.Width;
+        var rectABottom = rectA.Y + rectA.Height;
+        var rectBRight = rectB.X + rectB.Width;
+        var rectBBottom = rectB.Y + rectB.Height;
+        
+        if (rectARight < rectB.X || 
+            rectA.X > rectBRight || 
+            rectABottom < rectB.Y ||  
+            rectA.Y > rectBBottom)   
+        {
+            return false; 
+        }
+        
+        return true;
+    }
+    
+    private static bool CheckOverlap(PolylineViewModel polyline, RectangleViewModel rectangle)
+    {
+            return polyline.Points
+                .Any(p => p.X >= rectangle.X && p.X <= rectangle.X + rectangle.Width &&
+                          p.Y >= rectangle.Y && p.Y <= rectangle.Y + rectangle.Height);
     }
     
     public static void SaveCanvasToFile(Canvas canvas, string fileName)
@@ -403,5 +410,39 @@ public static class CanvasHelpers
         }
 
         return points;
+    }
+
+    public static void SetRectanglePosAndSize(RectangleViewModel rectangleViewModel, Point currentPos, Point startPos)
+    {
+        rectangleViewModel.X = Math.Min(currentPos.X, startPos.X);
+        rectangleViewModel.Y = Math.Min(currentPos.Y, startPos.Y);
+
+        rectangleViewModel.Width = Math.Max(currentPos.X, startPos.X) - rectangleViewModel.X;
+        rectangleViewModel.Height = Math.Max(currentPos.Y, startPos.Y) - rectangleViewModel.Y;
+    }
+    
+    public static void SetRectanglePosAndSize(EllipseViewModel ellipseViewModel, Point currentPos, Point startPos)
+    {
+        ellipseViewModel.X = Math.Min(currentPos.X, startPos.X);
+        ellipseViewModel.Y = Math.Min(currentPos.Y, startPos.Y);
+
+        ellipseViewModel.Width = Math.Max(currentPos.X, startPos.X) - ellipseViewModel.X;
+        ellipseViewModel.Height = Math.Max(currentPos.Y, startPos.Y) - ellipseViewModel.Y;
+    }
+    
+    public static void RemoveByArea(ObservableCollection<ShapeViewModelBase> shapes, 
+        RectangleViewModel area, 
+        DrawingHistoryService? drawingHistoryService = null)
+    {
+        var shapesToRemove = shapes
+            .Where(x => IsInArea(x, area) && x != area)
+            .ToList();
+
+        // if (drawingHistoryService != null && controlsToRemove.Any())
+        // {
+        //     drawingHistoryService.Save(controlsToRemove, DrawingAction.Delete);
+        // }
+        
+        shapes.RemoveMany(shapesToRemove);
     }
 }
