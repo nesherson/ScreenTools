@@ -34,8 +34,6 @@ public partial class DrawingOverlay : Window, IViewFor<DrawingOverlayViewModel>
         
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
-        ViewModel.WindowWidth = Width;
-        ViewModel.WindowHeight = Height;
         
         Hidden += (_, _) => ViewModel.OnWindowHidden();
         Deactivated += (_, _) => ViewModel.OnWindowDeactivated();

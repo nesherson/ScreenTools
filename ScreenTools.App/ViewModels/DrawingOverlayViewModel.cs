@@ -30,8 +30,6 @@ public class DrawingOverlayViewModel : ObservableObject
     private readonly IConfiguration _configuration;
 
     private Thickness _windowBorderThickness;
-    private double _windowWidth;
-    private double _windowHeight;
     private bool _isPopupOpen;
     private Point _startPoint;
     private DrawingState _drawingState;
@@ -75,22 +73,6 @@ public class DrawingOverlayViewModel : ObservableObject
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
         SelectPen();
-        
-        Shapes.Add(new RectangleViewModel { X = 50, Y = 50, Width = 50, Height = 50, Fill = "Red" });
-        Shapes.Add(new RectangleViewModel { X = 100, Y = 100, Width = 50, Height = 50, Fill = "Blue" });
-        Shapes.Add(new RectangleViewModel { X = 150, Y = 150, Width = 50, Height = 50, Fill = "Green" });
-    }
-    
-    public double WindowWidth
-    {
-        get => _windowWidth;
-        set => SetProperty(ref _windowWidth, value);
-    }
-    
-    public double WindowHeight
-    {
-        get => _windowHeight;
-        set => SetProperty(ref _windowHeight, value);
     }
     
     public bool IsPopupOpen
