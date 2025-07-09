@@ -70,6 +70,7 @@
     <PackageReference Include="SharpHook" Version="5.3.8" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
+    <PackageReference Include="Xaml.Behaviors" Version="11.3.0.12" />
   </ItemGroup>
 
   <ItemGroup>
