@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Reactive.Disposables;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using ReactiveMarbles.ObservableEvents;
@@ -10,17 +13,16 @@ using WeakReferenceMessenger = CommunityToolkit.Mvvm.Messaging.WeakReferenceMess
 
 namespace ScreenTools.App;
 
-public partial class DrawingOverlay : Window, IViewFor<DrawingOverlayViewModel>
+public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 {
-    public static readonly StyledProperty<DrawingOverlayViewModel?> ViewModelProperty =
-        AvaloniaProperty.Register<DrawingOverlay, DrawingOverlayViewModel?>(nameof(ViewModel));
-    
     public DrawingOverlay(DrawingOverlayViewModel viewModel)
     {
         InitializeComponent();
 
         ViewModel = viewModel;
-        
+
+        viewModel.Window = this;
+
         this.WhenAnyValue(x => x.ViewModel).BindTo(this, x => x.DataContext);
         this.WhenActivated(disposables =>
         {
@@ -28,70 +30,85 @@ public partial class DrawingOverlay : Window, IViewFor<DrawingOverlayViewModel>
                 .KeyDown
                 .Subscribe(async e => await ViewModel.HandleOnKeyDown(e))
                 .DisposeWith(disposables);
+            this.Events()
+                .PointerWheelChanged
+                .Subscribe(e => ViewModel.HandleOnPointerWheelChanged(e))
+                .DisposeWith(disposables);
         });
-        
-        WeakReferenceMessenger.Default.Register<HideWindowMessage>(this, HandleHideWindowMessage);
+
+        WeakReferenceMessenger.Default
+            .Register<DrawingOverlayMessage>(this, HandleDrawingOverlayMessage);
+        WeakReferenceMessenger.Default
+            .Register<PasteLastItemFromClipboardMessage>(this, HandlePasteLastItemFromClipboard);
         
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
-        
+
         Hidden += (_, _) => ViewModel.OnWindowHidden();
         Deactivated += (_, _) => ViewModel.OnWindowDeactivated();
         Activated += (_, _) => ViewModel.OnWindowActivated();
     }
-    
-    public DrawingOverlayViewModel? ViewModel
-    {
-        get => GetValue(ViewModelProperty);
-        set => SetValue(ViewModelProperty, value);
-    }
-    
-    object? IViewFor.ViewModel
-    {
-        get => ViewModel;
-        set => ViewModel = (DrawingOverlayViewModel?)value;
-    }
-    
+
     public event EventHandler? Hidden;
-    
+
     public override void Hide()
     {
         base.Hide();
-        
+
         OnHidden(EventArgs.Empty);
     }
-    
+
     private void OnHidden(EventArgs e)
     {
         Dispatcher.UIThread.Invoke(() => Hidden?.Invoke(this, e));
     }
 
-    private void HandleHideWindowMessage(object recipient, HideWindowMessage message)
+    private async void HandleDrawingOverlayMessage(object recipient, DrawingOverlayMessage message)
     {
-        if (message.Value)
-            Hide();
+        switch (message.Value)
+        {
+            case DrawingOverlayMessageType.HideWindow:
+                Hide();
+                break;
+
+            case DrawingOverlayMessageType.ChangeMonitor:
+                ChangeMonitor();
+                break;
+        }
+    }
+    
+    private void HandlePasteLastItemFromClipboard(object recipient, PasteLastItemFromClipboardMessage message)
+    {
+        var clipboard = GetTopLevel(this)?.Clipboard;
+
+        if (clipboard is null)
+        {
+            message.Reply(string.Empty);
+            
+            return;
+        }
+        
+        message.Reply(clipboard.GetTextAsync());
     }
 
-    // protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
-    // {
-    //     if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) 
-    //         return;
-    //
-    //     var deltaY = Convert.ToInt32(e.Delta.Y);
-    //     var nextColorIndex = LineColors.IndexOf(SelectedLineColor) + deltaY;
-    //     
-    //     if (nextColorIndex < 0)
-    //     {
-    //         nextColorIndex = LineColors.Count - 1;
-    //     }
-    //     
-    //     if (nextColorIndex >= LineColors.Count)
-    //     {
-    //         nextColorIndex = 0;
-    //     }
-    //     
-    //     SelectedLineColor = LineColors[nextColorIndex];
-    // }
+    private void ChangeMonitor()
+    {
+        var currentScreen = Screens.ScreenFromWindow(this);
+        var targetScreen = Screens.All.FirstOrDefault(x => x != currentScreen);
+
+        if (targetScreen is null)
+        {
+            return;
+        }
+        
+        var rect = targetScreen.WorkingArea;
+
+        WindowState = WindowState.Normal;
+        Position = new PixelPoint(rect.X, rect.Y);
+        Width = rect.Width;
+        Height = rect.Height;
+        WindowState = WindowState.Maximized;
+    }
 
     // private void OnNotificationClick(string pathToImage)
     // {
@@ -125,75 +142,8 @@ public partial class DrawingOverlay : Window, IViewFor<DrawingOverlayViewModel>
     //     
     //     flyout.ShowAt(Canvas, true);
     // }
-    //
-    
-    //
-    //
-    // private async Task PasteLastItemFromClipboard()
-    // {
-    //     var clipboard = GetTopLevel(this)?.Clipboard;
-    //
-    //     if (clipboard is null)
-    //         return;
-    //             
-    //     var text = await clipboard.GetTextAsync();
-    //             
-    //     if (string.IsNullOrEmpty(text))
-    //         return;
-    //             
-    //     AddTextToCanvas(text);
-    // }
-    //
     
 
-    // private void TextBlockOnPointerMoved(object? sender, PointerEventArgs e)
-    // {
-    //     var textBlock = sender as TextBlock;
-    //     
-    //     if (textBlock is null)
-    //         return;
-    //
-    //     if (_dragPosition is null)
-    //         return;
-    //     
-    //     var point = e.GetCurrentPoint(Canvas);
-    //
-    //     if (point.Properties.IsLeftButtonPressed)
-    //     {
-    //         Canvas.SetPosition(textBlock,
-    //             point.Position.X - _dragPosition.Value.X,
-    //             point.Position.Y - _dragPosition.Value.Y);
-    //     }
-    // }
-    //
-    // private void TextBlockOnPointerReleased(object? sender, PointerReleasedEventArgs e)
-    // {
-    //     _dragPosition = null;
-    //     _isDragging = false;
-    //     IsPopupOpen = true;
-    //     e.Handled = true;
-    // }
-    //
-    // private void TextBlockOnPointerPressed(object? sender, PointerPressedEventArgs e)
-    // {
-    //     var textBlock = sender as TextBlock;
-    //
-    //     if (textBlock is null)
-    //         return;
-    //     
-    //     var point = e.GetCurrentPoint(Canvas);
-    //
-    //     if (point.Properties.IsLeftButtonPressed)
-    //     {
-    //         IsPopupOpen = false;
-    //         _isDragging = true;
-    //         _dragPosition = e.GetPosition(textBlock);
-    //     }
-    //     else if (point.Properties.IsRightButtonPressed)
-    //     {
-    //         HandleTextBlockRightBtnPressed(textBlock);
-    //     }
-    // }
     //
     // private void HandleTextBlockRightBtnPressed(TextBlock textBlock)
     // {
@@ -217,62 +167,13 @@ public partial class DrawingOverlay : Window, IViewFor<DrawingOverlayViewModel>
 
         if (ViewModel is null)
             return;
-        
+
         canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
         canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
         canvas.PointerReleased += (_, pe) => ViewModel.OnPointerReleased(pe.GetCurrentPoint(Canvas));
-    //     
-    //     var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
-    //     
-    //     CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
+        //     
+        //     var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
+        //     
+        //     CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
     }
-    
-    // private void AssignDraggingToShape(Shape shape)
-    // {
-    //     shape.PointerPressed += ShapeOnPointerPressed;
-    //     shape.PointerReleased += ShapeOnPointerReleased;
-    //     shape.PointerMoved += ShapeOnPointerMoved;
-    // }
-    //
-    // private void ShapeOnPointerPressed(object? sender, PointerPressedEventArgs e)
-    // {
-    //     if (sender is not Shape shape)
-    //         return;
-    //     
-    //     var point = e.GetCurrentPoint(Canvas);
-    //
-    //     if (point.Properties.IsLeftButtonPressed)
-    //     {
-    //         IsPopupOpen = false;
-    //         _isDragging = true; 
-    //         _dragPosition = e.GetPosition(shape);
-    //     }
-    // }
-    //
-    // private void ShapeOnPointerReleased(object? sender, PointerReleasedEventArgs e)
-    // {
-    //     _dragPosition = null;
-    //     _isDragging = false;
-    //     IsPopupOpen = true;
-    //     e.Handled = true;
-    // }
-    //
-    // private void ShapeOnPointerMoved(object? sender, PointerEventArgs e)
-    // {
-    //     if (sender is not Shape shape)
-    //         return;
-    //
-    //     if (_dragPosition is null)
-    //         return;
-    //     
-    //     var point = e.GetCurrentPoint(Canvas);
-    //
-    //     if (point.Properties.IsLeftButtonPressed)
-    //     {
-    //         Canvas.SetPosition(shape,
-    //             point.Position.X - _dragPosition.Value.X,
-    //             point.Position.Y - _dragPosition.Value.Y);
-    //     }
-    // }
-    //
 }

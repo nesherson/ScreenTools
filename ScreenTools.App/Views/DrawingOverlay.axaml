@@ -6,6 +6,7 @@
         x:Class="ScreenTools.App.DrawingOverlay"
         xmlns:local="clr-namespace:ScreenTools.App"
         xmlns:core="clr-namespace:ScreenTools.Core;assembly=ScreenTools.Core"
+        xmlns:behaviours="http://schemas.microsoft.com/winfx/2006/xaml"
         WindowState="Maximized"
         TransparencyLevelHint="Transparent" 
         Background="Transparent"
@@ -172,7 +173,13 @@
                             Height="{Binding Height}"
                             Width="{Binding Width}"
                             Stroke="{Binding Stroke}"
-                            StrokeThickness="{Binding StrokeThickness}"/>
+                            StrokeThickness="{Binding StrokeThickness}">
+                            <Interaction.Behaviors>
+                                <EventTriggerBehavior EventName="PointerPressed">
+                                    <InvokeCommandAction Command="{Binding PointerPressedCommand}" />
+                                </EventTriggerBehavior>
+                            </Interaction.Behaviors>
+                        </Rectangle>
                     </DataTemplate>
                     <DataTemplate x:Key="EllipseViewModel" DataType="{x:Type core:EllipseViewModel}">
                         <Ellipse
@@ -200,7 +207,8 @@
                             Text="{Binding Text}"
                             FontSize="{Binding FontSize}"
                             Foreground="{Binding Foreground}"
-                            Background="{Binding Background}"/>
+                            Background="{Binding Background}">
+                        </TextBlock>
                     </DataTemplate>
                 </local:ShapeTemplateSelector>
                 

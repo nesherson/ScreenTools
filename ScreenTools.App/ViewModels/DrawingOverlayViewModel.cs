@@ -4,8 +4,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
 using ScreenTools.Infrastructure;
+using Action = System.Action;
 using Point = Avalonia.Point;
 
 namespace ScreenTools.App;
@@ -43,8 +46,8 @@ public class DrawingOverlayViewModel : ObservableObject
     private RectangleViewModel? _eraseArea;
     private RectangleViewModel? _textDetectionArea;
     // private Rectangle? _copyShapesArea;
-    // private Point? _dragPosition;
-    // private bool _isDragging;
+    private Point? _dragPosition;
+    private bool _isDragging;
     // private List<Control>? _itemsToCopy;
 
     
@@ -62,7 +65,7 @@ public class DrawingOverlayViewModel : ObservableObject
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
         _configuration = configuration;
-
+        
         SetToolbarItems();
         _drawingShape = DrawingShape.Rectangle;
         LineStrokes = [2, 5, 10, 15, 20];
@@ -109,7 +112,6 @@ public class DrawingOverlayViewModel : ObservableObject
         set => SetProperty(ref _selectedLineStroke, value);
     }
     
-    
     public ObservableCollection<string> LineColors
     {
         get => _lineColors;
@@ -138,6 +140,7 @@ public class DrawingOverlayViewModel : ObservableObject
         // };
     
     public ObservableCollection<ShapeViewModelBase> Shapes { get; } = new();
+    public Window? Window { get; set; }
     
     public async Task HandleOnKeyDown(KeyEventArgs e)
     {
@@ -160,15 +163,36 @@ public class DrawingOverlayViewModel : ObservableObject
                 IsPopupOpen = !IsPopupOpen;
                 break;
             case Key.V when e.KeyModifiers == KeyModifiers.Control:
-                // await PasteLastItemFromClipboard();
+                await PasteLastItemFromClipboard();
                 break;
         }
     }
     
+    public void HandleOnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) 
+            return;
+    
+        var deltaY = Convert.ToInt32(e.Delta.Y);
+        var nextColorIndex = LineColors.IndexOf(SelectedLineColor) + deltaY;
+        
+        if (nextColorIndex < 0)
+        {
+            nextColorIndex = LineColors.Count - 1;
+        }
+        
+        if (nextColorIndex >= LineColors.Count)
+        {
+            nextColorIndex = 0;
+        }
+        
+        SelectedLineColor = LineColors[nextColorIndex];
+    }
+    
     public void OnPointerPressed(PointerPoint pointerPoint)
     {
-        // if (_isDragging)
-        //     return;
+        if (_isDragging)
+            return;
     
         // if (pointerPoint.Properties.IsRightButtonPressed)
         // {
@@ -246,6 +270,11 @@ public class DrawingOverlayViewModel : ObservableObject
                             Fill = SelectedLineColor,
                         };
                         
+                        _currentShape.PointerPressedCommand = ReactiveCommand.Create(() =>
+                        {
+                            Shapes.Add(new RectangleViewModel { X = _startPoint.X + 100, Y = _startPoint.Y + 100, Width = 50, Height = 50, Fill = "Red" });
+                        });
+                        
                         Shapes.Add(_currentShape);
                         break;
                     case DrawingShape.Ellipse:
@@ -309,8 +338,8 @@ public class DrawingOverlayViewModel : ObservableObject
     
     public void OnPointerMoved(PointerPoint pointerPoint)
     {
-        // if (_isDragging)
-        //     return;
+        if (_isDragging)
+            return;
         
         if (pointerPoint.Properties.IsLeftButtonPressed)
         {
@@ -380,8 +409,8 @@ public class DrawingOverlayViewModel : ObservableObject
      
     public void OnPointerReleased(PointerPoint pointerPoint)
     {
-        // if (_isDragging)
-        //     return;
+        if (_isDragging)
+            return;
         
         try
         {
@@ -489,6 +518,37 @@ public class DrawingOverlayViewModel : ObservableObject
         }
     }
     
+    private void TextBlockOnPointerPressed()
+    {
+        IsPopupOpen = false;
+        _isDragging = true;
+        // _dragPosition = pointerPoint.Position;
+        // else if (point.Properties.IsRightButtonPressed)
+        // {
+        //     HandleTextBlockRightBtnPressed(textBlock);
+        // }
+    }
+    
+    
+    private void TextBlockOnPointerMoved(TextBlockViewModel textBlockViewModel, PointerPoint pointerPoint)
+    {
+        if (_dragPosition is null)
+            return;
+        
+        if (pointerPoint.Properties.IsLeftButtonPressed)
+        {
+            textBlockViewModel.X = pointerPoint.Position.X - _dragPosition.Value.X;
+            textBlockViewModel.Y = pointerPoint.Position.Y - _dragPosition.Value.Y;
+        }
+    }
+    
+    private void TextBlockOnPointerReleased()
+    {
+        _dragPosition = null;
+        _isDragging = false;
+        IsPopupOpen = true;
+    }
+    
     public void OnWindowActivated()
     {
         IsPopupOpen = true;
@@ -506,7 +566,19 @@ public class DrawingOverlayViewModel : ObservableObject
 
     private void HideWindow()
     {
-        WeakReferenceMessenger.Default.Send(new HideWindowMessage(true));
+        WeakReferenceMessenger.Default
+            .Send(new DrawingOverlayMessage(DrawingOverlayMessageType.HideWindow));
+    }
+
+    private async Task PasteLastItemFromClipboard()
+    {
+        var text = await WeakReferenceMessenger.Default
+            .Send(new PasteLastItemFromClipboardMessage());
+        
+        if (string.IsNullOrEmpty(text))
+            return;
+        
+        AddTextToCanvas(text);
     }
     
     private void TriggerToolbarItemOnClick(Key key)
@@ -785,24 +857,9 @@ public class DrawingOverlayViewModel : ObservableObject
     
     private void ChangeMonitor()
     {
-        // var currentScreen = Screens.ScreenFromWindow(this);
-        // var targetScreen = Screens.All.FirstOrDefault(x => x != currentScreen);
-        //
-        // if (targetScreen is null)
-        //     return;
-        //
-        // Canvas.ClearAll();
-        //
-        // var rect = targetScreen.WorkingArea;
-        //
-        // WindowState = WindowState.Normal;
-        // CanResize = true;
-        // Position = new PixelPoint(rect.X, rect.Y);
-        // Width = rect.Width;
-        // Height = rect.Height;
-        //
-        // WindowState = WindowState.Maximized;
-        // CanResize = false;
+        WeakReferenceMessenger.Default
+            .Send(new DrawingOverlayMessage(DrawingOverlayMessageType.ChangeMonitor));
+        Shapes.Clear();
     }
     
     private void SetActiveItem(DrawingToolbarItem toolbarItem)
@@ -836,16 +893,11 @@ public class DrawingOverlayViewModel : ObservableObject
             FontSize = 20,
             Foreground = "Black",
             Background = "Transparent",
-            X = WindowWidth * 0.85,
-            Y = WindowHeight * 0.15,
+            X = _startPoint.X,
+            Y = _startPoint.Y
         };
         
         Shapes.Add(textBlock);
-        
-        // textBlock.PointerPressed += TextBlockOnPointerPressed;
-        // textBlock.PointerReleased += TextBlockOnPointerReleased;
-        // textBlock.PointerMoved += TextBlockOnPointerMoved;
-        
-        // Canvas.AddToPosition(textBlock, Width * 0.85, Height * 0.15);
     }
 }
+
