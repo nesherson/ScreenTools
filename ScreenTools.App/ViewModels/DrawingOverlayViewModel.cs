@@ -4,10 +4,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,12 +19,12 @@ using ScreenTools.Core;
 using ScreenTools.Infrastructure;
 using Action = System.Action;
 using Point = Avalonia.Point;
+using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
 
 public class DrawingOverlayViewModel : ObservableObject
 {
-    // private readonly WindowNotificationManager _notificationManager;
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly FilePathRepository _filePathRepository;
@@ -58,7 +58,6 @@ public class DrawingOverlayViewModel : ObservableObject
         ILogger<DrawingOverlay> logger,
         IConfiguration configuration)
     {
-        // _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
@@ -140,7 +139,6 @@ public class DrawingOverlayViewModel : ObservableObject
         // };
     
     public ObservableCollection<ShapeViewModelBase> Shapes { get; } = new();
-    public Window? Window { get; set; }
     
     public async Task HandleOnKeyDown(KeyEventArgs e)
     {
@@ -827,20 +825,21 @@ public class DrawingOverlayViewModel : ObservableObject
                 Directory.CreateDirectory(filePath.Path);
             }
             
-            // var imageSavePath = SystemIOPath.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
-            // var bmp = _screenCaptureService.CaptureVisibleWindow(Width, Height, Position.X, Position.Y);
-            //
-            // bmp.Save(imageSavePath, ImageFormat.Png);
-            // _notificationManager.Show(new Notification(
-            //     "Screenshot captured!",
-            //     "Click to show image in explorer.",
-            //     NotificationType.Success,
-            //     null,
-            //     () => OnNotificationClick(imageSavePath)));
+            var windowSize = await WeakReferenceMessenger.Default
+                .Send(new GetWindowSizeMessage());
+            var imageSavePath = SystemIOPath.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
+            var bmp = _screenCaptureService.CaptureVisibleWindow(windowSize.Width, windowSize.Height, 0, 0);
+            
+            bmp.Save(imageSavePath, ImageFormat.Png);
+            ShowWindowNotifcation(
+                "Screenshot captured!",
+                "Click to show image in explorer.",
+                NotificationType.Success,
+                () => OnNotificationClick(imageSavePath));
         }
         catch (Exception ex)
         {
-            // _notificationManager.Show(new Notification("Error", "An error occured.", NotificationType.Error));
+            ShowWindowNotifcation("Error", "An error occured.", NotificationType.Error);
             _logger.LogError($"Failed to capture window. Exception: {ex}");
         }
         finally
@@ -898,6 +897,18 @@ public class DrawingOverlayViewModel : ObservableObject
         };
         
         Shapes.Add(textBlock);
+    }
+    
+    private void OnNotificationClick(string pathToImage)
+    {
+        ProcessHelpers.ShowFileInFileExplorer(pathToImage);
+    }
+
+    public void ShowWindowNotifcation(string title, string message, NotificationType type, Action? onClick = null)
+    {
+        WeakReferenceMessenger.Default
+            .Send(new ShowWindowNotificationMessage(
+                new Notification(title, message, type, null, onClick)));
     }
 }
 

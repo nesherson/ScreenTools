@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Disposables;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
@@ -15,14 +15,15 @@ namespace ScreenTools.App;
 
 public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 {
+    private readonly WindowNotificationManager _notificationManager;
+
     public DrawingOverlay(DrawingOverlayViewModel viewModel)
     {
         InitializeComponent();
 
         ViewModel = viewModel;
-
-        viewModel.Window = this;
-
+        _notificationManager = new WindowNotificationManager(GetTopLevel(this));
+        
         this.WhenAnyValue(x => x.ViewModel).BindTo(this, x => x.DataContext);
         this.WhenActivated(disposables =>
         {
@@ -39,7 +40,11 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         WeakReferenceMessenger.Default
             .Register<DrawingOverlayMessage>(this, HandleDrawingOverlayMessage);
         WeakReferenceMessenger.Default
-            .Register<PasteLastItemFromClipboardMessage>(this, HandlePasteLastItemFromClipboard);
+            .Register<PasteLastItemFromClipboardMessage>(this, HandlePasteLastItemFromClipboardMessage);
+        WeakReferenceMessenger.Default
+            .Register<GetWindowSizeMessage>(this, HandleGetWindowSizeMessage);
+        WeakReferenceMessenger.Default
+            .Register<ShowWindowNotificationMessage>(this, HandleShowWindowNotificationMessage);
         
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
@@ -48,7 +53,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Deactivated += (_, _) => ViewModel.OnWindowDeactivated();
         Activated += (_, _) => ViewModel.OnWindowActivated();
     }
-
+    
     public event EventHandler? Hidden;
 
     public override void Hide()
@@ -63,7 +68,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Dispatcher.UIThread.Invoke(() => Hidden?.Invoke(this, e));
     }
 
-    private async void HandleDrawingOverlayMessage(object recipient, DrawingOverlayMessage message)
+    private void HandleDrawingOverlayMessage(object recipient, DrawingOverlayMessage message)
     {
         switch (message.Value)
         {
@@ -77,7 +82,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         }
     }
     
-    private void HandlePasteLastItemFromClipboard(object recipient, PasteLastItemFromClipboardMessage message)
+    private void HandlePasteLastItemFromClipboardMessage(object recipient, PasteLastItemFromClipboardMessage message)
     {
         var clipboard = GetTopLevel(this)?.Clipboard;
 
@@ -89,6 +94,20 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         }
         
         message.Reply(clipboard.GetTextAsync());
+    }
+
+    public void HandleGetWindowSizeMessage(object recipient, GetWindowSizeMessage message)
+    {
+        message.Reply(new WindowSize
+        {
+            Width = Width,
+            Height = Height
+        });
+    }
+    
+    private void HandleShowWindowNotificationMessage(object recipient, ShowWindowNotificationMessage message)
+    {
+        _notificationManager.Show(message.Notification);
     }
 
     private void ChangeMonitor()
@@ -109,11 +128,6 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Height = rect.Height;
         WindowState = WindowState.Maximized;
     }
-
-    // private void OnNotificationClick(string pathToImage)
-    // {
-    //     ProcessHelpers.ShowFileInFileExplorer(pathToImage);
-    // }
 
     // private void HandleCanvasOnRightMouseButtonPressed(Point position)
     // {
