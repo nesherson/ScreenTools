@@ -3,7 +3,6 @@
 public enum DrawingShape
 {
     Rectangle,
-    Ellipse,
     Polyline,
     Line
 }

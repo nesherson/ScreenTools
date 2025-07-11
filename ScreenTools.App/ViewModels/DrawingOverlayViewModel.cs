@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -45,10 +47,10 @@ public class DrawingOverlayViewModel : ObservableObject
     private ObservableCollection<DrawingToolbarItem> _toolbarItems;
     private RectangleViewModel? _eraseArea;
     private RectangleViewModel? _textDetectionArea;
-    // private Rectangle? _copyShapesArea;
+    private RectangleViewModel? _copyShapesArea;
     private Point? _dragPosition;
     private bool _isDragging;
-    // private List<Control>? _itemsToCopy;
+    private List<ShapeViewModelBase>? _itemsToCopy;
 
     
     public DrawingOverlayViewModel(TextDetectionService textDetectionService,
@@ -134,7 +136,6 @@ public class DrawingOverlayViewModel : ObservableObject
         // {
         //     Line => "Line",
         //     Rectangle => "Rectangle",
-        //     Ellipse => "Ellipse",
         //     _ => "Shape not selected"
         // };
     
@@ -186,16 +187,46 @@ public class DrawingOverlayViewModel : ObservableObject
         
         SelectedLineColor = LineColors[nextColorIndex];
     }
+
+    public void HandleOnRightMouseButtonPressed(PointerPoint pointerPoint)
+    {
+        WeakReferenceMessenger.Default
+            .Send(new ShowContextMenuMessage(
+                new ShowContextMenuMessageContent
+                {
+                    IsPasteEnabled = _itemsToCopy?.Count > 0,
+                    OnPaste = async () => await OnPaste(pointerPoint)
+                }));
+    }
+
+    private async Task OnPaste(PointerPoint pointerPoint)
+    {
+        if (_itemsToCopy != null && _itemsToCopy.Count == 0)
+            return;
+            
+        foreach (var itemToCopy in _itemsToCopy)
+        {
+            var windowSize = await WeakReferenceMessenger.Default
+                .Send(new GetWindowSizeMessage());
+            
+            CanvasHelpers.CopyShapeToPosition(Shapes,
+                itemToCopy,
+                new Point(pointerPoint.Position.X, pointerPoint.Position.Y),
+                new Point(_startPoint.X, _startPoint.Y),
+                windowSize.Width,
+                windowSize.Height);
+        }
+    }
     
     public void OnPointerPressed(PointerPoint pointerPoint)
     {
         if (_isDragging)
             return;
     
-        // if (pointerPoint.Properties.IsRightButtonPressed)
-        // {
-        //     HandleCanvasOnRightMouseButtonPressed(e.GetPosition(Canvas));
-        // }
+        if (pointerPoint.Properties.IsRightButtonPressed)
+        {
+            HandleOnRightMouseButtonPressed(pointerPoint);
+        }
         
         if (!pointerPoint.Properties.IsLeftButtonPressed)
             return;
@@ -268,23 +299,6 @@ public class DrawingOverlayViewModel : ObservableObject
                             Fill = SelectedLineColor,
                         };
                         
-                        _currentShape.PointerPressedCommand = ReactiveCommand.Create(() =>
-                        {
-                            Shapes.Add(new RectangleViewModel { X = _startPoint.X + 100, Y = _startPoint.Y + 100, Width = 50, Height = 50, Fill = "Red" });
-                        });
-                        
-                        Shapes.Add(_currentShape);
-                        break;
-                    case DrawingShape.Ellipse:
-                        _currentShape = new EllipseViewModel
-                        {
-                            X = _startPoint.X,
-                            Y = _startPoint.Y,
-                            Height = 1,
-                            Width = 1,
-                            Fill = SelectedLineColor,
-                        };
-                        
                         Shapes.Add(_currentShape);
                         break;
                 }
@@ -319,17 +333,20 @@ public class DrawingOverlayViewModel : ObservableObject
                 // flyout.ShowAt(Canvas, true);
                 break;
             case DrawingState.CopyShapes:
-                // if (_copyShapesArea is null)
-                // {
-                //     _copyShapesArea = new Rectangle()
-                //     {
-                //         Stroke = new SolidColorBrush(Colors.Blue),
-                //         StrokeThickness = 1,
-                //         Name = "CopyShapes"
-                //     };
-                //     
-                //     Canvas.AddToPosition(_copyShapesArea, _startPoint);
-                // }
+                if (_copyShapesArea is null)
+                {
+                    _copyShapesArea = new RectangleViewModel
+                    {
+                        X = _startPoint.X,
+                        Y = _startPoint.Y,
+                        Height = 1,
+                        Width = 1,
+                        Stroke = "Purple",
+                        StrokeThickness = 1
+                    };
+                    
+                    Shapes.Add(_copyShapesArea);
+                }
                 break;
         }
     }
@@ -383,29 +400,23 @@ public class DrawingOverlayViewModel : ObservableObject
 
                             CanvasHelpers.SetRectanglePosAndSize(rectangleViewModel, pointerPoint.Position, _startPoint);
                             break;
-                        case DrawingShape.Ellipse:
-                            if (_currentShape is not EllipseViewModel ellipseViewModel)
-                                return;
-                            
-                            CanvasHelpers.SetRectanglePosAndSize(ellipseViewModel, pointerPoint.Position, _startPoint);
-                            break;
                     }
                     break;
                 }
-                // case DrawingState.CopyShapes:
-                // {
-                //     if (_copyShapesArea is null)
-                //         return;
-                //     
-                //     Canvas.SetPositionAndSize(_copyShapesArea, point.Position, _startPoint);
-                //     
-                //     break;
-                // }
+                case DrawingState.CopyShapes:
+                {
+                    if (_copyShapesArea is null)
+                        return;
+                    
+                    CanvasHelpers.SetRectanglePosAndSize(_copyShapesArea, pointerPoint.Position, _startPoint);
+                    
+                    break;
+                }
             }
         }
     }
      
-    public void OnPointerReleased(PointerPoint pointerPoint)
+    public void OnPointerReleased()
     {
         if (_isDragging)
             return;
@@ -476,26 +487,29 @@ public class DrawingOverlayViewModel : ObservableObject
                     _currentShape = null;
                     
                     break;
-                // case DrawingState.CopyShapes:
-                //     if (_copyShapesArea is null)
-                //         return;
-                //     
-                //     var items = Canvas.GetItemsByArea(_copyShapesArea);
-                //
-                //     if (items.Count == 0)
-                //     {
-                //         Canvas.Children.Remove(_copyShapesArea);
-                //         _copyShapesArea = null;
-                //
-                //         return;
-                //     }
-                //     
-                //     _itemsToCopy = items;
-                //     _startPoint = new Point(_copyShapesArea.Bounds.X, _copyShapesArea.Bounds.Y);
-                //
-                //     Canvas.Children.Remove(_copyShapesArea);
-                //     _copyShapesArea = null;
-                //     break;
+                case DrawingState.CopyShapes:
+                    if (_copyShapesArea is null)
+                        return;
+                    
+                    var itemsToCopy = Shapes
+                        .Where(x => CanvasHelpers.IsInArea(x, _copyShapesArea) && x != _copyShapesArea)
+                        .ToList();
+                
+                    if (itemsToCopy.Count == 0)
+                    {
+                        Shapes.Remove(_copyShapesArea);
+                        _copyShapesArea = null;
+                
+                        return;
+                    }
+                    
+                    _itemsToCopy = itemsToCopy;
+                    _startPoint = new Point(_copyShapesArea.X, _copyShapesArea.Y);
+                
+                    Shapes.Remove(_copyShapesArea);
+                    _copyShapesArea = null;
+                    
+                    break;
             }
         }
         catch (ArgumentException argEx) when (argEx.Message.Contains("TextDetectError"))
@@ -629,16 +643,7 @@ public class DrawingOverlayViewModel : ObservableObject
                             IconPath = "/Assets/square.svg",
                             CanBeActive = true,
                             OnClickCommand = ReactiveCommand.Create(() => SelectItem("sub-item-rectangle", () => SelectShape("Rectangle")))
-                        },
-                        new DrawingToolbarItem
-                        {
-                            Id = "sub-item-ellipse",
-                            Name = "Ellipse",
-                            Text = "Ellipse",
-                            IconPath = "/Assets/circle.svg",
-                            CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectItem("sub-item-ellipse", () => SelectShape("Ellipse")))
-                        },
+                        }
                     ]
             },
             new DrawingToolbarItem
@@ -773,10 +778,6 @@ public class DrawingOverlayViewModel : ObservableObject
                 break;
             case "Rectangle":
                 _drawingShape = DrawingShape.Rectangle;
-                
-                break;
-            case "Ellipse":
-                _drawingShape = DrawingShape.Ellipse;
                 
                 break;
         }

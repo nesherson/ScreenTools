@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Controls.Shapes;
+using Avalonia.Media;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
@@ -16,7 +19,7 @@ namespace ScreenTools.App;
 public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 {
     private readonly WindowNotificationManager _notificationManager;
-
+    
     public DrawingOverlay(DrawingOverlayViewModel viewModel)
     {
         InitializeComponent();
@@ -45,6 +48,8 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             .Register<GetWindowSizeMessage>(this, HandleGetWindowSizeMessage);
         WeakReferenceMessenger.Default
             .Register<ShowWindowNotificationMessage>(this, HandleShowWindowNotificationMessage);
+        WeakReferenceMessenger.Default
+            .Register<ShowContextMenuMessage>(this, HandleShowContextMenuMessage);
         
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
@@ -61,6 +66,23 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         base.Hide();
 
         OnHidden(EventArgs.Empty);
+    }
+    
+    private void Canvas_OnInitialized(object? sender, EventArgs e)
+    {
+        if (sender is not Canvas canvas)
+            return;
+
+        if (ViewModel is null)
+            return;
+        
+        canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
+        canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
+        canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
+        //     
+        //     var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
+        //     
+        //     CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
     }
 
     private void OnHidden(EventArgs e)
@@ -96,7 +118,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         message.Reply(clipboard.GetTextAsync());
     }
 
-    public void HandleGetWindowSizeMessage(object recipient, GetWindowSizeMessage message)
+    private void HandleGetWindowSizeMessage(object recipient, GetWindowSizeMessage message)
     {
         message.Reply(new WindowSize
         {
@@ -128,36 +150,25 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Height = rect.Height;
         WindowState = WindowState.Maximized;
     }
-
-    // private void HandleCanvasOnRightMouseButtonPressed(Point position)
-    // {
-    //     var flyout = new MenuFlyout();
-    //     var pasteMenuItem = new MenuItem
-    //     {
-    //         Header = "Paste",
-    //         IsEnabled = _itemsToCopy != null
-    //     };
-    //
-    //     pasteMenuItem.Click += (_, _) =>
-    //     {
-    //         if (_itemsToCopy?.Count > 0)
-    //         {
-    //             foreach (var itemToCopy in _itemsToCopy)
-    //             {
-    //                 CanvasHelpers.CopyControlToPosition(Canvas,
-    //                     itemToCopy,
-    //                     new Point(position.X, position.Y),
-    //                     new Point(_startPoint.X, _startPoint.Y));
-    //             }
-    //         }
-    //     };
-    //     
-    //     flyout.Items.Add(pasteMenuItem);
-    //     
-    //     flyout.ShowAt(Canvas, true);
-    // }
     
-
+    private void HandleShowContextMenuMessage(object recipient, ShowContextMenuMessage message)
+    {
+        var flyout = new MenuFlyout();
+        var pasteMenuItem = new MenuItem
+        {
+            Header = "Paste",
+            IsEnabled = message.Content.IsPasteEnabled
+        };
+        
+        pasteMenuItem.Click += (_, _) =>
+        {
+            message.Content.OnPaste?.Invoke();
+        };
+        
+        flyout.Items.Add(pasteMenuItem);
+        flyout.ShowAt(this, true);
+    }
+    
     //
     // private void HandleTextBlockRightBtnPressed(TextBlock textBlock)
     // {
@@ -174,20 +185,4 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
     //     flyout.ShowAt(textBlock);
     // }
     //
-    private void Canvas_OnInitialized(object? sender, EventArgs e)
-    {
-        if (sender is not Canvas canvas)
-            return;
-
-        if (ViewModel is null)
-            return;
-
-        canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
-        canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
-        canvas.PointerReleased += (_, pe) => ViewModel.OnPointerReleased(pe.GetCurrentPoint(Canvas));
-        //     
-        //     var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
-        //     
-        //     CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
-    }
 }

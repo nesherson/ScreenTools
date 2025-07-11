@@ -181,12 +181,6 @@
                             </Interaction.Behaviors>
                         </Rectangle>
                     </DataTemplate>
-                    <DataTemplate x:Key="EllipseViewModel" DataType="{x:Type core:EllipseViewModel}">
-                        <Ellipse
-                            Fill="{Binding Fill}"
-                            Height="{Binding Height}"
-                            Width="{Binding Width}"/>
-                    </DataTemplate>
                     <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">
                         <Line 
                             Stroke="{Binding Stroke}"
