@@ -23,25 +23,8 @@ public static class CanvasHelpers
         {
             case PolylineViewModel polylineViewModel:
                 return CheckOverlap(polylineViewModel, eraseArea);
-            // case TextBlockViewModel textBlockViewModel:
-            //     return CheckOverlap(textBlockViewModel, eraseArea);
-            // case Line line:
-            //     return (line.StartPoint.X >= eraseArea.Bounds.TopLeft.X &&
-            //             line.StartPoint.X <= eraseArea.Bounds.TopRight.X &&
-            //             line.StartPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-            //             line.StartPoint.X <= eraseArea.Bounds.BottomRight.X &&
-            //             line.StartPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-            //             line.StartPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-            //             line.StartPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-            //             line.StartPoint.Y <= eraseArea.Bounds.BottomRight.Y) ||
-            //            (line.EndPoint.X >= eraseArea.Bounds.TopLeft.X &&
-            //             line.EndPoint.X <= eraseArea.Bounds.TopRight.X &&
-            //             line.EndPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-            //             line.EndPoint.X <= eraseArea.Bounds.BottomRight.X &&
-            //             line.EndPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-            //             line.EndPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-            //             line.EndPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-            //             line.EndPoint.Y <= eraseArea.Bounds.BottomRight.Y);
+            case LineViewModel lineViewModel:
+                return CheckOverlap(lineViewModel, eraseArea);
             case RectangleViewModel rectangleViewModel:
                 return CheckOverlap(rectangleViewModel, eraseArea);
         }   
@@ -72,6 +55,42 @@ public static class CanvasHelpers
             return polyline.Points
                 .Any(p => p.X >= rectangle.X && p.X <= rectangle.X + rectangle.Width &&
                           p.Y >= rectangle.Y && p.Y <= rectangle.Y + rectangle.Height);
+    }
+    
+    private static bool CheckOverlap(LineViewModel line, RectangleViewModel rectangle)
+    {
+        var rect = new Rect(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+        
+        if (rect.Contains(line.StartPoint) || rect.Contains(line.EndPoint))
+        {
+            return true;
+        }
+
+        return LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.TopLeft, rect.TopRight) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.TopRight, rect.BottomRight) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.BottomRight, rect.BottomLeft) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.BottomLeft, rect.TopLeft);
+    }
+    
+    private static bool LineSegmentIntersects(Point lineOneStartPoint, Point lineOneEndPoint, Point lineTwoStartPoint, Point lineTwoEndPoint)
+    {
+        var denominator = (lineTwoEndPoint.Y - lineTwoStartPoint.Y) *
+            (lineOneEndPoint.X - lineOneStartPoint.X) - (lineTwoEndPoint.X - lineTwoStartPoint.X) 
+            * (lineOneEndPoint.Y - lineOneStartPoint.Y);
+        
+        if (Math.Abs(denominator) < 1e-9)
+        {
+            return false;
+        }
+
+        var t = ((lineTwoEndPoint.X - lineTwoStartPoint.X)
+            * (lineOneStartPoint.Y - lineTwoStartPoint.Y) - (lineTwoEndPoint.Y - lineTwoStartPoint.Y)
+            * (lineOneStartPoint.X - lineTwoStartPoint.X)) / denominator;
+        var u = -((lineOneEndPoint.X - lineOneStartPoint.X) * 
+            (lineOneStartPoint.Y - lineTwoStartPoint.Y) - (lineOneEndPoint.Y - lineOneStartPoint.Y) 
+            * (lineOneStartPoint.X - lineTwoStartPoint.X)) / denominator;
+        
+        return t is >= 0 and <= 1 && u is >= 0 and <= 1;
     }
     
     public static void SaveCanvasToFile(Canvas canvas, string fileName)
