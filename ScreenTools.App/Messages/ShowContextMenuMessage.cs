@@ -16,5 +16,5 @@ public class ShowContextMenuMessage : RequestMessage<ShowContextMenuMessageConte
         Content = content;
     }
     
-    public ShowContextMenuMessageContent Content { get; set; }
+    public ShowContextMenuMessageContent Content { get; }
 }

@@ -5,14 +5,11 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Media;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -25,7 +22,7 @@ using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
 
-public class DrawingOverlayViewModel : ObservableObject
+public class DrawingOverlayViewModel : ViewModelBase
 {
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
@@ -44,7 +41,7 @@ public class DrawingOverlayViewModel : ObservableObject
     private ObservableCollection<string> _lineColors;
     private int _selectedLineStroke;
     private string _selectedLineColor;
-    private ObservableCollection<DrawingToolbarItem> _toolbarItems;
+    private ObservableCollection<DrawingToolbarItemViewModel> _toolbarItems;
     private RectangleViewModel? _eraseArea;
     private RectangleViewModel? _textDetectionArea;
     private RectangleViewModel? _copyShapesArea;
@@ -96,7 +93,7 @@ public class DrawingOverlayViewModel : ObservableObject
         get => _drawingState;
         set
         {
-            // OnPropertyChanged(nameof(SelectedShapeToolTip));
+            OnPropertyChanged(nameof(SelectedShapeToolTip));
             SetProperty(ref _drawingState, value);
         }
     }
@@ -125,19 +122,19 @@ public class DrawingOverlayViewModel : ObservableObject
         set => SetProperty(ref _selectedLineColor, value);
     }
     
-    public ObservableCollection<DrawingToolbarItem> ToolbarItems
+    public ObservableCollection<DrawingToolbarItemViewModel> ToolbarItems
     {
         get => _toolbarItems;
         set => SetProperty(ref _toolbarItems, value);
     }
 
-    public string SelectedShapeToolTip => "Test";
-        // _selectedShape switch
-        // {
-        //     Line => "Line",
-        //     Rectangle => "Rectangle",
-        //     _ => "Shape not selected"
-        // };
+    public string SelectedShapeToolTip => 
+        _drawingShape switch
+        {
+            DrawingShape.Line => "Line",
+            DrawingShape.Rectangle => "Rectangle",
+            _ => "Shape not selected"
+        };
     
     public ObservableCollection<ShapeViewModelBase> Shapes { get; } = new();
     
@@ -306,31 +303,30 @@ public class DrawingOverlayViewModel : ObservableObject
                 break;
             }
             case DrawingState.AddText:
-                // var flyout = new Flyout();
-                // var textBox = new TextBox
-                // {
-                //     Width = 220,
-                //     Height = 30
-                // };
-                // flyout.Content = textBox;
-                // flyout.Closed += (_, _) =>
-                // {
-                //     var text = textBox.Text;
-                //
-                //     if (string.IsNullOrEmpty(text))
-                //         return;
-                //
-                //     var textBlock = new TextBlock
-                //     {
-                //         Text = text,
-                //         FontSize = 20,
-                //         Foreground = new SolidColorBrush(Colors.Black),
-                //         Background = new SolidColorBrush(Colors.Transparent)
-                //     };
-                //
-                //     Canvas.AddToPosition(textBlock, _startPoint.X, _startPoint.Y);
-                // };
-                // flyout.ShowAt(Canvas, true);
+                var content = new ShowTextBoxMessageContent
+                {
+                    OnClosed = text =>
+                    {
+                        if (string.IsNullOrEmpty(text)) 
+                            return;
+                    
+                        var textBlockViewModel = new TextBlockViewModel
+                        {
+                            Text = text,
+                            FontSize = 20,
+                            Foreground = "Black",
+                            Background = "Transparent",
+                            X = _startPoint.X,
+                            Y = _startPoint.Y
+                        };
+                        
+                        Shapes.Add(textBlockViewModel);
+                    }
+                };
+
+
+                WeakReferenceMessenger.Default
+                    .Send(new ShowTextBoxMessage(content));
                 break;
             case DrawingState.CopyShapes:
                 if (_copyShapesArea is null)
@@ -471,9 +467,9 @@ public class DrawingOverlayViewModel : ObservableObject
                 
                     if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
                     {
-                        // _notificationManager.Show(new Notification(
-                        //     "Information",
-                        //     "Text could not be detected."));
+                        ShowWindowNotifcation("Information",
+                            "Text could not be detected",
+                            NotificationType.Information);
                         
                         return;
                     }
@@ -514,11 +510,10 @@ public class DrawingOverlayViewModel : ObservableObject
         }
         catch (ArgumentException argEx) when (argEx.Message.Contains("TextDetectError"))
         {
-            // _notificationManager.Show(new Notification(
-            //     "Error",
-            //     argEx.Message[argEx.Message.IndexOf(':').. + 2],
-            //     NotificationType.Error));
-            // _logger.LogError($"Failed to detect text. Exception: {argEx.Message}");
+            ShowWindowNotifcation("Error",
+                argEx.Message[argEx.Message.IndexOf(':').. + 2],
+                NotificationType.Error);
+            _logger.LogError($"Failed to detect text. Exception: {argEx.Message}");
         }
         catch (Exception ex)
         {
@@ -540,7 +535,6 @@ public class DrawingOverlayViewModel : ObservableObject
         //     HandleTextBlockRightBtnPressed(textBlock);
         // }
     }
-    
     
     private void TextBlockOnPointerMoved(TextBlockViewModel textBlockViewModel, PointerPoint pointerPoint)
     {
@@ -604,101 +598,101 @@ public class DrawingOverlayViewModel : ObservableObject
     {
         ToolbarItems =
         [
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-pen",
+                Type = ToolbarItemType.PenDrawing,
                 ShortcutText = "1",
                 IconPath = "/Assets/pen.svg",
                 ToolTip = "Pen",
                 ShortcutKey = Key.D1,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-pen", SelectPen))
+                OnClickCommand = ReactiveCommand.Create(SelectPen)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-shape",
+                Type = ToolbarItemType.ShapeDrawing,
                 ShortcutText = "2",
                 IconPath = "/Assets/square.svg",
                 Name = "Rectangle",
                 ToolTip = SelectedShapeToolTip,
                 ShortcutKey = Key.D2,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-shape", () => SelectShape("Rectangle"))),
+                OnClickCommand = ReactiveCommand.Create(() => SelectShape("Rectangle")),
                 SubItems = 
                     [
-                        new DrawingToolbarItem
+                        new DrawingToolbarItemViewModel
                         {
-                            Id = "sub-item-line",
+                            Type = ToolbarItemType.ShapeDrawing,
                             Name = "Line",
                             Text = "Line",
                             IconPath = "/Assets/line.svg",
                             CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectItem("sub-item-line", () => SelectShape("Line")))
+                            OnClickCommand = ReactiveCommand.Create(() => SelectShape("Line"))
                         },
-                        new DrawingToolbarItem
+                        new DrawingToolbarItemViewModel
                         {
-                            Id = "sub-item-rectangle",
+                            Type = ToolbarItemType.ShapeDrawing,
                             Name = "Rectangle",
                             Text = "Rectangle",
                             IconPath = "/Assets/square.svg",
                             CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectItem("sub-item-rectangle", () => SelectShape("Rectangle")))
+                            OnClickCommand = ReactiveCommand.Create(() => SelectShape("Rectangle"))
                         }
                     ]
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-eraser",
+                Type = ToolbarItemType.Eraser,
                 ShortcutText = "3",
                 IconPath = "/Assets/eraser.svg",
                 ToolTip = "Erase content using area selector tool",
                 ShortcutKey = Key.D3,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-eraser", SelectEraser))
+                OnClickCommand = ReactiveCommand.Create(SelectEraser)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-clear",
+                Type = ToolbarItemType.ClearAll,
                 ShortcutText = "4",
                 IconPath = "/Assets/trash.svg",
                 ToolTip = "Clear all content",
                 ShortcutKey = Key.D4,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-clear", ClearCanvas))
+                OnClickCommand = ReactiveCommand.Create(ClearCanvas)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-detect-text",
+                Type = ToolbarItemType.DetectText,
                 ShortcutText = "5",
                 IconPath = "/Assets/detect.svg",
                 ToolTip = "Detect text using area selector tool",
                 ShortcutKey = Key.D5,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-detect-text", SelectDetectText))
+                OnClickCommand = ReactiveCommand.Create(SelectDetectText)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-add-text",
+                Type = ToolbarItemType.AddText,
                 ShortcutText = "6",
                 IconPath = "/Assets/type.svg",
                 ToolTip = "Add text",
                 ShortcutKey = Key.D6,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-add-text", SelectAddText))
+                OnClickCommand = ReactiveCommand.Create(SelectAddText)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-copy-shapes",
+                Type = ToolbarItemType.CopyShapes,
                 ShortcutText = "7",
                 IconPath = "/Assets/copy.svg",
                 ToolTip = "Copy selected shapes",
                 ShortcutKey = Key.D7,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectItem("item-copy-shapes", SelectCopyShapes))
+                OnClickCommand = ReactiveCommand.Create(SelectCopyShapes)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-save",
+                Type = ToolbarItemType.Save,
                 ShortcutText = "C+S",
                 IconPath = "/Assets/save.svg",
                 ToolTip = "Save",
@@ -706,9 +700,9 @@ public class DrawingOverlayViewModel : ObservableObject
                 CanBeActive = false,
                 OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-undo",
+                Type = ToolbarItemType.Undo,
                 ShortcutText = "C+Z",
                 IconPath = "/Assets/undo.svg",
                 ToolTip = "Undo",
@@ -716,9 +710,9 @@ public class DrawingOverlayViewModel : ObservableObject
                 CanBeActive = false,
                 OnClickCommand = ReactiveCommand.Create(Undo)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-change-monitor",
+                Type = ToolbarItemType.ChangeMonitor,
                 ShortcutText = "F11",
                 IconPath = "/Assets/monitor.svg",
                 ToolTip = "Change monitor",
@@ -726,9 +720,9 @@ public class DrawingOverlayViewModel : ObservableObject
                 CanBeActive = false,
                 OnClickCommand = ReactiveCommand.Create(ChangeMonitor)
             },
-            new DrawingToolbarItem
+            new DrawingToolbarItemViewModel
             {
-                Id = "item-close",
+                Type = ToolbarItemType.Exit,
                 ShortcutText = "ESC",
                 IconPath = "/Assets/x.svg",
                 ToolTip = "Close window",
@@ -738,34 +732,13 @@ public class DrawingOverlayViewModel : ObservableObject
             }
         ];
     }
-
-    private void SelectItem(string toolbarItemId, Action action)
-    {
-        DrawingToolbarItem? toolbarItem;
-
-        if (toolbarItemId.Contains("sub-item"))
-        {
-            toolbarItem = ToolbarItems
-                .Where(x => x.SubItems != null)
-                .SelectMany(x => x.SubItems)
-                .FirstOrDefault(x => x.Id == toolbarItemId);
-        }
-        else
-        {
-            toolbarItem = ToolbarItems.FirstOrDefault(x => x.Id == toolbarItemId);
-        }
-
-        if (toolbarItem is null)
-            return;
-        
-        SetActiveItem(toolbarItem);
-        action.Invoke();
-    }
     
     private void SelectPen()
     {
         _drawingShape = DrawingShape.Polyline;
         DrawingState = DrawingState.Draw;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.PenDrawing));
     }
     
     private void SelectShape(string shapeName)
@@ -783,11 +756,15 @@ public class DrawingOverlayViewModel : ObservableObject
         }
         
         DrawingState = DrawingState.Draw;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.ShapeDrawing));
     }
     
     private void SelectEraser()
     {
         DrawingState = DrawingState.Erase;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.Eraser));
     }
 
     private void ClearCanvas()
@@ -798,16 +775,22 @@ public class DrawingOverlayViewModel : ObservableObject
     private void SelectDetectText()
     {
         DrawingState = DrawingState.DetectText;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.DetectText));
     }
     
     private void SelectAddText()
     {
         DrawingState = DrawingState.AddText;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.AddText));
     }
     
     private void SelectCopyShapes()
     {
         DrawingState = DrawingState.CopyShapes;
+        
+        SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.CopyShapes));
     }
     
     private async Task CaptureWindow()
@@ -862,9 +845,9 @@ public class DrawingOverlayViewModel : ObservableObject
         Shapes.Clear();
     }
     
-    private void SetActiveItem(DrawingToolbarItem toolbarItem)
+    private void SetActiveItem(DrawingToolbarItemViewModel toolbarItemViewModel)
     {
-        if (!toolbarItem.CanBeActive)
+        if (!toolbarItemViewModel.CanBeActive)
             return;
         
         foreach (var item in ToolbarItems)
@@ -873,15 +856,15 @@ public class DrawingOverlayViewModel : ObservableObject
                 item.IsActive = false;
         }
     
-        if (toolbarItem.Parent != null)
+        if (toolbarItemViewModel.Parent != null)
         {
-            toolbarItem.Parent.IsActive = true;
-            toolbarItem.Parent.IconPath = toolbarItem.IconPath;
-            toolbarItem.Parent.Name = toolbarItem.Name;
+            toolbarItemViewModel.Parent.IsActive = true;
+            toolbarItemViewModel.Parent.IconPath = toolbarItemViewModel.IconPath;
+            toolbarItemViewModel.Parent.Name = toolbarItemViewModel.Name;
         }
         else
         {
-            toolbarItem.IsActive = toolbarItem.CanBeActive;
+            toolbarItemViewModel.IsActive = toolbarItemViewModel.CanBeActive;
         }
     }
     
@@ -903,13 +886,6 @@ public class DrawingOverlayViewModel : ObservableObject
     private void OnNotificationClick(string pathToImage)
     {
         ProcessHelpers.ShowFileInFileExplorer(pathToImage);
-    }
-
-    public void ShowWindowNotifcation(string title, string message, NotificationType type, Action? onClick = null)
-    {
-        WeakReferenceMessenger.Default
-            .Send(new ShowWindowNotificationMessage(
-                new Notification(title, message, type, null, onClick)));
     }
 }
 

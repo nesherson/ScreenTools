@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.ReactiveUI;
 using Avalonia.Threading;
@@ -19,14 +20,14 @@ namespace ScreenTools.App;
 public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 {
     private readonly WindowNotificationManager _notificationManager;
-    
+
     public DrawingOverlay(DrawingOverlayViewModel viewModel)
     {
         InitializeComponent();
 
         ViewModel = viewModel;
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
-        
+
         this.WhenAnyValue(x => x.ViewModel).BindTo(this, x => x.DataContext);
         this.WhenActivated(disposables =>
         {
@@ -50,7 +51,9 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             .Register<ShowWindowNotificationMessage>(this, HandleShowWindowNotificationMessage);
         WeakReferenceMessenger.Default
             .Register<ShowContextMenuMessage>(this, HandleShowContextMenuMessage);
-        
+        WeakReferenceMessenger.Default
+            .Register<ShowTextBoxMessage>(this, HandleShowTextBoxMessage);
+
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
 
@@ -58,7 +61,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Deactivated += (_, _) => ViewModel.OnWindowDeactivated();
         Activated += (_, _) => ViewModel.OnWindowActivated();
     }
-    
+
     public event EventHandler? Hidden;
 
     public override void Hide()
@@ -67,7 +70,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 
         OnHidden(EventArgs.Empty);
     }
-    
+
     private void Canvas_OnInitialized(object? sender, EventArgs e)
     {
         if (sender is not Canvas canvas)
@@ -75,7 +78,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
 
         if (ViewModel is null)
             return;
-        
+
         canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
         canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
         canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
@@ -103,7 +106,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
                 break;
         }
     }
-    
+
     private void HandlePasteLastItemFromClipboardMessage(object recipient, PasteLastItemFromClipboardMessage message)
     {
         var clipboard = GetTopLevel(this)?.Clipboard;
@@ -111,10 +114,10 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         if (clipboard is null)
         {
             message.Reply(string.Empty);
-            
+
             return;
         }
-        
+
         message.Reply(clipboard.GetTextAsync());
     }
 
@@ -126,7 +129,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             Height = Height
         });
     }
-    
+
     private void HandleShowWindowNotificationMessage(object recipient, ShowWindowNotificationMessage message)
     {
         _notificationManager.Show(message.Notification);
@@ -141,7 +144,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         {
             return;
         }
-        
+
         var rect = targetScreen.WorkingArea;
 
         WindowState = WindowState.Normal;
@@ -150,7 +153,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         Height = rect.Height;
         WindowState = WindowState.Maximized;
     }
-    
+
     private void HandleShowContextMenuMessage(object recipient, ShowContextMenuMessage message)
     {
         var flyout = new MenuFlyout();
@@ -159,30 +162,38 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             Header = "Paste",
             IsEnabled = message.Content.IsPasteEnabled
         };
-        
-        pasteMenuItem.Click += (_, _) =>
-        {
-            message.Content.OnPaste?.Invoke();
-        };
-        
+
+        pasteMenuItem.Click += (_, _) => { message.Content.OnPaste?.Invoke(); };
+
         flyout.Items.Add(pasteMenuItem);
         flyout.ShowAt(this, true);
     }
-    
-    //
-    // private void HandleTextBlockRightBtnPressed(TextBlock textBlock)
-    // {
-    //     var flyout = new Flyout();
-    //     var textBox = new TextBox
-    //     {
-    //         Text = textBlock.Text
-    //     };
-    //     flyout.Content = textBox;
-    //     flyout.Closed += (_, _) =>
-    //     {
-    //         textBlock.Text = textBox.Text;
-    //     };
-    //     flyout.ShowAt(textBlock);
-    // }
-    //
+
+    private void HandleShowTextBoxMessage(object recipient, ShowTextBoxMessage message)
+    {
+        var flyout = new Flyout();
+        var textBox = new TextBox
+        {
+            Width = 320,
+            Height = 200,
+            TextWrapping = TextWrapping.Wrap,
+            AcceptsReturn = true
+        };
+        
+        textBox.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape)
+            {
+                textBox.Text = null;
+                flyout.Hide();
+            }
+        };
+
+        flyout.Content = textBox;
+        flyout.Closed += (_, _) =>
+        {
+            message.Content.OnClosed?.Invoke(textBox.Text);
+        };
+        flyout.ShowAt(this, true);
+    }
 }

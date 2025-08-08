@@ -108,7 +108,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:DrawingToolbarItem">
+                                <DataTemplate DataType="local:DrawingToolbarItemViewModel">
                                     <Button
                                         Background="{Binding IsActive,
                                             Converter={StaticResource BooleanToSolidColorBrushConverter}}"
