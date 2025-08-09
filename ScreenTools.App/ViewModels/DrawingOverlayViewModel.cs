@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.Notifications;
@@ -593,11 +594,11 @@ public class DrawingOverlayViewModel : ViewModelBase
             ?.OnClickCommand
             .Execute(null);
     }
-    
+
     private void SetToolbarItems()
     {
-        ToolbarItems =
-        [
+        var toolbarItems = new List<DrawingToolbarItemViewModel>()
+        {
             new DrawingToolbarItemViewModel
             {
                 Type = ToolbarItemType.PenDrawing,
@@ -606,7 +607,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Pen",
                 ShortcutKey = Key.D1,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectPen)
+                OnClickCommand = ReactiveCommand.Create(SelectPen),
+                Order = 1
             },
             new DrawingToolbarItemViewModel
             {
@@ -617,8 +619,9 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = SelectedShapeToolTip,
                 ShortcutKey = Key.D2,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(() => SelectShape("Rectangle")),
-                SubItems = 
+                OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle)),
+                Order = 2,
+                SubItems =
                     [
                         new DrawingToolbarItemViewModel
                         {
@@ -627,7 +630,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                             Text = "Line",
                             IconPath = "/Assets/line.svg",
                             CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectShape("Line"))
+                            OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Line))
                         },
                         new DrawingToolbarItemViewModel
                         {
@@ -636,7 +639,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                             Text = "Rectangle",
                             IconPath = "/Assets/square.svg",
                             CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectShape("Rectangle"))
+                            OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle))
                         }
                     ]
             },
@@ -648,7 +651,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Erase content using area selector tool",
                 ShortcutKey = Key.D3,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectEraser)
+                OnClickCommand = ReactiveCommand.Create(SelectEraser),
+                Order = 3
             },
             new DrawingToolbarItemViewModel
             {
@@ -658,7 +662,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Clear all content",
                 ShortcutKey = Key.D4,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(ClearCanvas)
+                OnClickCommand = ReactiveCommand.Create(ClearCanvas),
+                Order = 4
             },
             new DrawingToolbarItemViewModel
             {
@@ -668,7 +673,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Detect text using area selector tool",
                 ShortcutKey = Key.D5,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectDetectText)
+                OnClickCommand = ReactiveCommand.Create(SelectDetectText),
+                Order = 5
             },
             new DrawingToolbarItemViewModel
             {
@@ -678,7 +684,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Add text",
                 ShortcutKey = Key.D6,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectAddText)
+                OnClickCommand = ReactiveCommand.Create(SelectAddText),
+                Order = 6
             },
             new DrawingToolbarItemViewModel
             {
@@ -688,7 +695,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Copy selected shapes",
                 ShortcutKey = Key.D7,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectCopyShapes)
+                OnClickCommand = ReactiveCommand.Create(SelectCopyShapes),
+                Order = 7
             },
             new DrawingToolbarItemViewModel
             {
@@ -698,7 +706,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Save",
                 ShortcutKey = Key.S,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow)
+                OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow),
+                Order = 8
             },
             new DrawingToolbarItemViewModel
             {
@@ -708,17 +717,8 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Undo",
                 ShortcutKey = Key.Z,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(Undo)
-            },
-            new DrawingToolbarItemViewModel
-            {
-                Type = ToolbarItemType.ChangeMonitor,
-                ShortcutText = "F11",
-                IconPath = "/Assets/monitor.svg",
-                ToolTip = "Change monitor",
-                ShortcutKey = Key.F11,
-                CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(ChangeMonitor)
+                OnClickCommand = ReactiveCommand.Create(Undo),
+                Order = 9
             },
             new DrawingToolbarItemViewModel
             {
@@ -728,9 +728,31 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Close window",
                 ShortcutKey = Key.Escape,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(HideWindow)
+                OnClickCommand = ReactiveCommand.Create(HideWindow),
+                Order = 11
             }
-        ];
+        };
+
+        var isUsingMultipleMonitors = WeakReferenceMessenger.Default
+                .Send(new IsUsingMultipleMonitorsMessage());
+
+        // if (isUsingMultipleMonitors.Response)
+        // {
+        //     toolbarItems.Add(
+        //         new DrawingToolbarItemViewModel
+        //         {
+        //             Type = ToolbarItemType.ChangeMonitor,
+        //             ShortcutText = "F11",
+        //             IconPath = "/Assets/monitor.svg",
+        //             ToolTip = "Change monitor",
+        //             ShortcutKey = Key.F11,
+        //             CanBeActive = false,
+        //             OnClickCommand = ReactiveCommand.Create(ChangeMonitor),
+        //             Order = 10
+        //         });
+        // }
+
+        ToolbarItems = new ObservableCollection<DrawingToolbarItemViewModel>(toolbarItems);
     }
     
     private void SelectPen()
@@ -741,15 +763,15 @@ public class DrawingOverlayViewModel : ViewModelBase
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.PenDrawing));
     }
     
-    private void SelectShape(string shapeName)
+    private void SelectShape(ShapeType shapeType)
     {
-        switch (shapeName)
+        switch (shapeType)
         {
-            case "Line":
+            case ShapeType.Line:
                 _drawingShape = DrawingShape.Line;
                 
                 break;
-            case "Rectangle":
+            case ShapeType.Rectangle:
                 _drawingShape = DrawingShape.Rectangle;
                 
                 break;

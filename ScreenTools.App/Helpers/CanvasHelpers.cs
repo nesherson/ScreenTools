@@ -106,7 +106,7 @@ public static class CanvasHelpers
             {
                 case Polyline polyline:
                 {
-                    shapeToSave.ShapeName = "polyline";
+                    shapeToSave.ShapeType = ShapeType.Polyline;
                     shapeToSave.StrokeColor = polyline.Stroke?.ToString();
                     shapeToSave.StrokeWidth = polyline.StrokeThickness;
                     shapeToSave.Points = polyline.Points
@@ -115,14 +115,14 @@ public static class CanvasHelpers
                     break;
                 }
                 case Rectangle rectangle:
-                    shapeToSave.ShapeName = "rectangle";
+                    shapeToSave.ShapeType = ShapeType.Rectangle;
                     shapeToSave.FillColor = rectangle.Fill?.ToString();
                     shapeToSave.StartPoint = new SavedPoint(rectangle.Bounds.X, rectangle.Bounds.Y);
                     shapeToSave.Width = rectangle.Width;
                     shapeToSave.Height = rectangle.Height;
                     break;
                 case Line line:
-                    shapeToSave.ShapeName = "line";
+                    shapeToSave.ShapeType = ShapeType.Line;
                     shapeToSave.StrokeColor = line.Stroke?.ToString();
                     shapeToSave.StrokeWidth = line.StrokeThickness;
                     shapeToSave.StartPoint = new SavedPoint(line.StartPoint.X, line.StartPoint.Y);
@@ -168,9 +168,9 @@ public static class CanvasHelpers
         
         foreach (var savedItem in savedItems)
         {
-            switch (savedItem.ShapeName)
+            switch (savedItem.ShapeType)
             {
-                case "polyline":
+                case ShapeType.Polyline:
                 {
                     var polyline = new Polyline
                     {
@@ -182,7 +182,7 @@ public static class CanvasHelpers
                     canvas.Children.Add(polyline);
                     break;
                 }
-                case "rectangle":
+                case ShapeType.Rectangle:
                     var rectangle = new Rectangle
                     {
                         Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
@@ -193,7 +193,7 @@ public static class CanvasHelpers
                     canvas.AddToPosition(rectangle, savedItem.StartPoint.X, savedItem.StartPoint.Y);
                     
                     break;
-                case "line":
+                case ShapeType.Line:
                     var line = new Line
                     {
                         StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),

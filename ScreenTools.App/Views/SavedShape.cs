@@ -2,7 +2,7 @@
 
 public class SavedShape
 {
-    public string ShapeName { get; set; }
+    public ShapeType ShapeType { get; set; }
     public SavedPoint[]? Points { get; set; }
     public SavedPoint? StartPoint { get; set; }
     public SavedPoint? EndPoint { get; set; }

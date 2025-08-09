@@ -5,7 +5,6 @@ using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.ReactiveUI;
@@ -53,6 +52,8 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             .Register<ShowContextMenuMessage>(this, HandleShowContextMenuMessage);
         WeakReferenceMessenger.Default
             .Register<ShowTextBoxMessage>(this, HandleShowTextBoxMessage);
+        WeakReferenceMessenger.Default
+            .Register<IsUsingMultipleMonitorsMessage>(this, HandleIsUsingMultipleMonitorsMessage);
 
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
@@ -128,6 +129,11 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             Width = Width,
             Height = Height
         });
+    }
+
+    private void HandleIsUsingMultipleMonitorsMessage(object recipient, IsUsingMultipleMonitorsMessage message)
+    {
+        message.Reply(Screens.All.Count > 1);
     }
 
     private void HandleShowWindowNotificationMessage(object recipient, ShowWindowNotificationMessage message)
