@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media;
 
-namespace ScreenTools.App;
+namespace ScreenTools.Core;
 
 public class SavedShapeViewModel
 {

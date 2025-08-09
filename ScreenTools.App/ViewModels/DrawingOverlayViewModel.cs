@@ -556,7 +556,6 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ShortcutKey = Key.D1,
                 CanBeActive = true,
                 OnClickCommand = ReactiveCommand.Create(SelectPen),
-                Order = 1
             },
             new()
             {
@@ -568,7 +567,6 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ShortcutKey = Key.D2,
                 CanBeActive = true,
                 OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle)),
-                Order = 2,
                 SubItems =
                 [
                     new DrawingToolbarItemViewModel
@@ -601,8 +599,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Erase content using area selector tool",
                 ShortcutKey = Key.D3,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectEraser),
-                Order = 3
+                OnClickCommand = ReactiveCommand.Create(SelectEraser)
             },
             new()
             {
@@ -612,8 +609,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Clear all content",
                 ShortcutKey = Key.D4,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(ClearCanvas),
-                Order = 4
+                OnClickCommand = ReactiveCommand.Create(ClearCanvas)
             },
             new()
             {
@@ -623,8 +619,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Detect text using area selector tool",
                 ShortcutKey = Key.D5,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectDetectText),
-                Order = 5
+                OnClickCommand = ReactiveCommand.Create(SelectDetectText)
             },
             new()
             {
@@ -634,8 +629,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Add text",
                 ShortcutKey = Key.D6,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectAddText),
-                Order = 6
+                OnClickCommand = ReactiveCommand.Create(SelectAddText)
             },
             new()
             {
@@ -645,8 +639,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Copy selected shapes",
                 ShortcutKey = Key.D7,
                 CanBeActive = true,
-                OnClickCommand = ReactiveCommand.Create(SelectCopyShapes),
-                Order = 7
+                OnClickCommand = ReactiveCommand.Create(SelectCopyShapes)
             },
             new()
             {
@@ -656,8 +649,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Save",
                 ShortcutKey = Key.S,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow),
-                Order = 8
+                OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow)
             },
             new()
             {
@@ -667,8 +659,16 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Undo",
                 ShortcutKey = Key.Z,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(Undo),
-                Order = 9
+                OnClickCommand = ReactiveCommand.Create(Undo)
+            }, new DrawingToolbarItemViewModel
+            {
+                Type = ToolbarItemType.ChangeMonitor,
+                ShortcutText = "F11",
+                IconPath = "/Assets/monitor.svg",
+                ToolTip = "Change monitor",
+                ShortcutKey = Key.F11,
+                CanBeActive = false,
+                OnClickCommand = ReactiveCommand.Create(ChangeMonitor)
             },
             new()
             {
@@ -678,32 +678,11 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ToolTip = "Close window",
                 ShortcutKey = Key.Escape,
                 CanBeActive = false,
-                OnClickCommand = ReactiveCommand.Create(HideWindow),
-                Order = 11
+                OnClickCommand = ReactiveCommand.Create(HideWindow)
             }
         };
-
-        var result = WeakReferenceMessenger.Default
-            .Send<IsUsingMultipleMonitorsMessage>();
-
-        // if (isUsingMultipleMonitors.Response)
-        // {
-        //     toolbarItems.Add(
-        //         new DrawingToolbarItemViewModel
-        //         {
-        //             Type = ToolbarItemType.ChangeMonitor,
-        //             ShortcutText = "F11",
-        //             IconPath = "/Assets/monitor.svg",
-        //             ToolTip = "Change monitor",
-        //             ShortcutKey = Key.F11,
-        //             CanBeActive = false,
-        //             OnClickCommand = ReactiveCommand.Create(ChangeMonitor),
-        //             Order = 10
-        //         });
-        // }
-
+        
         ToolbarItems = toolbarItems
-            .OrderBy(x => x.Order)
             .ToObservable();
     }
 

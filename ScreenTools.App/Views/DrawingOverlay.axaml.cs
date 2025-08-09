@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -12,6 +11,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Messaging;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
+using ScreenTools.Core;
 using WeakReferenceMessenger = CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger;
 
 namespace ScreenTools.App;
@@ -52,8 +52,6 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             .Register<ShowContextMenuMessage>(this, HandleShowContextMenuMessage);
         WeakReferenceMessenger.Default
             .Register<ShowTextBoxMessage>(this, HandleShowTextBoxMessage);
-        WeakReferenceMessenger.Default
-            .Register<IsUsingMultipleMonitorsMessage>(this, HandleIsUsingMultipleMonitorsMessage);
 
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
@@ -126,12 +124,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
             Height = Height
         });
     }
-
-    private void HandleIsUsingMultipleMonitorsMessage(object recipient, IsUsingMultipleMonitorsMessage message)
-    {
-        message.Reply(Screens.All.Count > 1);
-    }
-
+    
     private void HandleShowWindowNotificationMessage(object recipient, ShowWindowNotificationMessage message)
     {
         _notificationManager.Show(message.Notification);

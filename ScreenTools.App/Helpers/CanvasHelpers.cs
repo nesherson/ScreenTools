@@ -170,49 +170,56 @@ public static class CanvasHelpers
             return [];
         
         var shapes = new List<ShapeViewModelBase>();
-        
-        foreach (var savedItem in savedItems)
-        {
-            switch (savedItem.ShapeType)
-            {
-                case ShapeType.Polyline:
-                {
-                    var polyline = new PolylineViewModel
-                    {
-                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.Stroke,
-                        Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToObservable()
-                    };
-                    
-                    shapes.Add(polyline);
-                    break;
-                }
-                case ShapeType.Rectangle:
-                    var rectangle = new RectangleViewModel
-                    {
-                        Fill = savedItem.Fill,
-                        Width = savedItem.Width.GetValueOrDefault(100),
-                        Height = savedItem.Height.GetValueOrDefault(100),
-                        X = savedItem.StartPoint?.X ?? 0,
-                        Y = savedItem.StartPoint?.Y ?? 0,
-                    };
-                    
-                    shapes.Add(rectangle);
-                    
-                    break;
-                case ShapeType.Line:
-                    var line = new LineViewModel
-                    {
-                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.Stroke,
-                        StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
-                        EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
-                    };
-                    
-                    shapes.Add(line);
 
-                    break;
+        try
+        {
+            foreach (var savedItem in savedItems)
+            {
+                switch (savedItem.ShapeType)
+                {
+                    case ShapeType.Polyline:
+                    {
+                        var polyline = new PolylineViewModel
+                        {
+                            StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                            Stroke = savedItem.Stroke,
+                            Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToObservable()
+                        };
+                    
+                        shapes.Add(polyline);
+                        break;
+                    }
+                    case ShapeType.Rectangle:
+                        var rectangle = new RectangleViewModel
+                        {
+                            Fill = savedItem.Fill,
+                            Width = savedItem.Width.GetValueOrDefault(100),
+                            Height = savedItem.Height.GetValueOrDefault(100),
+                            X = savedItem.StartPoint?.X ?? 0,
+                            Y = savedItem.StartPoint?.Y ?? 0,
+                        };
+                    
+                        shapes.Add(rectangle);
+                    
+                        break;
+                    case ShapeType.Line:
+                        var line = new LineViewModel
+                        {
+                            StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                            Stroke = savedItem.Stroke,
+                            StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
+                            EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
+                        };
+                    
+                        shapes.Add(line);
+
+                        break;
+                }
             }
+        }
+        catch
+        {
+            //Ignore
         }
 
         return shapes;

@@ -1,4 +1,4 @@
-﻿namespace ScreenTools.App;
+﻿namespace ScreenTools.Core;
 
 public enum ToolbarItemType
 {

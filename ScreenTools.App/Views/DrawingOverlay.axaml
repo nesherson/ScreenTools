@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ScreenTools.App.DrawingOverlay"
+        d:DataContext="{d:DesignInstance local:DrawingOverlayViewModel}"
         xmlns:local="clr-namespace:ScreenTools.App"
         xmlns:core="clr-namespace:ScreenTools.Core;assembly=ScreenTools.Core"
         WindowState="Maximized"
@@ -17,7 +18,6 @@
         IsVisible="{Binding IsVisible}">
 	<Window.Resources>
 		<local:BooleanToSolidColorBrushConverter x:Key="BooleanToSolidColorBrushConverter"/>
-        
 	</Window.Resources>
     <Window.Styles>
         <Style Selector="ContextMenu.ContextMenuShapes">

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging.Messages;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 

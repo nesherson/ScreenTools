@@ -2,6 +2,7 @@
 using System.Windows.Input;
 using Avalonia.Input;
 using ReactiveUI;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
@@ -21,7 +22,6 @@ public class DrawingToolbarItemViewModel : ReactiveObject
     public bool IsContextMenuVisible => SubItems?.Count > 0;
     public DrawingToolbarItemViewModel? Parent { get; set; }
     public bool CanBeActive { get; set; }
-    public int Order { get; set; }
     public bool IsActive
     {
         get => _isActive;
