@@ -97,11 +97,7 @@ public class DrawingOverlayViewModel : ViewModelBase
     public DrawingState DrawingState
     {
         get => _drawingState;
-        set
-        {
-            OnPropertyChanged(nameof(SelectedShapeToolTip));
-            SetProperty(ref _drawingState, value);
-        }
+        set => SetProperty(ref _drawingState, value);
     }
 
     public ObservableCollection<int> LineStrokes
@@ -133,15 +129,7 @@ public class DrawingOverlayViewModel : ViewModelBase
         get => _toolbarItems;
         set => SetProperty(ref _toolbarItems, value);
     }
-
-    public string SelectedShapeToolTip =>
-        _drawingShape switch
-        {
-            ShapeType.Line => "Line",
-            ShapeType.Rectangle => "Rectangle",
-            _ => "Shape not selected"
-        };
-
+    
     public ObservableCollection<ShapeViewModelBase> Shapes { get; } = new();
 
     public async Task HandleOnKeyDown(KeyEventArgs e)
@@ -576,7 +564,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 ShortcutText = "2",
                 IconPath = "/Assets/square.svg",
                 Name = "Rectangle",
-                ToolTip = SelectedShapeToolTip,
+                ToolTip = "Rectangle",
                 ShortcutKey = Key.D2,
                 CanBeActive = true,
                 OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle)),
@@ -589,6 +577,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                         Name = "Line",
                         Text = "Line",
                         IconPath = "/Assets/line.svg",
+                        ToolTip = "Line",
                         CanBeActive = true,
                         OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Line))
                     },
@@ -598,6 +587,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                         Name = "Rectangle",
                         Text = "Rectangle",
                         IconPath = "/Assets/square.svg",
+                        ToolTip = "Rectangle",
                         CanBeActive = true,
                         OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle))
                     }
@@ -788,20 +778,13 @@ public class DrawingOverlayViewModel : ViewModelBase
             WindowBorderThickness = new Thickness(0);
 
             await Task.Delay(100);
-
-            var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("draw-scr");
-
-            if (!Directory.Exists(filePath.Path))
-            {
-                Directory.CreateDirectory(filePath.Path);
-            }
-
+            
             var windowSize = await WeakReferenceMessenger.Default
                 .Send(new GetWindowSizeMessage());
-            var imageSavePath = SystemIOPath.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
-            var bmp = _screenCaptureService.CaptureVisibleWindow(windowSize.Width, windowSize.Height, 0, 0);
-
-            bmp.Save(imageSavePath, ImageFormat.Png);
+            
+            var imageSavePath = await _screenCaptureService
+                .CaptureWindow(windowSize.Width, windowSize.Height);
+            
             ShowWindowNotifcation(
                 "Screenshot captured!",
                 "Click to show image in explorer.",
@@ -848,6 +831,7 @@ public class DrawingOverlayViewModel : ViewModelBase
             toolbarItemViewModel.Parent.IsActive = true;
             toolbarItemViewModel.Parent.IconPath = toolbarItemViewModel.IconPath;
             toolbarItemViewModel.Parent.Name = toolbarItemViewModel.Name;
+            toolbarItemViewModel.Parent.ToolTip = toolbarItemViewModel.ToolTip;
         }
         else
         {
