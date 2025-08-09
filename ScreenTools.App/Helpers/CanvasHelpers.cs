@@ -5,9 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Media;
 using DynamicData;
 using Microsoft.Extensions.Logging;
 using ScreenTools.Core;
@@ -408,10 +405,7 @@ public static class CanvasHelpers
             .Where(x => IsInArea(x, area) && x != area)
             .ToList();
 
-        // if (drawingHistoryService != null && controlsToRemove.Any())
-        // {
-        //     drawingHistoryService.Save(controlsToRemove, DrawingAction.Delete);
-        // }
+        drawingHistoryService?.Save(shapesToRemove, DrawingAction.Delete);
         
         shapes.RemoveMany(shapesToRemove);
     }

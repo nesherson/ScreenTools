@@ -1,15 +1,16 @@
 ﻿using System.Collections.Generic;
 using Avalonia.Controls;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
-public class DrawingHistoryItem
+public sealed class DrawingHistoryItem
 {
-    public DrawingHistoryItem(List<Control> canvasControls, DrawingAction drawingAction)
+    public DrawingHistoryItem(List<ShapeViewModelBase> canvasControls, DrawingAction drawingAction)
     {
-        CanvasControls = canvasControls;
+        Shapes = canvasControls;
         Action = drawingAction;
     }
-    public List<Control> CanvasControls { get; set; }
-    public DrawingAction Action { get; set; }
+    public List<ShapeViewModelBase> Shapes { get; }
+    public DrawingAction Action { get; }
 }

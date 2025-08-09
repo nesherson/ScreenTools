@@ -442,37 +442,14 @@ public class DrawingOverlayViewModel : ViewModelBase
                 case DrawingState.DetectText:
                     if (_textDetectionArea is null)
                         return;
-
-                    var startX = _textDetectionArea.X;
-                    var startY = _textDetectionArea.Y;
-                    var width = _textDetectionArea.Width;
-                    var height = _textDetectionArea.Height;
-
+                    
                     Shapes.Remove(_textDetectionArea);
-                    _textDetectionArea = null;
-
-                    if (width == 0 || height == 0)
-                        throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
-
-                    var bmp = new Bitmap(Convert.ToInt32(width),
-                        Convert.ToInt32(height),
-                        PixelFormat.Format32bppArgb);
-
-                    using (var g = Graphics.FromImage(bmp))
-                        g.CopyFromScreen(Convert.ToInt32(startX),
-                            Convert.ToInt32(startY),
-                            0,
-                            0,
-                            bmp.Size,
-                            CopyPixelOperation.SourceCopy);
-
-                    var ms = new MemoryStream();
-
-                    bmp.Save(ms, ImageFormat.Png);
-
+                    
                     var text = _textDetectionService
-                        .ProcessImage(ms.ToArray())
-                        .Trim();
+                        .DetectText(_textDetectionArea.X, 
+                            _textDetectionArea.Y, 
+                            _textDetectionArea.Width, 
+                            _textDetectionArea.Height);
 
                     if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
                     {
@@ -484,13 +461,18 @@ public class DrawingOverlayViewModel : ViewModelBase
                     }
 
                     AddTextToCanvas(text);
+                    
+                    _textDetectionArea = null;
 
                     break;
                 case DrawingState.Draw:
-                    // _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
+                    if (_currentShape is not null)
+                    {
+                        _drawingHistoryService.Save([_currentShape], DrawingAction.Draw);
 
-                    _currentShape = null;
-
+                        _currentShape = null;
+                    }
+                    
                     break;
                 case DrawingState.CopyShapes:
                     if (_copyShapesArea is null)
@@ -533,37 +515,7 @@ public class DrawingOverlayViewModel : ViewModelBase
             IsPopupOpen = true;
         }
     }
-
-    private void TextBlockOnPointerPressed()
-    {
-        IsPopupOpen = false;
-        _isDragging = true;
-        // _dragPosition = pointerPoint.Position;
-        // else if (point.Properties.IsRightButtonPressed)
-        // {
-        //     HandleTextBlockRightBtnPressed(textBlock);
-        // }
-    }
-
-    private void TextBlockOnPointerMoved(TextBlockViewModel textBlockViewModel, PointerPoint pointerPoint)
-    {
-        if (_dragPosition is null)
-            return;
-
-        if (pointerPoint.Properties.IsLeftButtonPressed)
-        {
-            textBlockViewModel.X = pointerPoint.Position.X - _dragPosition.Value.X;
-            textBlockViewModel.Y = pointerPoint.Position.Y - _dragPosition.Value.Y;
-        }
-    }
-
-    private void TextBlockOnPointerReleased()
-    {
-        _dragPosition = null;
-        _isDragging = false;
-        IsPopupOpen = true;
-    }
-
+    
     public void OnWindowActivated()
     {
         IsPopupOpen = true;
@@ -801,6 +753,9 @@ public class DrawingOverlayViewModel : ViewModelBase
 
     private void ClearCanvas()
     {
+        _drawingHistoryService?.Save(Shapes.ToList(),
+            DrawingAction.Clear);
+        
         Shapes.Clear();
     }
 
@@ -867,7 +822,7 @@ public class DrawingOverlayViewModel : ViewModelBase
 
     private void Undo()
     {
-        // _drawingHistoryService.Undo(Canvas);
+        _drawingHistoryService.Undo(Shapes);
     }
 
     private void ChangeMonitor()
