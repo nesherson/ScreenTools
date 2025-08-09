@@ -2,24 +2,25 @@
 using System.Windows.Input;
 using Avalonia.Input;
 using ReactiveUI;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
-public class DrawingToolbarItem : ReactiveObject
+public class DrawingToolbarItemViewModel : ReactiveObject
 {
     private bool _isActive;
     private string _iconPath;
     
-    public string Id { get; set; }
+    public ToolbarItemType Type { get; set; }
     public string Name { get; set; }
     public string ToolTip { get; set; }
     public string ShortcutText { get; set; }
     public Key ShortcutKey { get; set; }
     public string Text { get; set; }
     public ICommand OnClickCommand { get; set; }
-    public List<DrawingToolbarItem>? SubItems { get; set; }
+    public List<DrawingToolbarItemViewModel>? SubItems { get; set; }
     public bool IsContextMenuVisible => SubItems?.Count > 0;
-    public DrawingToolbarItem? Parent { get; set; }
+    public DrawingToolbarItemViewModel? Parent { get; set; }
     public bool CanBeActive { get; set; }
     public bool IsActive
     {

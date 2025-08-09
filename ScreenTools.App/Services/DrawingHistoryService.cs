@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using Avalonia.Controls;
+using DynamicData;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
@@ -13,17 +15,20 @@ public class DrawingHistoryService
         _drawingHistoryItems = [];
     }
     
-    public void Save(Control canvasControl, DrawingAction drawingAction)
+    public void Save(ShapeViewModelBase shape, DrawingAction drawingAction)
     {
-        Save([canvasControl], drawingAction);
+        Save([shape], drawingAction);
     }
     
-    public void Save(List<Control> canvasControls, DrawingAction drawingAction)
+    public void Save(List<ShapeViewModelBase> shapes, DrawingAction drawingAction)
     {
-        _drawingHistoryItems.Add(new DrawingHistoryItem(canvasControls, drawingAction));
+        if (shapes.Count == 0)
+            return;
+        
+        _drawingHistoryItems.Add(new DrawingHistoryItem(shapes, drawingAction));
     }
     
-    public void Undo(Canvas canvas)
+    public void Undo(ObservableCollection<ShapeViewModelBase> shapes)
     {
         var itemToUndo = _drawingHistoryItems.LastOrDefault();
 
@@ -33,18 +38,16 @@ public class DrawingHistoryService
         switch (itemToUndo.Action)
         {
             case DrawingAction.Draw:
-                foreach (var canvasControl in itemToUndo.CanvasControls)
-                {
-                    canvas.Children.Remove(canvasControl);
-                }
+                shapes.RemoveMany(itemToUndo.Shapes);
                 _drawingHistoryItems.Remove(itemToUndo);
+                
                 break;
             case DrawingAction.Delete:
             case DrawingAction.Clear:
-                canvas.Children.AddRange(itemToUndo.CanvasControls);
+                shapes.AddRange(itemToUndo.Shapes);
                 _drawingHistoryItems.Remove(itemToUndo);
+                
                 break;
         }
     }
-
 }

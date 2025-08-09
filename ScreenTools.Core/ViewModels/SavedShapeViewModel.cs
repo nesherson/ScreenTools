@@ -1,16 +1,20 @@
-﻿namespace ScreenTools.App;
+﻿using Avalonia.Media;
 
-public class SavedShape
+namespace ScreenTools.Core;
+
+public class SavedShapeViewModel
 {
-    public string ShapeName { get; set; }
+    public ShapeType ShapeType { get; set; }
     public SavedPoint[]? Points { get; set; }
     public SavedPoint? StartPoint { get; set; }
     public SavedPoint? EndPoint { get; set; }
     public double? Width { get; set; }
     public double? Height { get; set; }
-    public string? StrokeColor { get; set; }
-    public string? FillColor { get; set; }
+    public string? Stroke { get; set; }
+    public string? Fill { get; set; }
     public double? StrokeWidth { get; set; }
+    public PenLineJoin? StrokeJoin { get; set; }
+    public PenLineCap? StrokeLineCap { get; set; }
 }
 
 public class SavedPoint

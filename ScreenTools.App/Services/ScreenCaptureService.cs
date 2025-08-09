@@ -3,15 +3,19 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using ScreenTools.Infrastructure;
 
 namespace ScreenTools.App
 {
     public class ScreenCaptureService
     {
-        public ScreenCaptureService()
+        private readonly FilePathRepository _filePathRepository;
+        public ScreenCaptureService(FilePathRepository filePathRepository)
         {
+            _filePathRepository = filePathRepository;
         }
+
         public Bitmap CaptureVisibleWindow(double width, double height, int x, int y)
         {
             var bmp = new Bitmap(Convert.ToInt32(width), Convert.ToInt32(height), PixelFormat.Format32bppArgb);
@@ -22,6 +26,24 @@ namespace ScreenTools.App
                 return bmp;
             }
         }
+
+        public async Task<string> CaptureWindow(double windowWidth, double windowHeight)
+        {
+            var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("draw-scr");
+
+            if (!Directory.Exists(filePath.Path))
+            {
+                Directory.CreateDirectory(filePath.Path);
+            }
+            
+            var imageSavePath = Path.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
+            var bmp = CaptureVisibleWindow(windowWidth, windowHeight, 0, 0);
+
+            bmp.Save(imageSavePath, ImageFormat.Png);
+            
+            return imageSavePath;
+        }
+        
         /// <summary>
         /// Creates an Image object containing a screen shot of the entire desktop
         /// </summary>
@@ -123,7 +145,6 @@ namespace ScreenTools.App
         /// </summary>
         private class GDI32
         {
-
             public const int SRCCOPY = 0x00CC0020; // BitBlt dwRop parameter
 
             [DllImport("gdi32.dll")]

@@ -4,7 +4,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ScreenTools.App.DrawingOverlay"
+        d:DataContext="{d:DesignInstance local:DrawingOverlayViewModel}"
         xmlns:local="clr-namespace:ScreenTools.App"
+        xmlns:core="clr-namespace:ScreenTools.Core;assembly=ScreenTools.Core"
         WindowState="Maximized"
         TransparencyLevelHint="Transparent" 
         Background="Transparent"
@@ -13,7 +15,7 @@
         ExtendClientAreaTitleBarHeightHint="0"
         CanResize="False"
         IsHitTestVisible="True"
-		DataContext="{Binding $self}">
+        IsVisible="{Binding IsVisible}">
 	<Window.Resources>
 		<local:BooleanToSolidColorBrushConverter x:Key="BooleanToSolidColorBrushConverter"/>
 	</Window.Resources>
@@ -66,31 +68,29 @@
         <Grid
             x:Name="PartGrid"
             Grid.Row="0">
-            <Popup x:Name="ToolsPopup" 
+            <Popup x:Name="ToolsPopup"
                    Placement="Bottom"
                    VerticalOffset="10"
-                   PlacementTarget="PartGrid" 
+                   PlacementTarget="PartGrid"
                    IsOpen="{Binding IsPopupOpen, FallbackValue=true}">
                 <Border
                     x:Name="PopupBorder"
                     Padding="5">
                     <StackPanel Orientation="Horizontal" Spacing="5">
-                        <ComboBox  
+                        <ComboBox
                             ItemsSource="{Binding LineStrokes}"
                             SelectedItem="{Binding SelectedLineStroke}"
-                            SelectionChanged="StrokeWidthComboBox_OnSelectionChanged"
                             ToolTip.Tip="Stroke width"/>
-                        <ComboBox 
+                        <ComboBox
                             x:Name="ColorComboBox"
                             ItemsSource="{Binding LineColors}"
                             SelectedItem="{Binding SelectedLineColor}"
-                            SelectionChanged="StrokeColorComboBox_OnSelectionChanged"
                             ToolTip.Tip="Stroke color">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                    <Panel
                                        Margin="0">
-                                       <Border 
+                                       <Border
                                            Padding="0"
                                            Margin="0"
                                            BorderBrush="{Binding}"
@@ -107,9 +107,9 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:DrawingToolbarItem">
-                                    <Button 
-                                        Background="{Binding IsActive, 
+                                <DataTemplate DataType="local:DrawingToolbarItemViewModel">
+                                    <Button
+                                        Background="{Binding IsActive,
                                             Converter={StaticResource BooleanToSolidColorBrushConverter}}"
                                         Command="{Binding OnClickCommand}"
                                         ToolTip.Tip="{Binding ToolTip}">
@@ -122,7 +122,7 @@
                                         <Button.ContextMenu>
                                             <ContextMenu
                                                 Placement="BottomEdgeAlignedLeft"
-                                                Classes="ContextMenuShapes" 
+                                                Classes="ContextMenuShapes"
                                                 ItemsSource="{Binding SubItems}"
                                                 IsVisible="{Binding IsContextMenuVisible}">
                                                 <ContextMenu.Styles>
@@ -148,15 +148,65 @@
                 </Border>
             </Popup>
         </Grid>
-        <Canvas
-            Grid.Row="1"
-            x:Name="Canvas"
-            PointerPressed="Canvas_OnPointerPressed"
-            PointerReleased="Canvas_OnPointerReleased"
-            PointerMoved="Canvas_OnPointerMoved"
-            Background="Transparent"
-            Initialized="Canvas_OnInitialized">
-        </Canvas>
+        <ItemsControl 
+            Grid.Row="1" 
+            ItemsSource="{Binding Shapes}" >
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="core:ShapeViewModelBase">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas x:Name="Canvas"
+                            Initialized="Canvas_OnInitialized"
+                            Background="Transparent" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <local:ShapeTemplateSelector>
+                    <DataTemplate x:Key="RectangleViewModel" DataType="{x:Type core:RectangleViewModel}">
+                        <Rectangle
+                            Fill="{Binding Fill}"
+                            Height="{Binding Height}"
+                            Width="{Binding Width}"
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}">
+                            <Interaction.Behaviors>
+                                <EventTriggerBehavior EventName="PointerPressed">
+                                    <InvokeCommandAction Command="{Binding PointerPressedCommand}" />
+                                </EventTriggerBehavior>
+                            </Interaction.Behaviors>
+                        </Rectangle>
+                    </DataTemplate>
+                    <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">
+                        <Line 
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StartPoint="{Binding StartPoint}"
+                            EndPoint="{Binding EndPoint}"/>
+                    </DataTemplate>
+                    <DataTemplate x:Key="PolylineViewModel" DataType="{x:Type core:PolylineViewModel}">
+                        <Polyline 
+                            Points="{Binding Points}"
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StrokeJoin="{Binding StrokeJoin}"
+                            StrokeLineCap="{Binding StrokeLineCap}"/>
+                    </DataTemplate>
+                    <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}">
+                        <TextBlock 
+                            Text="{Binding Text}"
+                            FontSize="{Binding FontSize}"
+                            Foreground="{Binding Foreground}"
+                            Background="{Binding Background}">
+                        </TextBlock>
+                    </DataTemplate>
+                </local:ShapeTemplateSelector>
+                
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
     </Border>
 </Window>

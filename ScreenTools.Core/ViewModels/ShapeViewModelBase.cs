@@ -1,5 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ScreenTools.Core;
 
-public class ShapeViewModelBase : ObservableObject {}
+public class ShapeViewModelBase : ObservableObject
+{
+    public ICommand? PointerPressedCommand { get; set; } 
+    public ICommand? PointerMovedCommand { get; set; } 
+    public ICommand? PointerReleasedCommand { get; set; } 
+}

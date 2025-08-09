@@ -1,124 +1,135 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
-using Avalonia.Media;
+using DynamicData;
 using Microsoft.Extensions.Logging;
-using ReactiveUI;
+using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
 public static class CanvasHelpers
 {
     private const double POSITION_OFFSET = 10;
-    public static bool IsInArea(Control control, Rectangle eraseArea)
+    public static bool IsInArea(ShapeViewModelBase shape, RectangleViewModel eraseArea)
     {
-        switch (control)
+        switch (shape)
         {
-            case Polyline polyline:
-                return polyline.Points
-                    .Any(p => p.X >= eraseArea.Bounds.TopLeft.X &&
-                              p.X <= eraseArea.Bounds.TopRight.X &&
-                              p.X >= eraseArea.Bounds.BottomLeft.X &&
-                              p.X <= eraseArea.Bounds.BottomRight.X &&
-                              p.Y >= eraseArea.Bounds.TopLeft.Y &&
-                              p.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                              p.Y >= eraseArea.Bounds.TopRight.Y &&
-                              p.Y <= eraseArea.Bounds.BottomRight.Y);
-            case TextBlock textBlock:
-                return textBlock.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                       textBlock.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                       textBlock.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                       textBlock.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                       textBlock.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                       textBlock.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                       textBlock.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                       textBlock.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
-            case Line line:
-                return (line.StartPoint.X >= eraseArea.Bounds.TopLeft.X &&
-                        line.StartPoint.X <= eraseArea.Bounds.TopRight.X &&
-                        line.StartPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-                        line.StartPoint.X <= eraseArea.Bounds.BottomRight.X &&
-                        line.StartPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-                        line.StartPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                        line.StartPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-                        line.StartPoint.Y <= eraseArea.Bounds.BottomRight.Y) ||
-                       (line.EndPoint.X >= eraseArea.Bounds.TopLeft.X &&
-                        line.EndPoint.X <= eraseArea.Bounds.TopRight.X &&
-                        line.EndPoint.X >= eraseArea.Bounds.BottomLeft.X &&
-                        line.EndPoint.X <= eraseArea.Bounds.BottomRight.X &&
-                        line.EndPoint.Y >= eraseArea.Bounds.TopLeft.Y &&
-                        line.EndPoint.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                        line.EndPoint.Y >= eraseArea.Bounds.TopRight.Y &&
-                        line.EndPoint.Y <= eraseArea.Bounds.BottomRight.Y);
-            case Rectangle rectangle:
-                return rectangle.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                              rectangle.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                              rectangle.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                              rectangle.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                              rectangle.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                              rectangle.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                              rectangle.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                              rectangle.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
-            case Ellipse ellipse:
-                return ellipse.Bounds.X >= eraseArea.Bounds.TopLeft.X &&
-                       ellipse.Bounds.X <= eraseArea.Bounds.TopRight.X &&
-                       ellipse.Bounds.X >= eraseArea.Bounds.BottomLeft.X &&
-                       ellipse.Bounds.X <= eraseArea.Bounds.BottomRight.X &&
-                       ellipse.Bounds.Y >= eraseArea.Bounds.TopLeft.Y &&
-                       ellipse.Bounds.Y <= eraseArea.Bounds.BottomLeft.Y &&
-                       ellipse.Bounds.Y >= eraseArea.Bounds.TopRight.Y &&
-                       ellipse.Bounds.Y <= eraseArea.Bounds.BottomRight.Y;
-        }
+            case PolylineViewModel polylineViewModel:
+                return CheckOverlap(polylineViewModel, eraseArea);
+            case LineViewModel lineViewModel:
+                return CheckOverlap(lineViewModel, eraseArea);
+            case RectangleViewModel rectangleViewModel:
+                return CheckOverlap(rectangleViewModel, eraseArea);
+        }   
 
         return false;
     }
     
-    public static void SaveCanvasToFile(Canvas canvas, string fileName)
+    private static bool CheckOverlap(RectangleViewModel rectA, RectangleViewModel rectB)
     {
-        var canvasItems = canvas.Children.ToList();
-        var itemsToSave = new List<SavedShape>();
-
-        foreach (var item in canvasItems)
+        var rectARight = rectA.X + rectA.Width;
+        var rectABottom = rectA.Y + rectA.Height;
+        var rectBRight = rectB.X + rectB.Width;
+        var rectBBottom = rectB.Y + rectB.Height;
+        
+        if (rectARight < rectB.X || 
+            rectA.X > rectBRight || 
+            rectABottom < rectB.Y ||  
+            rectA.Y > rectBBottom)   
         {
-            var shapeToSave = new SavedShape();
+            return false; 
+        }
+        
+        return true;
+    }
+    
+    private static bool CheckOverlap(PolylineViewModel polyline, RectangleViewModel rectangle)
+    {
+            return polyline.Points
+                .Any(p => p.X >= rectangle.X && p.X <= rectangle.X + rectangle.Width &&
+                          p.Y >= rectangle.Y && p.Y <= rectangle.Y + rectangle.Height);
+    }
+    
+    private static bool CheckOverlap(LineViewModel line, RectangleViewModel rectangle)
+    {
+        var rect = new Rect(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
+        
+        if (rect.Contains(line.StartPoint) || rect.Contains(line.EndPoint))
+        {
+            return true;
+        }
+
+        return LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.TopLeft, rect.TopRight) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.TopRight, rect.BottomRight) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.BottomRight, rect.BottomLeft) ||
+               LineSegmentIntersects(line.StartPoint, line.EndPoint, rect.BottomLeft, rect.TopLeft);
+    }
+    
+    private static bool LineSegmentIntersects(Point lineOneStartPoint, Point lineOneEndPoint, Point lineTwoStartPoint, Point lineTwoEndPoint)
+    {
+        var denominator = (lineTwoEndPoint.Y - lineTwoStartPoint.Y) *
+            (lineOneEndPoint.X - lineOneStartPoint.X) - (lineTwoEndPoint.X - lineTwoStartPoint.X) 
+            * (lineOneEndPoint.Y - lineOneStartPoint.Y);
+        
+        if (Math.Abs(denominator) < 1e-9)
+        {
+            return false;
+        }
+
+        var t = ((lineTwoEndPoint.X - lineTwoStartPoint.X)
+            * (lineOneStartPoint.Y - lineTwoStartPoint.Y) - (lineTwoEndPoint.Y - lineTwoStartPoint.Y)
+            * (lineOneStartPoint.X - lineTwoStartPoint.X)) / denominator;
+        var u = -((lineOneEndPoint.X - lineOneStartPoint.X) * 
+            (lineOneStartPoint.Y - lineTwoStartPoint.Y) - (lineOneEndPoint.Y - lineOneStartPoint.Y) 
+            * (lineOneStartPoint.X - lineTwoStartPoint.X)) / denominator;
+        
+        return t is >= 0 and <= 1 && u is >= 0 and <= 1;
+    }
+    
+    public static void SaveCanvasToFile(ObservableCollection<ShapeViewModelBase> shapes, string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            throw new ArgumentNullException(nameof(fileName));    
+        }
+        
+        var itemsToSave = new List<SavedShapeViewModel>();
+
+        foreach (var item in shapes)
+        {
+            var shapeToSave = new SavedShapeViewModel();
             
             switch (item)
             {
-                case Polyline polyline:
+                case PolylineViewModel polyline:
                 {
-                    shapeToSave.ShapeName = "polyline";
-                    shapeToSave.StrokeColor = polyline.Stroke?.ToString();
+                    shapeToSave.ShapeType = ShapeType.Polyline;
+                    shapeToSave.StrokeJoin = polyline.StrokeJoin;
+                    shapeToSave.StrokeLineCap = polyline.StrokeLineCap;
+                    shapeToSave.Stroke = polyline.Stroke;
                     shapeToSave.StrokeWidth = polyline.StrokeThickness;
                     shapeToSave.Points = polyline.Points
                         .Select(p => new SavedPoint(p.X, p.Y))
                         .ToArray();
                     break;
                 }
-                case Rectangle rectangle:
-                    shapeToSave.ShapeName = "rectangle";
-                    shapeToSave.FillColor = rectangle.Fill?.ToString();
-                    shapeToSave.StartPoint = new SavedPoint(rectangle.Bounds.X, rectangle.Bounds.Y);
+                case RectangleViewModel rectangle:
+                    shapeToSave.ShapeType = ShapeType.Rectangle;
+                    shapeToSave.Fill = rectangle.Fill;
+                    shapeToSave.StartPoint = new SavedPoint(rectangle.X, rectangle.Y);
                     shapeToSave.Width = rectangle.Width;
                     shapeToSave.Height = rectangle.Height;
                     break;
-                case Line line:
-                    shapeToSave.ShapeName = "line";
-                    shapeToSave.StrokeColor = line.Stroke?.ToString();
+                case LineViewModel line:
+                    shapeToSave.ShapeType = ShapeType.Line;
+                    shapeToSave.Stroke = line.Stroke;
                     shapeToSave.StrokeWidth = line.StrokeThickness;
                     shapeToSave.StartPoint = new SavedPoint(line.StartPoint.X, line.StartPoint.Y);
                     shapeToSave.EndPoint = new SavedPoint(line.EndPoint.X, line.EndPoint.Y);
-                    break;
-                case Ellipse ellipse:
-                    shapeToSave.ShapeName = "ellipse";
-                    shapeToSave.FillColor = ellipse.Fill?.ToString();
-                    shapeToSave.StartPoint = new SavedPoint(ellipse.Bounds.X, ellipse.Bounds.Y);
-                    shapeToSave.Width = ellipse.Bounds.Width;
-                    shapeToSave.Height = ellipse.Bounds.Height;
                     break;
             }
             
@@ -131,7 +142,7 @@ public static class CanvasHelpers
         streamWriter.WriteLine(serializedShape);
     }
 
-    public static void LoadCanvasFromFile(Canvas canvas, string fileName, ILogger logger)
+    public static List<ShapeViewModelBase> LoadShapesFromFile(string fileName, ILogger logger)
     {
         if (!File.Exists(fileName))
         {
@@ -151,65 +162,67 @@ public static class CanvasHelpers
         }
 
         if (string.IsNullOrEmpty(readLine))
-            return;
+            return [];
                     
-        var savedItems = JsonSerializer.Deserialize<SavedShape[]>(readLine);
+        var savedItems = JsonSerializer.Deserialize<SavedShapeViewModel[]>(readLine);
         
         if (savedItems == null)
-            return;
+            return [];
         
-        foreach (var savedItem in savedItems)
-        {
-            switch (savedItem.ShapeName)
-            {
-                case "polyline":
-                {
-                    var polyline = new Polyline
-                    {
-                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
-                        Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToArray()
-                    };
-                    
-                    canvas.Children.Add(polyline);
-                    break;
-                }
-                case "rectangle":
-                    var rectangle = new Rectangle
-                    {
-                        Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
-                        Width = savedItem.Width.GetValueOrDefault(100),
-                        Height = savedItem.Height.GetValueOrDefault(100),
-                    };
-                    
-                    canvas.AddToPosition(rectangle, savedItem.StartPoint.X, savedItem.StartPoint.Y);
-                    
-                    break;
-                case "line":
-                    var line = new Line
-                    {
-                        StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
-                        StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
-                        EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
-                    };
-                    
-                    canvas.Children.Add(line);
+        var shapes = new List<ShapeViewModelBase>();
 
-                    break;
-                case "ellipse":
-                    var ellipse = new Ellipse
+        try
+        {
+            foreach (var savedItem in savedItems)
+            {
+                switch (savedItem.ShapeType)
+                {
+                    case ShapeType.Polyline:
                     {
-                        Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
-                        Width = savedItem.Width.GetValueOrDefault(100),
-                        Height = savedItem.Height.GetValueOrDefault(100)
-                    };
+                        var polyline = new PolylineViewModel
+                        {
+                            StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                            Stroke = savedItem.Stroke,
+                            Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToObservable()
+                        };
                     
-                    canvas.AddToPosition(ellipse, savedItem.StartPoint.X, savedItem.StartPoint.Y);
+                        shapes.Add(polyline);
+                        break;
+                    }
+                    case ShapeType.Rectangle:
+                        var rectangle = new RectangleViewModel
+                        {
+                            Fill = savedItem.Fill,
+                            Width = savedItem.Width.GetValueOrDefault(100),
+                            Height = savedItem.Height.GetValueOrDefault(100),
+                            X = savedItem.StartPoint?.X ?? 0,
+                            Y = savedItem.StartPoint?.Y ?? 0,
+                        };
                     
-                    break;
+                        shapes.Add(rectangle);
+                    
+                        break;
+                    case ShapeType.Line:
+                        var line = new LineViewModel
+                        {
+                            StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
+                            Stroke = savedItem.Stroke,
+                            StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
+                            EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
+                        };
+                    
+                        shapes.Add(line);
+
+                        break;
+                }
             }
         }
+        catch
+        {
+            //Ignore
+        }
+
+        return shapes;
     }
 
     public static void DeleteSavedCanvas(string fileName)
@@ -220,181 +233,158 @@ public static class CanvasHelpers
         }
     }
 
-    public static void CopyControlToPosition(Canvas canvas, 
-        Control controlToCopy, 
+    public static void CopyShapeToPosition(ObservableCollection<ShapeViewModelBase> shapes,
+        ShapeViewModelBase shapeToCopy, 
         Point newPos, 
-        Point selectedAreaPos)
+        Point selectedAreaPos,
+        double windowWidth,
+        double windowHeight)
     {
-        switch (controlToCopy)
+        switch (shapeToCopy)
         {
-            case Polyline polyline:
+            case PolylineViewModel polylineViewModel:
             {
-                var newPolyline = new Polyline
+                var newPolylineViewModel = new PolylineViewModel
                 {
-                    Stroke = polyline.Stroke,
-                    StrokeThickness = polyline.StrokeThickness,
-                    StrokeJoin = polyline.StrokeJoin,
-                    StrokeLineCap = polyline.StrokeLineCap
+                    Stroke = polylineViewModel.Stroke,
+                    StrokeThickness = polylineViewModel.StrokeThickness,
+                    StrokeJoin = polylineViewModel.StrokeJoin,
+                    StrokeLineCap = polylineViewModel.StrokeLineCap
                 };
                 
-                var newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                var newPolylinePoints = CalculateNewPolylinePoints(polylineViewModel, selectedAreaPos, newPos);
                 var outOfCanvasWidthPoints = newPolylinePoints
-                    .Where(p => p.X > canvas.Bounds.Width)
+                    .Where(p => p.X > windowWidth)
                     .ToList();
 
                 if (outOfCanvasWidthPoints.Count > 0)
                 {
                     var furthestPoint = outOfCanvasWidthPoints.MaxBy(p => p.X);
-                    var outOfCanvasDistance = new Point(furthestPoint.X - canvas.Bounds.Width, furthestPoint.Y);
+                    var outOfCanvasDistance = new Point(furthestPoint.X - windowWidth, furthestPoint.Y);
                     
                     newPos = new Point(newPos.X - outOfCanvasDistance.X - POSITION_OFFSET, newPos.Y);
-                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                    newPolylinePoints = CalculateNewPolylinePoints(polylineViewModel, selectedAreaPos, newPos);
                 }
                 
                 var outOfCanvasHeightPoints = newPolylinePoints
-                    .Where(p => p.Y > canvas.Bounds.Height)
+                    .Where(p => p.Y > windowHeight)
                     .ToList();
 
                 if (outOfCanvasHeightPoints.Count > 0)
                 {
                     var furthestPoint = outOfCanvasHeightPoints.MaxBy(p => p.Y);
-                    var outOfCanvasDistance = new Point(furthestPoint.X, furthestPoint.Y - canvas.Bounds.Height);
+                    var outOfCanvasDistance = new Point(furthestPoint.X, furthestPoint.Y - windowHeight);
                     
                     newPos = new Point(newPos.X, newPos.Y - outOfCanvasDistance.Y - POSITION_OFFSET);
-                    newPolylinePoints = CalculateNewPolylinePoints(polyline, selectedAreaPos, newPos);
+                    newPolylinePoints = CalculateNewPolylinePoints(polylineViewModel, selectedAreaPos, newPos);
                 }
                 
-                newPolyline.Points = newPolylinePoints;
+                newPolylineViewModel.Points = newPolylinePoints.ToObservable();
                 
-                canvas.Children.Add(newPolyline);
+                shapes.Add(newPolylineViewModel);
                 
                 break;
             }
-            case Rectangle rectangle:
+            case RectangleViewModel rectangleViewModel:
             {
-                var newRectangle = new Rectangle
+                var newRectangleViewModel = new RectangleViewModel
                 {
-                    Fill = rectangle.Fill,
-                    Width = rectangle.Width,
-                    Height = rectangle.Height
+                    Fill = rectangleViewModel.Fill,
+                    Width = rectangleViewModel.Width,
+                    Height = rectangleViewModel.Height
                 };
                 
-                var pos = new Point(newPos.X + rectangle.Bounds.X - selectedAreaPos.X,
-                    newPos.Y + rectangle.Bounds.Y - selectedAreaPos.Y);
+                var pos = new Point(newPos.X + rectangleViewModel.X - selectedAreaPos.X,
+                    newPos.Y + rectangleViewModel.Y - selectedAreaPos.Y);
 
-                if (pos.X + newRectangle.Width > canvas.Bounds.Width)
+                if (pos.X + newRectangleViewModel.Width > windowWidth)
                 {
-                    pos = new Point(pos.X - (pos.X + newRectangle.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                    pos = new Point(pos.X - (pos.X + newRectangleViewModel.Width - windowWidth) - POSITION_OFFSET, pos.Y);
                 }
                 
-                if (pos.Y + newRectangle.Height > canvas.Bounds.Height)
+                if (pos.Y + newRectangleViewModel.Height > windowHeight)
                 {
-                    pos = new Point(pos.X, pos.Y - (pos.Y + newRectangle.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                    pos = new Point(pos.X, pos.Y - (pos.Y + newRectangleViewModel.Height - windowHeight) - POSITION_OFFSET);
                 }
                 
-                canvas.SetPosition(newRectangle, pos);
-                canvas.Children.Add(newRectangle);
+                newRectangleViewModel.X = pos.X;
+                newRectangleViewModel.Y = pos.Y;
+                
+                shapes.Add(newRectangleViewModel);
                 
                 break;
             }
-            case Ellipse ellipse:
+            case LineViewModel lineViewModel:
             {
-                var newEllipse = new Ellipse
+                var newLineViewModel = new LineViewModel
                 {
-                    Fill = ellipse.Fill,
-                    Width = ellipse.Width,
-                    Height = ellipse.Height
+                    Stroke = lineViewModel.Stroke,
+                    StrokeThickness = lineViewModel.StrokeThickness,
+                    StartPoint = new Point(newPos.X + lineViewModel.StartPoint.X - selectedAreaPos.X,
+                        newPos.Y + lineViewModel.StartPoint.Y - selectedAreaPos.Y),
+                    EndPoint = new Point(newPos.X + lineViewModel.EndPoint.X - selectedAreaPos.X,
+                        newPos.Y + lineViewModel.EndPoint.Y - selectedAreaPos.Y)
                 };
-                
-                var pos = new Point(newPos.X + ellipse.Bounds.X - selectedAreaPos.X,
-                    newPos.Y + ellipse.Bounds.Y - selectedAreaPos.Y);
 
-                if (pos.X + newEllipse.Width > canvas.Bounds.Width)
+                if (newLineViewModel.EndPoint.X > windowWidth)
                 {
-                    pos = new Point(pos.X - (pos.X + newEllipse.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
+                    newLineViewModel.StartPoint = new Point(newLineViewModel.StartPoint.X - (newLineViewModel.EndPoint.X - windowWidth) - POSITION_OFFSET, newLineViewModel.StartPoint.Y);
+                    newLineViewModel.EndPoint = new Point(newLineViewModel.EndPoint.X - (newLineViewModel.EndPoint.X - windowWidth) - POSITION_OFFSET, newLineViewModel.EndPoint.Y);
                 }
                 
-                if (pos.Y + newEllipse.Height > canvas.Bounds.Height)
+                if (newLineViewModel.EndPoint.Y > windowHeight)
                 {
-                    pos = new Point(pos.X, pos.Y - (pos.Y + newEllipse.Height - canvas.Bounds.Height) - POSITION_OFFSET);
+                    newLineViewModel.StartPoint = new Point(newLineViewModel.StartPoint.X, newLineViewModel.StartPoint.Y - (newLineViewModel.EndPoint.Y - windowHeight) - POSITION_OFFSET);
+                    newLineViewModel.EndPoint = new Point(newLineViewModel.EndPoint.X, newLineViewModel.EndPoint.Y - (newLineViewModel.EndPoint.Y - windowHeight) - POSITION_OFFSET);
                 }
-                
-                canvas.SetPosition(newEllipse, pos);
-                canvas.Children.Add(newEllipse);
+
+                shapes.Add(newLineViewModel);
                 
                 break;
             }
-            case Line line:
+            case TextBlockViewModel textBlockViewModel:
             {
-                var newLine = new Line
+                var newTextBlockViewModel = new TextBlockViewModel
                 {
-                    Stroke = line.Stroke,
-                    StrokeThickness = line.StrokeThickness,
-                    StartPoint = new Point(newPos.X + line.StartPoint.X - selectedAreaPos.X,
-                        newPos.Y + line.StartPoint.Y - selectedAreaPos.Y),
-                    EndPoint = new Point(newPos.X + line.EndPoint.X - selectedAreaPos.X,
-                        newPos.Y + line.EndPoint.Y - selectedAreaPos.Y)
-                };
-
-                if (newLine.EndPoint.X > canvas.Bounds.Width)
-                {
-                    newLine.StartPoint = new Point(newLine.StartPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.StartPoint.Y);
-                    newLine.EndPoint = new Point(newLine.EndPoint.X - (newLine.EndPoint.X - canvas.Bounds.Width) - POSITION_OFFSET, newLine.EndPoint.Y);
-                }
-                
-                if (newLine.EndPoint.Y > canvas.Bounds.Height)
-                {
-                    newLine.StartPoint = new Point(newLine.StartPoint.X, newLine.StartPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
-                    newLine.EndPoint = new Point(newLine.EndPoint.X, newLine.EndPoint.Y - (newLine.EndPoint.Y - canvas.Bounds.Height) - POSITION_OFFSET);
-                }
-
-                canvas.Children.Add(newLine);
-                break;
-            }
-            case TextBlock textBlock:
-            {
-                var newTextBlock = new TextBlock
-                {
-                    Text = textBlock.Text,
-                    FontSize = textBlock.FontSize,
-                    Foreground = textBlock.Foreground,
-                    Background = textBlock.Background,
+                    Text = textBlockViewModel.Text,
+                    FontSize = textBlockViewModel.FontSize,
+                    Foreground = textBlockViewModel.Foreground,
+                    Background = textBlockViewModel.Background,
                 };
                 
-                var pos = new Point(newPos.X + textBlock.Bounds.X - selectedAreaPos.X,
-                    newPos.Y + textBlock.Bounds.Y - selectedAreaPos.Y);
+                var pos = new Point(newPos.X + textBlockViewModel.X - selectedAreaPos.X,
+                    newPos.Y + textBlockViewModel.Y - selectedAreaPos.Y);
                 
-                if (pos.X + textBlock.Bounds.Width > canvas.Bounds.Width)
-                {
-                    pos = new Point(pos.X - (pos.X + textBlock.Bounds.Width - canvas.Bounds.Width) - POSITION_OFFSET, pos.Y);
-                }
+                // if (pos.X + textBlockViewModel.Width > windowWidth)
+                // {
+                //     pos = new Point(pos.X - (pos.X + textBlockViewModel.Width - windowWidth) - POSITION_OFFSET, pos.Y);
+                // }
+                //
+                // if (pos.Y + textBlockViewModel.Height > windowHeight)
+                // {
+                //     pos = new Point(pos.X, pos.Y - (pos.Y + textBlockViewModel.Height - windowHeight) - POSITION_OFFSET);
+                // }
                 
-                if (pos.Y + textBlock.Bounds.Height > canvas.Bounds.Height)
-                {
-                    pos = new Point(pos.X, pos.Y - (pos.Y + textBlock.Bounds.Height - canvas.Bounds.Height) - POSITION_OFFSET);
-                }
-                
-                canvas.SetPosition(newTextBlock, pos);
-                canvas.Children.Add(newTextBlock);
+                shapes.Add(newTextBlockViewModel);
                 
                 break;
             }
         }
     }
     
-    private static List<Point> CalculateNewPolylinePoints(Polyline oldPolyline, Point selectedAreaPos, Point newPos)
+    private static List<Point> CalculateNewPolylinePoints(PolylineViewModel oldPolylineViewModel, Point selectedAreaPos, Point newPos)
     {
         var points = new List<Point>();
         var currentPoint = new Point(
-            newPos.X + oldPolyline.Points.First().X - selectedAreaPos.X,
-            newPos.Y + oldPolyline.Points.First().Y - selectedAreaPos.Y);
+            newPos.X + oldPolylineViewModel.Points.First().X - selectedAreaPos.X,
+            newPos.Y + oldPolylineViewModel.Points.First().Y - selectedAreaPos.Y);
                 
         points.Add(currentPoint);
                 
-        for (var i = 0; i < oldPolyline.Points.Count - 1; i++)
+        for (var i = 0; i < oldPolylineViewModel.Points.Count - 1; i++)
         {
-            var diffX = oldPolyline.Points[i + 1].X - oldPolyline.Points[i].X;
-            var diffY = oldPolyline.Points[i + 1].Y - oldPolyline.Points[i].Y;
+            var diffX = oldPolylineViewModel.Points[i + 1].X - oldPolylineViewModel.Points[i].X;
+            var diffY = oldPolylineViewModel.Points[i + 1].Y - oldPolylineViewModel.Points[i].Y;
             var nextPoint = new Point(currentPoint.X + diffX, currentPoint.Y + diffY);
                     
             currentPoint = new Point(nextPoint.X, nextPoint.Y);
@@ -403,5 +393,27 @@ public static class CanvasHelpers
         }
 
         return points;
+    }
+
+    public static void SetRectanglePosAndSize(RectangleViewModel rectangleViewModel, Point currentPos, Point startPos)
+    {
+        rectangleViewModel.X = Math.Min(currentPos.X, startPos.X);
+        rectangleViewModel.Y = Math.Min(currentPos.Y, startPos.Y);
+
+        rectangleViewModel.Width = Math.Max(currentPos.X, startPos.X) - rectangleViewModel.X;
+        rectangleViewModel.Height = Math.Max(currentPos.Y, startPos.Y) - rectangleViewModel.Y;
+    }
+    
+    public static void RemoveByArea(ObservableCollection<ShapeViewModelBase> shapes, 
+        RectangleViewModel area, 
+        DrawingHistoryService? drawingHistoryService = null)
+    {
+        var shapesToRemove = shapes
+            .Where(x => IsInArea(x, area) && x != area)
+            .ToList();
+
+        drawingHistoryService?.Save(shapesToRemove, DrawingAction.Delete);
+        
+        shapes.RemoveMany(shapesToRemove);
     }
 }
