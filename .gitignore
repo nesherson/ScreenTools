@@ -367,3 +367,6 @@ FodyWeavers.xsd
 
 # Generated database
 ScreenTools.Infrastructure/ScreenTools.db
+
+# VS Code
+.vscode
