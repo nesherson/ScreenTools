@@ -83,10 +83,6 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
         canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
         canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
-        //     
-        //     var canvasFilePath = _configuration["CanvasFilePath"] ?? "";
-        //     
-        //     CanvasHelpers.LoadCanvasFromFile(canvas, canvasFilePath, _logger);
     }
 
     private void OnHidden(EventArgs e)

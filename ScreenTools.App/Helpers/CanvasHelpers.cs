@@ -93,37 +93,43 @@ public static class CanvasHelpers
         return t is >= 0 and <= 1 && u is >= 0 and <= 1;
     }
     
-    public static void SaveCanvasToFile(Canvas canvas, string fileName)
+    public static void SaveCanvasToFile(ObservableCollection<ShapeViewModelBase> shapes, string fileName)
     {
-        var canvasItems = canvas.Children.ToList();
-        var itemsToSave = new List<SavedShape>();
-
-        foreach (var item in canvasItems)
+        if (string.IsNullOrEmpty(fileName))
         {
-            var shapeToSave = new SavedShape();
+            throw new ArgumentNullException(nameof(fileName));    
+        }
+        
+        var itemsToSave = new List<SavedShapeViewModel>();
+
+        foreach (var item in shapes)
+        {
+            var shapeToSave = new SavedShapeViewModel();
             
             switch (item)
             {
-                case Polyline polyline:
+                case PolylineViewModel polyline:
                 {
                     shapeToSave.ShapeType = ShapeType.Polyline;
-                    shapeToSave.StrokeColor = polyline.Stroke?.ToString();
+                    shapeToSave.StrokeJoin = polyline.StrokeJoin;
+                    shapeToSave.StrokeLineCap = polyline.StrokeLineCap;
+                    shapeToSave.Stroke = polyline.Stroke;
                     shapeToSave.StrokeWidth = polyline.StrokeThickness;
                     shapeToSave.Points = polyline.Points
                         .Select(p => new SavedPoint(p.X, p.Y))
                         .ToArray();
                     break;
                 }
-                case Rectangle rectangle:
+                case RectangleViewModel rectangle:
                     shapeToSave.ShapeType = ShapeType.Rectangle;
-                    shapeToSave.FillColor = rectangle.Fill?.ToString();
-                    shapeToSave.StartPoint = new SavedPoint(rectangle.Bounds.X, rectangle.Bounds.Y);
+                    shapeToSave.Fill = rectangle.Fill;
+                    shapeToSave.StartPoint = new SavedPoint(rectangle.X, rectangle.Y);
                     shapeToSave.Width = rectangle.Width;
                     shapeToSave.Height = rectangle.Height;
                     break;
-                case Line line:
+                case LineViewModel line:
                     shapeToSave.ShapeType = ShapeType.Line;
-                    shapeToSave.StrokeColor = line.Stroke?.ToString();
+                    shapeToSave.Stroke = line.Stroke;
                     shapeToSave.StrokeWidth = line.StrokeThickness;
                     shapeToSave.StartPoint = new SavedPoint(line.StartPoint.X, line.StartPoint.Y);
                     shapeToSave.EndPoint = new SavedPoint(line.EndPoint.X, line.EndPoint.Y);
@@ -139,7 +145,7 @@ public static class CanvasHelpers
         streamWriter.WriteLine(serializedShape);
     }
 
-    public static void LoadCanvasFromFile(Canvas canvas, string fileName, ILogger logger)
+    public static List<ShapeViewModelBase> LoadShapesFromFile(string fileName, ILogger logger)
     {
         if (!File.Exists(fileName))
         {
@@ -159,12 +165,14 @@ public static class CanvasHelpers
         }
 
         if (string.IsNullOrEmpty(readLine))
-            return;
+            return [];
                     
-        var savedItems = JsonSerializer.Deserialize<SavedShape[]>(readLine);
+        var savedItems = JsonSerializer.Deserialize<SavedShapeViewModel[]>(readLine);
         
         if (savedItems == null)
-            return;
+            return [];
+        
+        var shapes = new List<ShapeViewModelBase>();
         
         foreach (var savedItem in savedItems)
         {
@@ -172,41 +180,45 @@ public static class CanvasHelpers
             {
                 case ShapeType.Polyline:
                 {
-                    var polyline = new Polyline
+                    var polyline = new PolylineViewModel
                     {
                         StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
-                        Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToArray()
+                        Stroke = savedItem.Stroke,
+                        Points = savedItem.Points.Select(p => new Point(p.X, p.Y)).ToObservable()
                     };
                     
-                    canvas.Children.Add(polyline);
+                    shapes.Add(polyline);
                     break;
                 }
                 case ShapeType.Rectangle:
-                    var rectangle = new Rectangle
+                    var rectangle = new RectangleViewModel
                     {
-                        Fill = savedItem.FillColor != null ? SolidColorBrush.Parse(savedItem.FillColor) : null,
+                        Fill = savedItem.Fill,
                         Width = savedItem.Width.GetValueOrDefault(100),
                         Height = savedItem.Height.GetValueOrDefault(100),
+                        X = savedItem.StartPoint?.X ?? 0,
+                        Y = savedItem.StartPoint?.Y ?? 0,
                     };
                     
-                    canvas.AddToPosition(rectangle, savedItem.StartPoint.X, savedItem.StartPoint.Y);
+                    shapes.Add(rectangle);
                     
                     break;
                 case ShapeType.Line:
-                    var line = new Line
+                    var line = new LineViewModel
                     {
                         StrokeThickness = savedItem.StrokeWidth.GetValueOrDefault(5),
-                        Stroke = savedItem.StrokeColor != null ? SolidColorBrush.Parse(savedItem.StrokeColor) : null,
+                        Stroke = savedItem.Stroke,
                         StartPoint = new Point(savedItem.StartPoint.X, savedItem.StartPoint.Y),
                         EndPoint = new Point(savedItem.EndPoint.X, savedItem.EndPoint.Y)
                     };
                     
-                    canvas.Children.Add(line);
+                    shapes.Add(line);
 
                     break;
             }
         }
+
+        return shapes;
     }
 
     public static void DeleteSavedCanvas(string fileName)
@@ -263,7 +275,7 @@ public static class CanvasHelpers
                     newPolylinePoints = CalculateNewPolylinePoints(polylineViewModel, selectedAreaPos, newPos);
                 }
                 
-                newPolylineViewModel.Points = new ObservableCollection<Point>(newPolylinePoints);
+                newPolylineViewModel.Points = newPolylinePoints.ToObservable();
                 
                 shapes.Add(newPolylineViewModel);
                 

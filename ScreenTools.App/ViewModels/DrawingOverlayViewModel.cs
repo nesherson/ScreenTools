@@ -5,10 +5,11 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
+using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.Notifications;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Messaging;
@@ -17,7 +18,6 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
 using ScreenTools.Infrastructure;
-using Action = System.Action;
 using Point = Avalonia.Point;
 using SystemIOPath = System.IO.Path;
 
@@ -36,7 +36,7 @@ public class DrawingOverlayViewModel : ViewModelBase
     private bool _isPopupOpen;
     private Point _startPoint;
     private DrawingState _drawingState;
-    private DrawingShape? _drawingShape;
+    private ShapeType? _drawingShape;
     private ShapeViewModelBase? _currentShape;
     private ObservableCollection<int> _lineStrokes;
     private ObservableCollection<string> _lineColors;
@@ -50,7 +50,7 @@ public class DrawingOverlayViewModel : ViewModelBase
     private bool _isDragging;
     private List<ShapeViewModelBase>? _itemsToCopy;
 
-    
+
     public DrawingOverlayViewModel(TextDetectionService textDetectionService,
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
@@ -64,9 +64,8 @@ public class DrawingOverlayViewModel : ViewModelBase
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
         _configuration = configuration;
-        
-        SetToolbarItems();
-        _drawingShape = DrawingShape.Rectangle;
+
+        _drawingShape = ShapeType.Rectangle;
         LineStrokes = [2, 5, 10, 15, 20];
         SelectedLineStroke = LineStrokes.First();
         LineColors = ["#000000", "#ff0000", "#ffffff", "#3399ff", "#47d147"];
@@ -74,21 +73,27 @@ public class DrawingOverlayViewModel : ViewModelBase
         DrawingState = DrawingState.Draw;
         IsPopupOpen = true;
         WindowBorderThickness = new Thickness(2);
+        SetToolbarItems();
         SelectPen();
+        
+        Shapes = CanvasHelpers.LoadShapesFromFile(
+            _configuration["CanvasFilePath"] ?? "",
+            _logger)
+            .ToObservable();
     }
-    
+
     public bool IsPopupOpen
     {
         get => _isPopupOpen;
         set => SetProperty(ref _isPopupOpen, value);
     }
-    
+
     public Thickness WindowBorderThickness
     {
         get => _windowBorderThickness;
         set => SetProperty(ref _windowBorderThickness, value);
     }
-    
+
     public DrawingState DrawingState
     {
         get => _drawingState;
@@ -98,47 +103,47 @@ public class DrawingOverlayViewModel : ViewModelBase
             SetProperty(ref _drawingState, value);
         }
     }
-    
+
     public ObservableCollection<int> LineStrokes
     {
         get => _lineStrokes;
         set => SetProperty(ref _lineStrokes, value);
     }
-    
+
     public int SelectedLineStroke
     {
         get => _selectedLineStroke;
         set => SetProperty(ref _selectedLineStroke, value);
     }
-    
+
     public ObservableCollection<string> LineColors
     {
         get => _lineColors;
         set => SetProperty(ref _lineColors, value);
     }
-    
+
     public string SelectedLineColor
     {
         get => _selectedLineColor;
         set => SetProperty(ref _selectedLineColor, value);
     }
-    
+
     public ObservableCollection<DrawingToolbarItemViewModel> ToolbarItems
     {
         get => _toolbarItems;
         set => SetProperty(ref _toolbarItems, value);
     }
 
-    public string SelectedShapeToolTip => 
+    public string SelectedShapeToolTip =>
         _drawingShape switch
         {
-            DrawingShape.Line => "Line",
-            DrawingShape.Rectangle => "Rectangle",
+            ShapeType.Line => "Line",
+            ShapeType.Rectangle => "Rectangle",
             _ => "Shape not selected"
         };
-    
+
     public ObservableCollection<ShapeViewModelBase> Shapes { get; } = new();
-    
+
     public async Task HandleOnKeyDown(KeyEventArgs e)
     {
         switch (e.Key)
@@ -164,25 +169,25 @@ public class DrawingOverlayViewModel : ViewModelBase
                 break;
         }
     }
-    
+
     public void HandleOnPointerWheelChanged(PointerWheelEventArgs e)
     {
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || !e.KeyModifiers.HasFlag(KeyModifiers.Shift)) 
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || !e.KeyModifiers.HasFlag(KeyModifiers.Shift))
             return;
-    
+
         var deltaY = Convert.ToInt32(e.Delta.Y);
         var nextColorIndex = LineColors.IndexOf(SelectedLineColor) + deltaY;
-        
+
         if (nextColorIndex < 0)
         {
             nextColorIndex = LineColors.Count - 1;
         }
-        
+
         if (nextColorIndex >= LineColors.Count)
         {
             nextColorIndex = 0;
         }
-        
+
         SelectedLineColor = LineColors[nextColorIndex];
     }
 
@@ -201,12 +206,12 @@ public class DrawingOverlayViewModel : ViewModelBase
     {
         if (_itemsToCopy != null && _itemsToCopy.Count == 0)
             return;
-            
+
         foreach (var itemToCopy in _itemsToCopy)
         {
             var windowSize = await WeakReferenceMessenger.Default
                 .Send(new GetWindowSizeMessage());
-            
+
             CanvasHelpers.CopyShapeToPosition(Shapes,
                 itemToCopy,
                 new Point(pointerPoint.Position.X, pointerPoint.Position.Y),
@@ -215,23 +220,23 @@ public class DrawingOverlayViewModel : ViewModelBase
                 windowSize.Height);
         }
     }
-    
+
     public void OnPointerPressed(PointerPoint pointerPoint)
     {
         if (_isDragging)
             return;
-    
+
         if (pointerPoint.Properties.IsRightButtonPressed)
         {
             HandleOnRightMouseButtonPressed(pointerPoint);
         }
-        
+
         if (!pointerPoint.Properties.IsLeftButtonPressed)
             return;
-        
+
         IsPopupOpen = false;
         _startPoint = pointerPoint.Position;
-        
+
         switch (DrawingState)
         {
             case DrawingState.Erase:
@@ -244,7 +249,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                     Stroke = "Red",
                     StrokeThickness = 1
                 };
-                
+
                 Shapes.Add(_eraseArea);
                 break;
             case DrawingState.DetectText:
@@ -257,26 +262,26 @@ public class DrawingOverlayViewModel : ViewModelBase
                     Stroke = "LightBlue",
                     StrokeThickness = 1
                 };
-                
+
                 Shapes.Add(_textDetectionArea);
                 break;
             case DrawingState.Draw:
             {
                 switch (_drawingShape)
                 {
-                        case DrawingShape.Polyline:
-                            _currentShape = new PolylineViewModel
-                            {
-                                Stroke = SelectedLineColor,
-                                StrokeThickness = SelectedLineStroke,
-                                StrokeJoin = PenLineJoin.Miter,
-                                StrokeLineCap = PenLineCap.Round
-                            };
-                            
-                            Shapes.Add(_currentShape);
-                            
-                            break;
-                    case DrawingShape.Line:
+                    case ShapeType.Polyline:
+                        _currentShape = new PolylineViewModel
+                        {
+                            Stroke = SelectedLineColor,
+                            StrokeThickness = SelectedLineStroke,
+                            StrokeJoin = PenLineJoin.Miter,
+                            StrokeLineCap = PenLineCap.Round
+                        };
+
+                        Shapes.Add(_currentShape);
+
+                        break;
+                    case ShapeType.Line:
                         _currentShape = new LineViewModel
                         {
                             Stroke = SelectedLineColor,
@@ -284,10 +289,10 @@ public class DrawingOverlayViewModel : ViewModelBase
                             StartPoint = _startPoint,
                             EndPoint = _startPoint
                         };
-                       
+
                         Shapes.Add(_currentShape);
                         break;
-                    case DrawingShape.Rectangle:
+                    case ShapeType.Rectangle:
                         _currentShape = new RectangleViewModel
                         {
                             X = _startPoint.X,
@@ -296,11 +301,11 @@ public class DrawingOverlayViewModel : ViewModelBase
                             Width = 1,
                             Fill = SelectedLineColor,
                         };
-                        
+
                         Shapes.Add(_currentShape);
                         break;
                 }
-        
+
                 break;
             }
             case DrawingState.AddText:
@@ -308,9 +313,9 @@ public class DrawingOverlayViewModel : ViewModelBase
                 {
                     OnClosed = text =>
                     {
-                        if (string.IsNullOrEmpty(text)) 
+                        if (string.IsNullOrEmpty(text))
                             return;
-                    
+
                         var textBlockViewModel = new TextBlockViewModel
                         {
                             Text = text,
@@ -320,7 +325,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                             X = _startPoint.X,
                             Y = _startPoint.Y
                         };
-                        
+
                         Shapes.Add(textBlockViewModel);
                     }
                 };
@@ -341,18 +346,19 @@ public class DrawingOverlayViewModel : ViewModelBase
                         Stroke = "Purple",
                         StrokeThickness = 1
                     };
-                    
+
                     Shapes.Add(_copyShapesArea);
                 }
+
                 break;
         }
     }
-    
+
     public void OnPointerMoved(PointerPoint pointerPoint)
     {
         if (_isDragging)
             return;
-        
+
         if (pointerPoint.Properties.IsLeftButtonPressed)
         {
             switch (DrawingState)
@@ -363,7 +369,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                         return;
 
                     CanvasHelpers.SetRectanglePosAndSize(_eraseArea, pointerPoint.Position, _startPoint);
-                    
+
                     break;
                 }
                 case DrawingState.DetectText:
@@ -378,46 +384,48 @@ public class DrawingOverlayViewModel : ViewModelBase
                 {
                     switch (_drawingShape)
                     {
-                        case DrawingShape.Polyline:
+                        case ShapeType.Polyline:
                             if (_currentShape is not PolylineViewModel polylineViewModel)
                                 return;
-                            
+
                             polylineViewModel.Points.Add(pointerPoint.Position);
                             break;
-                        case DrawingShape.Line:
+                        case ShapeType.Line:
                             if (_currentShape is not LineViewModel lineViewModel)
                                 return;
 
                             lineViewModel.EndPoint = pointerPoint.Position;
-                            
+
                             break;
-                        case DrawingShape.Rectangle:
+                        case ShapeType.Rectangle:
                             if (_currentShape is not RectangleViewModel rectangleViewModel)
                                 return;
 
-                            CanvasHelpers.SetRectanglePosAndSize(rectangleViewModel, pointerPoint.Position, _startPoint);
+                            CanvasHelpers.SetRectanglePosAndSize(rectangleViewModel, pointerPoint.Position,
+                                _startPoint);
                             break;
                     }
+
                     break;
                 }
                 case DrawingState.CopyShapes:
                 {
                     if (_copyShapesArea is null)
                         return;
-                    
+
                     CanvasHelpers.SetRectanglePosAndSize(_copyShapesArea, pointerPoint.Position, _startPoint);
-                    
+
                     break;
                 }
             }
         }
     }
-     
+
     public void OnPointerReleased()
     {
         if (_isDragging)
             return;
-        
+
         try
         {
             switch (DrawingState)
@@ -425,31 +433,31 @@ public class DrawingOverlayViewModel : ViewModelBase
                 case DrawingState.Erase:
                     if (_eraseArea is null)
                         return;
-                    
-                    CanvasHelpers.RemoveByArea(Shapes, _eraseArea,_drawingHistoryService);
+
+                    CanvasHelpers.RemoveByArea(Shapes, _eraseArea, _drawingHistoryService);
                     Shapes.Remove(_eraseArea);
                     _eraseArea = null;
-                    
+
                     break;
                 case DrawingState.DetectText:
                     if (_textDetectionArea is null)
                         return;
-                
+
                     var startX = _textDetectionArea.X;
                     var startY = _textDetectionArea.Y;
                     var width = _textDetectionArea.Width;
                     var height = _textDetectionArea.Height;
-                
+
                     Shapes.Remove(_textDetectionArea);
                     _textDetectionArea = null;
-                
+
                     if (width == 0 || height == 0)
                         throw new ArgumentException("TextDetectError: Width and Height cannot be 0");
-                
+
                     var bmp = new Bitmap(Convert.ToInt32(width),
                         Convert.ToInt32(height),
                         PixelFormat.Format32bppArgb);
-                
+
                     using (var g = Graphics.FromImage(bmp))
                         g.CopyFromScreen(Convert.ToInt32(startX),
                             Convert.ToInt32(startY),
@@ -457,62 +465,62 @@ public class DrawingOverlayViewModel : ViewModelBase
                             0,
                             bmp.Size,
                             CopyPixelOperation.SourceCopy);
-                
+
                     var ms = new MemoryStream();
-                    
+
                     bmp.Save(ms, ImageFormat.Png);
-                    
+
                     var text = _textDetectionService
                         .ProcessImage(ms.ToArray())
                         .Trim();
-                
+
                     if (string.IsNullOrEmpty(text) || string.IsNullOrWhiteSpace(text))
                     {
                         ShowWindowNotifcation("Information",
                             "Text could not be detected",
                             NotificationType.Information);
-                        
+
                         return;
                     }
-                
+
                     AddTextToCanvas(text);
-                
+
                     break;
                 case DrawingState.Draw:
                     // _drawingHistoryService.Save([_selectedShape], DrawingAction.Draw);
-                    
+
                     _currentShape = null;
-                    
+
                     break;
                 case DrawingState.CopyShapes:
                     if (_copyShapesArea is null)
                         return;
-                    
+
                     var itemsToCopy = Shapes
                         .Where(x => CanvasHelpers.IsInArea(x, _copyShapesArea) && x != _copyShapesArea)
                         .ToList();
-                
+
                     if (itemsToCopy.Count == 0)
                     {
                         Shapes.Remove(_copyShapesArea);
                         _copyShapesArea = null;
-                
+
                         return;
                     }
-                    
+
                     _itemsToCopy = itemsToCopy;
                     _startPoint = new Point(_copyShapesArea.X, _copyShapesArea.Y);
-                
+
                     Shapes.Remove(_copyShapesArea);
                     _copyShapesArea = null;
-                    
+
                     break;
             }
         }
         catch (ArgumentException argEx) when (argEx.Message.Contains("TextDetectError"))
         {
             ShowWindowNotifcation("Error",
-                argEx.Message[argEx.Message.IndexOf(':').. + 2],
+                argEx.Message[argEx.Message.IndexOf(':').. +2],
                 NotificationType.Error);
             _logger.LogError($"Failed to detect text. Exception: {argEx.Message}");
         }
@@ -525,7 +533,7 @@ public class DrawingOverlayViewModel : ViewModelBase
             IsPopupOpen = true;
         }
     }
-    
+
     private void TextBlockOnPointerPressed()
     {
         IsPopupOpen = false;
@@ -536,39 +544,39 @@ public class DrawingOverlayViewModel : ViewModelBase
         //     HandleTextBlockRightBtnPressed(textBlock);
         // }
     }
-    
+
     private void TextBlockOnPointerMoved(TextBlockViewModel textBlockViewModel, PointerPoint pointerPoint)
     {
         if (_dragPosition is null)
             return;
-        
+
         if (pointerPoint.Properties.IsLeftButtonPressed)
         {
             textBlockViewModel.X = pointerPoint.Position.X - _dragPosition.Value.X;
             textBlockViewModel.Y = pointerPoint.Position.Y - _dragPosition.Value.Y;
         }
     }
-    
+
     private void TextBlockOnPointerReleased()
     {
         _dragPosition = null;
         _isDragging = false;
         IsPopupOpen = true;
     }
-    
+
     public void OnWindowActivated()
     {
         IsPopupOpen = true;
     }
-    
+
     public void OnWindowDeactivated()
     {
         IsPopupOpen = false;
     }
-    
+
     public void OnWindowHidden()
     {
-        // CanvasHelpers.SaveCanvasToFile(Canvas, _configuration["CanvasFilePath"]);
+        CanvasHelpers.SaveCanvasToFile(Shapes, _configuration["CanvasFilePath"]);
     }
 
     private void HideWindow()
@@ -581,13 +589,13 @@ public class DrawingOverlayViewModel : ViewModelBase
     {
         var text = await WeakReferenceMessenger.Default
             .Send(new PasteLastItemFromClipboardMessage());
-        
+
         if (string.IsNullOrEmpty(text))
             return;
-        
+
         AddTextToCanvas(text);
     }
-    
+
     private void TriggerToolbarItemOnClick(Key key)
     {
         ToolbarItems.FirstOrDefault(x => x.ShortcutKey == key)
@@ -599,7 +607,7 @@ public class DrawingOverlayViewModel : ViewModelBase
     {
         var toolbarItems = new List<DrawingToolbarItemViewModel>()
         {
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.PenDrawing,
                 ShortcutText = "1",
@@ -610,7 +618,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(SelectPen),
                 Order = 1
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.ShapeDrawing,
                 ShortcutText = "2",
@@ -622,28 +630,28 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle)),
                 Order = 2,
                 SubItems =
-                    [
-                        new DrawingToolbarItemViewModel
-                        {
-                            Type = ToolbarItemType.ShapeDrawing,
-                            Name = "Line",
-                            Text = "Line",
-                            IconPath = "/Assets/line.svg",
-                            CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Line))
-                        },
-                        new DrawingToolbarItemViewModel
-                        {
-                            Type = ToolbarItemType.ShapeDrawing,
-                            Name = "Rectangle",
-                            Text = "Rectangle",
-                            IconPath = "/Assets/square.svg",
-                            CanBeActive = true,
-                            OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle))
-                        }
-                    ]
+                [
+                    new DrawingToolbarItemViewModel
+                    {
+                        Type = ToolbarItemType.ShapeDrawing,
+                        Name = "Line",
+                        Text = "Line",
+                        IconPath = "/Assets/line.svg",
+                        CanBeActive = true,
+                        OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Line))
+                    },
+                    new DrawingToolbarItemViewModel
+                    {
+                        Type = ToolbarItemType.ShapeDrawing,
+                        Name = "Rectangle",
+                        Text = "Rectangle",
+                        IconPath = "/Assets/square.svg",
+                        CanBeActive = true,
+                        OnClickCommand = ReactiveCommand.Create(() => SelectShape(ShapeType.Rectangle))
+                    }
+                ]
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.Eraser,
                 ShortcutText = "3",
@@ -654,7 +662,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(SelectEraser),
                 Order = 3
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.ClearAll,
                 ShortcutText = "4",
@@ -665,7 +673,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(ClearCanvas),
                 Order = 4
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.DetectText,
                 ShortcutText = "5",
@@ -676,7 +684,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(SelectDetectText),
                 Order = 5
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.AddText,
                 ShortcutText = "6",
@@ -687,7 +695,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(SelectAddText),
                 Order = 6
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.CopyShapes,
                 ShortcutText = "7",
@@ -698,7 +706,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(SelectCopyShapes),
                 Order = 7
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.Save,
                 ShortcutText = "C+S",
@@ -709,7 +717,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.CreateFromTask(CaptureWindow),
                 Order = 8
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.Undo,
                 ShortcutText = "C+Z",
@@ -720,7 +728,7 @@ public class DrawingOverlayViewModel : ViewModelBase
                 OnClickCommand = ReactiveCommand.Create(Undo),
                 Order = 9
             },
-            new DrawingToolbarItemViewModel
+            new()
             {
                 Type = ToolbarItemType.Exit,
                 ShortcutText = "ESC",
@@ -733,8 +741,8 @@ public class DrawingOverlayViewModel : ViewModelBase
             }
         };
 
-        var isUsingMultipleMonitors = WeakReferenceMessenger.Default
-                .Send(new IsUsingMultipleMonitorsMessage());
+        var result = WeakReferenceMessenger.Default
+            .Send<IsUsingMultipleMonitorsMessage>();
 
         // if (isUsingMultipleMonitors.Response)
         // {
@@ -752,40 +760,42 @@ public class DrawingOverlayViewModel : ViewModelBase
         //         });
         // }
 
-        ToolbarItems = new ObservableCollection<DrawingToolbarItemViewModel>(toolbarItems);
+        ToolbarItems = toolbarItems
+            .OrderBy(x => x.Order)
+            .ToObservable();
     }
-    
+
     private void SelectPen()
     {
-        _drawingShape = DrawingShape.Polyline;
+        _drawingShape = ShapeType.Polyline;
         DrawingState = DrawingState.Draw;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.PenDrawing));
     }
-    
+
     private void SelectShape(ShapeType shapeType)
     {
         switch (shapeType)
         {
             case ShapeType.Line:
-                _drawingShape = DrawingShape.Line;
-                
+                _drawingShape = ShapeType.Line;
+
                 break;
             case ShapeType.Rectangle:
-                _drawingShape = DrawingShape.Rectangle;
-                
+                _drawingShape = ShapeType.Rectangle;
+
                 break;
         }
-        
+
         DrawingState = DrawingState.Draw;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.ShapeDrawing));
     }
-    
+
     private void SelectEraser()
     {
         DrawingState = DrawingState.Erase;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.Eraser));
     }
 
@@ -793,49 +803,49 @@ public class DrawingOverlayViewModel : ViewModelBase
     {
         Shapes.Clear();
     }
-    
+
     private void SelectDetectText()
     {
         DrawingState = DrawingState.DetectText;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.DetectText));
     }
-    
+
     private void SelectAddText()
     {
         DrawingState = DrawingState.AddText;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.AddText));
     }
-    
+
     private void SelectCopyShapes()
     {
         DrawingState = DrawingState.CopyShapes;
-        
+
         SetActiveItem(ToolbarItems.First(x => x.Type == ToolbarItemType.CopyShapes));
     }
-    
+
     private async Task CaptureWindow()
     {
         try
         {
             IsPopupOpen = false;
             WindowBorderThickness = new Thickness(0);
-    
+
             await Task.Delay(100);
-            
+
             var filePath = await _filePathRepository.GetByFilePathTypeAbrvAsync("draw-scr");
-    
+
             if (!Directory.Exists(filePath.Path))
             {
                 Directory.CreateDirectory(filePath.Path);
             }
-            
+
             var windowSize = await WeakReferenceMessenger.Default
                 .Send(new GetWindowSizeMessage());
             var imageSavePath = SystemIOPath.Combine(filePath.Path, $"Screenshot-{DateTime.Now:dd-MM-yyyy-hhmmss}.png");
             var bmp = _screenCaptureService.CaptureVisibleWindow(windowSize.Width, windowSize.Height, 0, 0);
-            
+
             bmp.Save(imageSavePath, ImageFormat.Png);
             ShowWindowNotifcation(
                 "Screenshot captured!",
@@ -851,33 +861,33 @@ public class DrawingOverlayViewModel : ViewModelBase
         finally
         {
             IsPopupOpen = true;
-            WindowBorderThickness = new Thickness(2); 
+            WindowBorderThickness = new Thickness(2);
         }
     }
-    
+
     private void Undo()
     {
         // _drawingHistoryService.Undo(Canvas);
     }
-    
+
     private void ChangeMonitor()
     {
         WeakReferenceMessenger.Default
             .Send(new DrawingOverlayMessage(DrawingOverlayMessageType.ChangeMonitor));
         Shapes.Clear();
     }
-    
+
     private void SetActiveItem(DrawingToolbarItemViewModel toolbarItemViewModel)
     {
         if (!toolbarItemViewModel.CanBeActive)
             return;
-        
+
         foreach (var item in ToolbarItems)
         {
             if (item.IsActive)
                 item.IsActive = false;
         }
-    
+
         if (toolbarItemViewModel.Parent != null)
         {
             toolbarItemViewModel.Parent.IsActive = true;
@@ -889,7 +899,7 @@ public class DrawingOverlayViewModel : ViewModelBase
             toolbarItemViewModel.IsActive = toolbarItemViewModel.CanBeActive;
         }
     }
-    
+
     private void AddTextToCanvas(string text)
     {
         var textBlock = new TextBlockViewModel
@@ -901,13 +911,12 @@ public class DrawingOverlayViewModel : ViewModelBase
             X = _startPoint.X,
             Y = _startPoint.Y
         };
-        
+
         Shapes.Add(textBlock);
     }
-    
+
     private void OnNotificationClick(string pathToImage)
     {
         ProcessHelpers.ShowFileInFileExplorer(pathToImage);
     }
 }
-
