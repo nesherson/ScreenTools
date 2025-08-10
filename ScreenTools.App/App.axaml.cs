@@ -52,22 +52,6 @@ namespace ScreenTools.App
             ConfigureServices();
             
             base.OnFrameworkInitializationCompleted();
-
-
-            var window = new Window
-            {
-                Title = "ScreenTools Started",
-                Width = 200,
-                Height = 200
-            };
-
-            window.Position = new PixelPoint(
-                Convert.ToInt32(window.Screens.Primary.Bounds.Width * 0.85),
-                Convert.ToInt32(window.Screens.Primary.Bounds.Height * 0.85));
-            
-            window.Show();
-            Thread.Sleep(100);
-            window.Close();
         }
         
         private void ConfigureServices()
