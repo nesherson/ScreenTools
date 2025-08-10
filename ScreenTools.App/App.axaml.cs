@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ScreenTools.App.Views;
 using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
@@ -52,6 +53,10 @@ namespace ScreenTools.App
             ConfigureServices();
             
             base.OnFrameworkInitializationCompleted();
+
+            var window = new MainWindow();
+            
+            window.Show();
         }
         
         private void ConfigureServices()

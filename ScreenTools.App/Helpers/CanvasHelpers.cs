@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using Avalonia;
 using DynamicData;
-using Microsoft.Extensions.Logging;
 using ScreenTools.Core;
 
 namespace ScreenTools.App;
