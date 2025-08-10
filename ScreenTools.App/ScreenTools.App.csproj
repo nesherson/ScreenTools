@@ -46,6 +46,12 @@
     <None Remove="Assets\Images\app-icon.svg" />
     <None Remove="Assets\Images\logo.svg" />
     <AvaloniaResource Include="Assets\Images\logo.svg" />
+    <None Remove="Assets\Fonts\Roboto-Bold.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\Roboto-Bold.ttf" />
+    <None Remove="Assets\Fonts\Roboto-Regular.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\Roboto-Regular.ttf" />
+    <None Remove="Assets\settings.svg" />
+    <AvaloniaResource Include="Assets\settings.svg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -85,5 +91,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ScreenTools.Infrastructure\ScreenTools.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Fonts\" />
   </ItemGroup>
 </Project>

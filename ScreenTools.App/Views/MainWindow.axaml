@@ -21,13 +21,15 @@
                                                 <TextBlock 
                                                         Text="ScreenTools" 
                                                         Margin="10 10 0 0"
-                                                        FontSize="18"></TextBlock>
+                                                        FontSize="16"></TextBlock>
                                         </StackPanel>
                                         <Button Content="Home"></Button>
                                         <Button Content="Gallery"></Button>
                                         <Button Content="Paths"></Button>
                                 </StackPanel>
-                                <Button Grid.Row="1" Content="Settings"> </Button>
+                                <Button Classes="transparent" HorizontalAlignment="Left" Grid.Row="1">
+                                        <Svg Path="/Assets/settings.svg" Width="16" />
+                                </Button>
                         </Grid>
                 </Border>
         </Grid>

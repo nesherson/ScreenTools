@@ -18,10 +18,14 @@
 		<SolidColorBrush x:Key="PrimaryText">#262626</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverBackground">#f2f2f2</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverForeground">#4d4d4d</SolidColorBrush>
+		
 		<LinearGradientBrush x:Key="PrimaryBackgroundGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
 			<GradientStop Offset="0" Color="#FFFFFF"></GradientStop>
 			<GradientStop Offset="1" Color="#f2f2f2"></GradientStop>
 		</LinearGradientBrush>
+		
+		<FontFamily x:Key="Roboto">/Assets/Fonts/Roboto-Regular.ttf#Roboto</FontFamily>
+		<FontFamily x:Key="RobotoBold">/Assets/Fonts/Roboto-Bold.ttf#Roboto</FontFamily>
 	</Application.Resources>
 	<TrayIcon.Icons>
 		<TrayIcons>
