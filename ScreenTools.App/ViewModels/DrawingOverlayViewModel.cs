@@ -49,8 +49,7 @@ public class DrawingOverlayViewModel : ViewModelBase
     private Point? _dragPosition;
     private bool _isDragging;
     private List<ShapeViewModelBase>? _itemsToCopy;
-
-
+    
     public DrawingOverlayViewModel(TextDetectionService textDetectionService,
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
@@ -75,11 +74,6 @@ public class DrawingOverlayViewModel : ViewModelBase
         WindowBorderThickness = new Thickness(2);
         SetToolbarItems();
         SelectPen();
-        
-        Shapes = CanvasHelpers.LoadShapesFromFile(
-            _configuration["CanvasFilePath"] ?? "",
-            _logger)
-            .ToObservable();
     }
 
     public bool IsPopupOpen
@@ -512,11 +506,6 @@ public class DrawingOverlayViewModel : ViewModelBase
     public void OnWindowDeactivated()
     {
         IsPopupOpen = false;
-    }
-
-    public void OnWindowHidden()
-    {
-        CanvasHelpers.SaveCanvasToFile(Shapes, _configuration["CanvasFilePath"]);
     }
 
     private void HideWindow()

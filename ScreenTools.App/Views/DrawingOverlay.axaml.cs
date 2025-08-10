@@ -56,7 +56,6 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         ViewModel.IsPopupOpen = true;
         ViewModel.WindowBorderThickness = new Thickness(2);
 
-        Hidden += (_, _) => ViewModel.OnWindowHidden();
         Deactivated += (_, _) => ViewModel.OnWindowDeactivated();
         Activated += (_, _) => ViewModel.OnWindowActivated();
     }
