@@ -1,21 +1,20 @@
 using System;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Controls.Notifications;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ScreenTools.App.Views;
 using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
+using Tesseract;
+using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
 namespace ScreenTools.App
 {
@@ -41,11 +40,27 @@ namespace ScreenTools.App
             var collection = new ServiceCollection();
             
             collection.AddCommonServices();
+            collection.AddViewModels();
+            
+            collection.AddSingleton<Func<ApplicationPageNames, PageViewModel>>(
+                sp => pageName => pageName switch
+                {
+                    ApplicationPageNames.Unknown => sp.GetRequiredService<HomePageViewModel>(),
+                    ApplicationPageNames.Home => sp.GetRequiredService<HomePageViewModel>(),
+                    ApplicationPageNames.Gallery => sp.GetRequiredService<GalleryPageViewModel>(),
+                    ApplicationPageNames.Paths => sp.GetRequiredService<PathsPageViewModel>(),
+                    ApplicationPageNames.Settings => sp.GetRequiredService<HomePageViewModel>(),
+                    _ => sp.GetRequiredService<HomePageViewModel>()
+                });
             
             _serviceProvider = collection.BuildServiceProvider();
             
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                desktop.MainWindow = new MainView
+                {
+                    DataContext = _serviceProvider.GetRequiredService<MainViewModel>()
+                };
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 desktop.Exit += OnExit;
             }
@@ -53,10 +68,6 @@ namespace ScreenTools.App
             ConfigureServices();
             
             base.OnFrameworkInitializationCompleted();
-
-            var window = new MainWindow();
-            
-            window.Show();
         }
         
         private void ConfigureServices()
@@ -162,8 +173,8 @@ namespace ScreenTools.App
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                var window = ActivatorUtilities.CreateInstance<GalleryView>(_serviceProvider);
-                window.Show();
+                // var window = ActivatorUtilities.CreateInstance<Ga>(_serviceProvider);
+                // window.Show();
             });
         }
         
@@ -171,8 +182,8 @@ namespace ScreenTools.App
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                var window = ActivatorUtilities.CreateInstance<OptionsView>(_serviceProvider);
-                window.Show();
+                var window = ActivatorUtilities.CreateInstance<PathsPageView>(_serviceProvider);
+                // window.Show();
             });
         }
         

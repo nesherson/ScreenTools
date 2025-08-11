@@ -11,35 +11,35 @@
     </Style>
     
     <Style Selector="Button">
-        <Setter Property="Background" Value="LightGray" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryText}" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="FontSize" Value="16" />
-    </Style>
-    
-    <Style Selector="Button.transparent">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="5" />
     </Style>
     
     <Style Selector="Button /template/ ContentPresenter">
-        <Setter Property="RenderTransform" Value="scale(1)" />
         <Setter Property="Transitions">
             <Transitions>
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1"></TransformOperationsTransition>
                 <BrushTransition Property="Background" Duration="0:0:0.1"></BrushTransition>
                 <BrushTransition Property="Foreground" Duration="0:0:0.1"></BrushTransition>
             </Transitions>
         </Setter>
     </Style>
     
+    <Style Selector="Button.active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryActiveBackground}" />
+    </Style>
+    
     <Style Selector="Button:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverForeground}" />
-        <Setter Property="RenderTransform" Value="scale(1.1)" />
-        
     </Style>
     
     <Style Selector="Button.transparent:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
+    <Style Selector="Button Label">
+        <Setter Property="FontSize" Value="16" />
     </Style>
 </Styles>

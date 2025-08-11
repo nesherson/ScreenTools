@@ -1,0 +1,94 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:app="clr-namespace:ScreenTools.App"
+        mc:Ignorable="d" d:DesignWidth="1024" d:DesignHeight="600"
+        Width="1024"
+        Height="720"
+        x:Class="ScreenTools.App.MainView"
+        Title="{Binding Title}">
+        <Design.DataContext>
+                <app:MainViewModel />
+        </Design.DataContext>
+        <Grid
+                ColumnDefinitions="Auto, *">
+                <Border 
+                        Grid.Column="0" 
+                        Padding="12 20"
+                        Background="{DynamicResource PrimaryBackground}"
+                        BoxShadow="1 0 2 2 #F2F2F2"
+                        Margin="0 0 2 0">
+                        <Grid RowDefinitions="*, Auto" >
+                                <StackPanel Spacing="5">
+                                        <Image 
+                                                Source="{SvgImage /Assets/Images/logo.svg}" 
+                                                PointerPressed="InputElement_OnPointerPressed"
+                                                Width="20"
+                                                Margin="0 0 0 15"
+                                                IsVisible="{Binding !IsSideMenuExpanded}"/>
+                                        <StackPanel 
+                                                Orientation="Horizontal" 
+                                                Margin="0 0 0 15" 
+                                                Spacing="10"
+                                                IsVisible="{Binding IsSideMenuExpanded}">
+                                                <Image 
+                                                        Source="{SvgImage /Assets/Images/logo.svg}" 
+                                                        PointerPressed="InputElement_OnPointerPressed"
+                                                        Width="60" />
+                                                <TextBlock 
+                                                        Text="ScreenTools" 
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="18" />
+                                        </StackPanel>
+                                        <Button 
+                                                Classes.active="{Binding HomePageIsActive}"
+                                                Command="{Binding GoToHomePageCommand}"
+                                                PointerEntered="InputElement_OnPointerEntered"
+                                                PointerExited="InputElement_OnPointerExited">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Label FontFamily="{DynamicResource PhosphorFill}" Classes="icon" Content="&#xE2C2;" />
+                                                        <Label IsVisible="{Binding IsSideMenuExpanded}">Home</Label>
+                                                </StackPanel>
+                                        </Button>
+                                        <Button 
+                                                Classes.active="{Binding GalleryPageIsActive}"
+                                                Command="{Binding GoToGalleryPageCommand}" 
+                                                PointerEntered="InputElement_OnPointerEntered"
+                                                PointerExited="InputElement_OnPointerExited">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <StackPanel Orientation="Horizontal">
+                                                                <Label FontFamily="{DynamicResource PhosphorFill}" Classes="icon" Content="&#xE2CA;" />
+                                                                <Label IsVisible="{Binding IsSideMenuExpanded}">Gallery</Label>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </Button>
+                                        <Button 
+                                                Classes.active="{Binding PathsPageIsActive}"
+                                                Command="{Binding GoToPathsPageCommand}" 
+                                                PointerEntered="InputElement_OnPointerEntered"
+                                                PointerExited="InputElement_OnPointerExited">
+                                                <StackPanel Orientation="Horizontal">
+                                                        <StackPanel Orientation="Horizontal">
+                                                                <Label FontFamily="{DynamicResource PhosphorFill}" Classes="icon" Content="&#xE230;" />
+                                                                <Label IsVisible="{Binding IsSideMenuExpanded}">Paths</Label>
+                                                        </StackPanel>
+                                                </StackPanel>
+                                        </Button>
+                                </StackPanel>
+                                <Button 
+                                        Classes="transparent" 
+                                        HorizontalAlignment="Left" 
+                                        Grid.Row="1" 
+                                        PointerEntered="InputElement_OnPointerEntered"
+                                        PointerExited="InputElement_OnPointerExited">
+                                        <Label FontFamily="{DynamicResource PhosphorFill}" Classes="icon" Content="&#xE270;" />
+                                </Button>
+                        </Grid>
+                </Border>
+                
+                <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" />
+                
+        </Grid>
+</Window>

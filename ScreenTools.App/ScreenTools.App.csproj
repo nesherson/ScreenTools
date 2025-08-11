@@ -44,14 +44,21 @@
     <None Remove="Assets\copy.svg" />
     <AvaloniaResource Include="Assets\copy.svg" />
     <None Remove="Assets\Images\app-icon.svg" />
-    <None Remove="Assets\Images\logo.svg" />
-    <AvaloniaResource Include="Assets\Images\logo.svg" />
     <None Remove="Assets\Fonts\Roboto-Bold.ttf" />
     <AvaloniaResource Include="Assets\Fonts\Roboto-Bold.ttf" />
     <None Remove="Assets\Fonts\Roboto-Regular.ttf" />
     <AvaloniaResource Include="Assets\Fonts\Roboto-Regular.ttf" />
     <None Remove="Assets\settings.svg" />
     <AvaloniaResource Include="Assets\settings.svg" />
+    <None Remove="Assets\home.svg" />
+    <None Remove="Assets\file.svg" />
+    <None Remove="Assets\image.svg" />
+    <None Remove="Assets\Fonts\Phosphor-Fill.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\Phosphor-Fill.ttf" />
+    <None Remove="Assets\Fonts\Phosphor.ttf" />
+    <AvaloniaResource Include="Assets\Fonts\Phosphor.ttf" />
+    <None Remove="Assets\Images\logo.svg" />
+    <AvaloniaResource Include="Assets\Images\logo.svg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -94,6 +101,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\Fonts\" />
+    <Reference Include="Svg.Controls.Skia.Avalonia">
+      <HintPath>..\..\..\..\Users\User\.nuget\packages\svg.controls.skia.avalonia\11.3.0.3\lib\net8.0\Svg.Controls.Skia.Avalonia.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

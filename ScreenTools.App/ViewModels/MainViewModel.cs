@@ -1,0 +1,60 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ScreenTools.App;
+
+public partial class MainViewModel : ViewModelBase
+{
+    private readonly PageFactory _pageFactory;
+    [ObservableProperty]
+    private bool _isSideMenuExpanded;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HomePageIsActive))]
+    [NotifyPropertyChangedFor(nameof(PathsPageIsActive))]
+    [NotifyPropertyChangedFor(nameof(GalleryPageIsActive))]
+    private PageViewModel _currentPage;
+
+    public MainViewModel()
+    {
+    }
+    
+    public MainViewModel(PageFactory pageFactory)
+    {
+        _pageFactory = pageFactory;
+        
+        CurrentPage = pageFactory.GetPageViewModel(ApplicationPageNames.Home);
+
+        Title = "ScreenTools";
+        IsSideMenuExpanded = true;
+    }
+
+    public string Title { get; set; }
+    public bool HomePageIsActive => CurrentPage.PageName == ApplicationPageNames.Home;
+    public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
+    public bool GalleryPageIsActive => CurrentPage.PageName == ApplicationPageNames.Gallery;
+    
+    [RelayCommand]
+    private void ResizeSideMenu()
+    {
+        IsSideMenuExpanded = !IsSideMenuExpanded;
+    }
+
+    [RelayCommand]
+    private void GoToHomePage()
+    {
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Home);
+    }
+    
+    [RelayCommand]
+    private void GoToPathsPage()
+    {
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Paths);
+    }
+    
+    [RelayCommand]
+    private void GoToGalleryPage()
+    {
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Gallery);
+    }
+}

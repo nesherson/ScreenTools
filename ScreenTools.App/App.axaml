@@ -3,21 +3,31 @@
              x:Class="ScreenTools.App.App"
              xmlns:local="clr-namespace:ScreenTools.App"
              RequestedThemeVariant="Default">
+	
+	<Application.DataTemplates>
+		<local:ViewLocator />
+	</Application.DataTemplates>
+	
 	<Application.DataContext>
 		<local:App />
 	</Application.DataContext>
+	
 	<Design.DataContext>
 		<local:App />
 	</Design.DataContext>
+	
 	<Application.Styles>
         <FluentTheme />
         <StyleInclude Source="Styles/AppDefaultStypes.axaml" />
     </Application.Styles>
+	
 	<Application.Resources>
 		<SolidColorBrush x:Key="PrimaryBackground">#FFFFFF</SolidColorBrush>
-		<SolidColorBrush x:Key="PrimaryText">#262626</SolidColorBrush>
-		<SolidColorBrush x:Key="PrimaryHoverBackground">#f2f2f2</SolidColorBrush>
-		<SolidColorBrush x:Key="PrimaryHoverForeground">#4d4d4d</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryForeground">#696b88</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryHoverBackground">#f0f3ff</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryActiveBackground">#f0f3ff</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryHoverForeground">#2a44ad</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryActiveForeground">#2a44ad</SolidColorBrush>
 		
 		<LinearGradientBrush x:Key="PrimaryBackgroundGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
 			<GradientStop Offset="0" Color="#FFFFFF"></GradientStop>
@@ -26,7 +36,10 @@
 		
 		<FontFamily x:Key="Roboto">/Assets/Fonts/Roboto-Regular.ttf#Roboto</FontFamily>
 		<FontFamily x:Key="RobotoBold">/Assets/Fonts/Roboto-Bold.ttf#Roboto</FontFamily>
+		<FontFamily x:Key="Phosphor">/Assets/Fonts/Phosphor.ttf#Phosphor</FontFamily>
+		<FontFamily x:Key="PhosphorFill">/Assets/Fonts/Phosphor-Fill.ttf#Phosphor-Fill</FontFamily>
 	</Application.Resources>
+	
 	<TrayIcon.Icons>
 		<TrayIcons>
 			<TrayIcon Icon="/Assets/app-icon.ico"
@@ -44,4 +57,5 @@
 			</TrayIcon>
 		</TrayIcons>
 	</TrayIcon.Icons>
+	
 </Application>
