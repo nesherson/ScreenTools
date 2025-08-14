@@ -22,19 +22,19 @@
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.DataTemplates>
-                    <DataTemplate DataType="local:GalleryImage">
+                    <DataTemplate DataType="local:GalleryImageViewModel">
                         <Border>
                             <Border.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Name="Preview" Header="Preview" Click="MenuItem_OnClick"/>
-                                    <MenuItem Name="ShowInExplorer" Header="Show in explorer" Click="MenuItem_OnClick" />
-                                    <MenuItem Name="CopyToClipboard" Header="Copy to clipboard" Click="MenuItem_OnClick" />
+                                    <MenuItem Name="Preview" Header="Preview" Command="{Binding $parent[UserControl].((local:GalleryPageViewModel)DataContext).PreviewImageCommand}" CommandParameter="{Binding .}" />
+                                    <MenuItem Name="ShowInExplorer" Header="Show in explorer" Command="{Binding $parent[UserControl].((local:GalleryPageViewModel)DataContext).ShowImageInExplorerCommand}" CommandParameter="{Binding .}" />
+                                    <MenuItem Name="CopyToClipboard" Header="Copy to clipboard" Command="{Binding $parent[UserControl].((local:GalleryPageViewModel)DataContext).CopyImageToClipboardCommand}" CommandParameter="{Binding .}" />
                                 </ContextMenu>
                             </Border.ContextMenu>
-                            <Image 
-                                Width="360" 
+                            <Image
+                                Width="360"
                                 Margin="2"
-                                Stretch="Uniform" 
+                                Stretch="Uniform"
                                 Source="{Binding Bitmap}"/>
                         </Border>
                     </DataTemplate>

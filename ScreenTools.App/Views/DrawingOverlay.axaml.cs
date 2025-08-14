@@ -77,9 +77,9 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         if (ViewModel is null)
             return;
 
-        canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
-        canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
-        canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
+        // canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
+        // canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
+        // canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
     }
 
     private void OnHidden(EventArgs e)
@@ -154,10 +154,10 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         var pasteMenuItem = new MenuItem
         {
             Header = "Paste",
-            IsEnabled = message.Content.IsPasteEnabled
+            IsEnabled = message.IsPasteEnabled
         };
 
-        pasteMenuItem.Click += (_, _) => { message.Content.OnPaste?.Invoke(); };
+        pasteMenuItem.Click += (_, _) => { message.OnPaste?.Invoke(); };
 
         flyout.Items.Add(pasteMenuItem);
         flyout.ShowAt(this, true);

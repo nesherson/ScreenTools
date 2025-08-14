@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\undo.svg" />
@@ -104,5 +105,9 @@
     <Reference Include="Svg.Controls.Skia.Avalonia">
       <HintPath>..\..\..\..\Users\User\.nuget\packages\svg.controls.skia.avalonia\11.3.0.3\lib\net8.0\Svg.Controls.Skia.Avalonia.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 </Project>

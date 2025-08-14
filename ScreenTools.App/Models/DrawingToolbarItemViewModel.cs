@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Input;
 using Avalonia.Input;
-using ReactiveUI;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ScreenTools.Core;
 
 namespace ScreenTools.App;
 
-public class DrawingToolbarItemViewModel : ReactiveObject
+public partial class DrawingToolbarItemViewModel : ObservableObject
 {
+    [ObservableProperty]
     private bool _isActive;
+    [ObservableProperty]
     private string _iconPath;
     
     public ToolbarItemType Type { get; set; }
@@ -22,14 +24,4 @@ public class DrawingToolbarItemViewModel : ReactiveObject
     public bool IsContextMenuVisible => SubItems?.Count > 0;
     public DrawingToolbarItemViewModel? Parent { get; set; }
     public bool CanBeActive { get; set; }
-    public bool IsActive
-    {
-        get => _isActive;
-        set => this.RaiseAndSetIfChanged(ref _isActive, value);
-    }
-    public string IconPath
-    {
-        get => _iconPath;
-        set => this.RaiseAndSetIfChanged(ref _iconPath, value);
-    }
 }

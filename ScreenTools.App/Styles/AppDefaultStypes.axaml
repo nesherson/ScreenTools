@@ -10,14 +10,14 @@
         <Setter Property="FontFamily" Value="{DynamicResource Roboto}" />
     </Style>
     
-    <Style Selector="Button">
+    <Style Selector=":is(Button)">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="CornerRadius" Value="5" />
     </Style>
     
-    <Style Selector="Button /template/ ContentPresenter">
+    <Style Selector=":is(Button) /template/ ContentPresenter">
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.1"></BrushTransition>
@@ -26,20 +26,20 @@
         </Setter>
     </Style>
     
-    <Style Selector="Button.active /template/ ContentPresenter">
+    <Style Selector=":is(Button).active /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryActiveBackground}" />
     </Style>
     
-    <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Style Selector=":is(Button):pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverForeground}" />
     </Style>
     
-    <Style Selector="Button.transparent:pointerover /template/ ContentPresenter">
+    <Style Selector=":is(Button).transparent:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
     </Style>
     
-    <Style Selector="Button Label">
+    <Style Selector=":is(Button) Label">
         <Setter Property="FontSize" Value="16" />
     </Style>
 </Styles>
