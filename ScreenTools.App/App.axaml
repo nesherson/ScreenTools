@@ -22,6 +22,12 @@
     </Application.Styles>
 	
 	<Application.Resources>
+		
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Controls/IconButton.axaml"></MergeResourceInclude>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
 		<SolidColorBrush x:Key="PrimaryBackground">#FFFFFF</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryForeground">#696b88</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverBackground">#f0f3ff</SolidColorBrush>

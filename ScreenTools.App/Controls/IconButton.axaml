@@ -44,8 +44,11 @@
           <ContentPresenter.ContentTemplate>
             <DataTemplate DataType="x:Object">
               <StackPanel Orientation="Horizontal">
-                <Label FontFamily="{DynamicResource PhosphorFill}" Classes="icon" Content="{Binding $parent[IconButton].IconText}" />
-                <ContentPresenter Content="{Binding}" />
+                <Label 
+                  FontFamily="{DynamicResource PhosphorFill}"
+                  Content="{Binding $parent[IconButton].IconText}"
+                  Margin="0 0 5 0"/>
+                <ContentPresenter Content="{Binding}" VerticalAlignment="Center" />
               </StackPanel>
             </DataTemplate>
           </ContentPresenter.ContentTemplate>
