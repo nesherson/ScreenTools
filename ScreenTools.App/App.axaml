@@ -34,6 +34,8 @@
 		<SolidColorBrush x:Key="PrimaryActiveBackground">#f0f3ff</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverForeground">#2a44ad</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryActiveForeground">#2a44ad</SolidColorBrush>
+		<SolidColorBrush x:Key="NavBtnPrimaryHoverBackground">#e8ebec</SolidColorBrush>
+		<SolidColorBrush x:Key="NavBtnPrimaryActiveBackground">#e8ebec</SolidColorBrush>
 		
 		<LinearGradientBrush x:Key="PrimaryBackgroundGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
 			<GradientStop Offset="0" Color="#FFFFFF"></GradientStop>

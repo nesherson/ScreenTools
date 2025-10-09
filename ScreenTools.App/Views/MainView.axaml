@@ -13,10 +13,10 @@
                 <app:MainViewModel />
         </Design.DataContext>
         <Grid
-                ColumnDefinitions="Auto, *">
+                ColumnDefinitions="200, *">
                 <Border 
                         Grid.Column="0" 
-                        Padding="12 20"
+                        Padding="2 20"
                         Background="{DynamicResource PrimaryBackground}"
                         BoxShadow="1 0 2 2 #F2F2F2"
                         Margin="0 0 2 0">

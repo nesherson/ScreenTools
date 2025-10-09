@@ -7,6 +7,7 @@
       <StackPanel Spacing="20">
         <IconButton Content="Click Me!" IconText="&#xE2CA;" />
         <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" />
+        <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" Height="100" />
         <Button Content="Click Me!" />
         <Button Classes="accent" Content="Click Me!" />
       </StackPanel>
@@ -47,8 +48,9 @@
                 <Label 
                   FontFamily="{DynamicResource PhosphorFill}"
                   Content="{Binding $parent[IconButton].IconText}"
-                  Margin="0 0 5 0"/>
-                <ContentPresenter Content="{Binding}" VerticalAlignment="Center" />
+                  Margin="0 0 5 0"
+                  VerticalAlignment="Center"/>
+                <ContentPresenter Content="{Binding}"  VerticalAlignment="Center" />
               </StackPanel>
             </DataTemplate>
           </ContentPresenter.ContentTemplate>
