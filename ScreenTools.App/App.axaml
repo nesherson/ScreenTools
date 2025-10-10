@@ -28,14 +28,22 @@
 				<MergeResourceInclude Source="/Controls/IconButton.axaml"></MergeResourceInclude>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
+		
+		<!-- General Styles -->
 		<SolidColorBrush x:Key="PrimaryBackground">#FFFFFF</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryForeground">#696b88</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverBackground">#f0f3ff</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryActiveBackground">#f0f3ff</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryHoverForeground">#2a44ad</SolidColorBrush>
 		<SolidColorBrush x:Key="PrimaryActiveForeground">#2a44ad</SolidColorBrush>
+		
+		<!-- Navigation Button Styles -->
+		<SolidColorBrush x:Key="NavBtnForeground">#4f5d64</SolidColorBrush>
 		<SolidColorBrush x:Key="NavBtnPrimaryHoverBackground">#e8ebec</SolidColorBrush>
 		<SolidColorBrush x:Key="NavBtnPrimaryActiveBackground">#e8ebec</SolidColorBrush>
+		
+		<!-- Split View Styles -->
+		<SolidColorBrush x:Key="SplitViewPaneBackground">#f1f3f4</SolidColorBrush>
 		
 		<LinearGradientBrush x:Key="PrimaryBackgroundGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
 			<GradientStop Offset="0" Color="#FFFFFF"></GradientStop>

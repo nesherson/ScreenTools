@@ -8,6 +8,8 @@ public partial class MainViewModel : ViewModelBase
     private readonly PageFactory _pageFactory;
     [ObservableProperty]
     private bool _isSideMenuExpanded;
+    [ObservableProperty]
+    private bool _isPaneOpen = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HomePageIsActive))]
@@ -56,5 +58,11 @@ public partial class MainViewModel : ViewModelBase
     private void GoToGalleryPage()
     {
         CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Gallery);
+    }
+    
+    [RelayCommand]
+    private void ToggleSideMenu()
+    {
+        IsPaneOpen = !IsPaneOpen;
     }
 }

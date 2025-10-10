@@ -12,74 +12,140 @@
         <Design.DataContext>
                 <app:MainViewModel />
         </Design.DataContext>
-        <Grid
-                ColumnDefinitions="200, *">
-                <Border 
-                        Grid.Column="0" 
-                        Padding="2 20"
-                        Background="{DynamicResource PrimaryBackground}"
-                        BoxShadow="1 0 2 2 #F2F2F2"
-                        Margin="0 0 2 0">
-                        <Grid RowDefinitions="*, Auto" >
-                                <StackPanel Spacing="5">
-                                        <Image 
-                                                Source="{SvgImage /Assets/Images/logo.svg}" 
-                                                PointerPressed="InputElement_OnPointerPressed"
-                                                Width="20"
-                                                Margin="0 0 0 15"
-                                                IsVisible="{Binding !IsSideMenuExpanded}"/>
-                                        <StackPanel 
-                                                Orientation="Horizontal" 
-                                                Margin="0 0 0 15" 
-                                                Spacing="10"
-                                                IsVisible="{Binding IsSideMenuExpanded}">
-                                                <Image 
-                                                        Source="{SvgImage /Assets/Images/logo.svg}" 
-                                                        PointerPressed="InputElement_OnPointerPressed"
-                                                        Width="60" />
-                                                <TextBlock 
-                                                        Text="ScreenTools" 
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="18" />
-                                        </StackPanel>
-                                        <IconButton 
-                                                Classes.active="{Binding HomePageIsActive}"
-                                                PointerEntered="InputElement_OnPointerEntered"
-                                                PointerExited="InputElement_OnPointerExited"
-                                                Command="{Binding GoToHomePageCommand}"
-                                                Content="Homepage"
-                                                IconText="&#xE2C2;"/>
-                                        <IconButton 
-                                                Classes.active="{Binding GalleryPageIsActive}"
-                                                Command="{Binding GoToGalleryPageCommand}" 
-                                                PointerEntered="InputElement_OnPointerEntered"
-                                                PointerExited="InputElement_OnPointerExited"
-                                                Content="Gallery"
-                                                IconText="&#xE2CA;" />
-                                        <IconButton 
-                                                Classes.active="{Binding PathsPageIsActive}"
-                                                Command="{Binding GoToPathsPageCommand}" 
-                                                PointerEntered="InputElement_OnPointerEntered"
-                                                PointerExited="InputElement_OnPointerExited"
-                                                Content="Paths"
-                                                IconText="&#xE230;" />
-                                </StackPanel>
-                                <Button 
-                                        Classes="transparent" 
-                                        HorizontalAlignment="Left" 
-                                        Grid.Row="1" 
-                                        PointerEntered="InputElement_OnPointerEntered"
-                                        PointerExited="InputElement_OnPointerExited">
-                                        <Label FontFamily="{DynamicResource PhosphorFill}" Content="&#xE270;" />
+        <SplitView IsPaneOpen="{Binding IsPaneOpen}"
+                   DisplayMode="CompactInline"
+                   OpenPaneLength="250"
+                   CompactPaneLength="50"
+                   PaneBackground="{DynamicResource SplitViewPaneBackground}">
+                <SplitView.Pane>
+                      <Border Padding="0 10 0 0">
+                              <StackPanel Spacing="5"> 
+                                <Button Command="{Binding ToggleSideMenu}"
+                                        Background="Transparent"
+                                        IsVisible="{Binding !IsPaneOpen}">
+                                        <Image
+                                                Source="{SvgImage /Assets/Images/logo.svg}"
+                                                Width="20" />
                                 </Button>
-                        </Grid>
-                </Border>
-                
-                <ContentControl 
-                        Grid.Column="1" 
+                                      <Button Background="Transparent"
+                                              IsVisible="{Binding IsPaneOpen}"
+                                              Command="{Binding ToggleSideMenu}">
+                                              <StackPanel Orientation="Horizontal"
+                                                          Spacing="10">
+                                                      <Image
+                                                              Source="{SvgImage /Assets/Images/logo.svg}"
+                                                              Width="25" />
+                                                      <TextBlock
+                                                              Text="ScreenTools"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              FontSize="16" />
+                                              </StackPanel>
+                                      </Button>
+                                <IconButton
+                                        Foreground="{DynamicResource NavBtnForeground}"
+                                        Classes.active="{Binding HomePageIsActive}"
+                                        PointerEntered="InputElement_OnPointerEntered"
+                                        PointerExited="InputElement_OnPointerExited"
+                                        Command="{Binding GoToHomePageCommand}"
+                                        Content="Homepage"
+                                        IconText="&#xE2C2;"/>
+                                <IconButton
+                                        Classes.active="{Binding GalleryPageIsActive}"
+                                        Command="{Binding GoToGalleryPageCommand}"
+                                        PointerEntered="InputElement_OnPointerEntered"
+                                        PointerExited="InputElement_OnPointerExited"
+                                        Content="Gallery"
+                                        IconText="&#xE2CA;" />
+                                <IconButton
+                                        Classes.active="{Binding PathsPageIsActive}"
+                                        Command="{Binding GoToPathsPageCommand}"
+                                        PointerEntered="InputElement_OnPointerEntered"
+                                        PointerExited="InputElement_OnPointerExited"
+                                        Content="Paths"
+                                        IconText="&#xE230;" />
+                                <IconButton
+                                        Classes.active="{Binding PathsPageIsActive}"
+                                        Command="{Binding GoToPathsPageCommand}"
+                                        PointerEntered="InputElement_OnPointerEntered"
+                                        PointerExited="InputElement_OnPointerExited"
+                                        Content="Settings"
+                                        IconText="&#xE270;" />
+                        </StackPanel> 
+                      </Border>  
+                </SplitView.Pane>
+                <ContentControl
                         Content="{Binding CurrentPage}"
                         Padding="20" />
-                
-        </Grid>
+        </SplitView>
+        <!-- <Grid -->
+        <!--         ColumnDefinitions="200, *"> -->
+        <!--         <Border  -->
+        <!--                 Grid.Column="0"  -->
+        <!--                 Padding="2 20" -->
+        <!--                 Background="{DynamicResource PrimaryBackground}" -->
+        <!--                 BoxShadow="1 0 2 2 #F2F2F2" -->
+        <!--                 Margin="0 0 2 0"> -->
+        <!--                 <Grid RowDefinitions="*, Auto" > -->
+        <!--                         <StackPanel Spacing="5"> -->
+        <!--                                 <Image  -->
+        <!--                                         Source="{SvgImage /Assets/Images/logo.svg}"  -->
+        <!--                                         PointerPressed="InputElement_OnPointerPressed" -->
+        <!--                                         Width="20" -->
+        <!--                                         Margin="0 0 0 15" -->
+        <!--                                         IsVisible="{Binding !IsSideMenuExpanded}"/> -->
+        <!--                                 <StackPanel  -->
+        <!--                                         Orientation="Horizontal"  -->
+        <!--                                         Margin="0 0 0 15"  -->
+        <!--                                         Spacing="10" -->
+        <!--                                         IsVisible="{Binding IsSideMenuExpanded}"> -->
+        <!--                                         <Image  -->
+        <!--                                                 Source="{SvgImage /Assets/Images/logo.svg}"  -->
+        <!--                                                 PointerPressed="InputElement_OnPointerPressed" -->
+        <!--                                                 Width="60" /> -->
+        <!--                                         <TextBlock  -->
+        <!--                                                 Text="ScreenTools"  -->
+        <!--                                                 HorizontalAlignment="Center" -->
+        <!--                                                 VerticalAlignment="Center" -->
+        <!--                                                 FontSize="18" /> -->
+        <!--                                 </StackPanel> -->
+        <!--                                 <IconButton  -->
+        <!--                                         Classes.active="{Binding HomePageIsActive}" -->
+        <!--                                         PointerEntered="InputElement_OnPointerEntered" -->
+        <!--                                         PointerExited="InputElement_OnPointerExited" -->
+        <!--                                         Command="{Binding GoToHomePageCommand}" -->
+        <!--                                         Content="Homepage" -->
+        <!--                                         IconText="&#xE2C2;"/> -->
+        <!--                                 <IconButton  -->
+        <!--                                         Classes.active="{Binding GalleryPageIsActive}" -->
+        <!--                                         Command="{Binding GoToGalleryPageCommand}"  -->
+        <!--                                         PointerEntered="InputElement_OnPointerEntered" -->
+        <!--                                         PointerExited="InputElement_OnPointerExited" -->
+        <!--                                         Content="Gallery" -->
+        <!--                                         IconText="&#xE2CA;" /> -->
+        <!--                                 <IconButton  -->
+        <!--                                         Classes.active="{Binding PathsPageIsActive}" -->
+        <!--                                         Command="{Binding GoToPathsPageCommand}"  -->
+        <!--                                         PointerEntered="InputElement_OnPointerEntered" -->
+        <!--                                         PointerExited="InputElement_OnPointerExited" -->
+        <!--                                         Content="Paths" -->
+        <!--                                         IconText="&#xE230;" /> -->
+        <!--                         </StackPanel> -->
+        <!--                         <Button  -->
+        <!--                                 Classes="transparent"  -->
+        <!--                                 HorizontalAlignment="Left"  -->
+        <!--                                 Grid.Row="1"  -->
+        <!--                                 PointerEntered="InputElement_OnPointerEntered" -->
+        <!--                                 PointerExited="InputElement_OnPointerExited"> -->
+        <!--                                 <Label FontFamily="{DynamicResource PhosphorFill}" Content="&#xE270;" /> -->
+        <!--                         </Button> -->
+        <!--                 </Grid> -->
+        <!--         </Border> -->
+        <!--          -->
+        <!--         <ContentControl  -->
+        <!--                 Grid.Column="1"  -->
+        <!--                 Content="{Binding CurrentPage}" -->
+        <!--                 Padding="20" /> -->
+        <!--          -->
+        <!-- </Grid> -->
 </Window>
