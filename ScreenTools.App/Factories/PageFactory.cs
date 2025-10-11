@@ -2,7 +2,7 @@
 
 namespace ScreenTools.App;
 
-public class PageFactory
+public class PageFactory : IPageFactory
 {
     private readonly Func<ApplicationPageNames, PageViewModel> _factory;
     

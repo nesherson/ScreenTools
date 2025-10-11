@@ -1,11 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ScreenTools.App;
 
 public partial class MainViewModel : ViewModelBase
 {
-    private readonly PageFactory _pageFactory;
+    private readonly IPageFactory _pageFactory;
     [ObservableProperty]
     private bool _isSideMenuExpanded;
     [ObservableProperty]
@@ -19,9 +20,15 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
+        if (!Design.IsDesignMode) 
+            return;
+        
+        _pageFactory = new DesignerPageFactory();
+            
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Dummy);
     }
     
-    public MainViewModel(PageFactory pageFactory)
+    public MainViewModel(IPageFactory pageFactory)
     {
         _pageFactory = pageFactory;
         
@@ -58,6 +65,12 @@ public partial class MainViewModel : ViewModelBase
     private void GoToGalleryPage()
     {
         CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Gallery);
+    }
+    
+    [RelayCommand]
+    private void GoToSettingsPage()
+    {
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Settings);
     }
     
     [RelayCommand]

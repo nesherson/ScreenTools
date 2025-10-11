@@ -42,17 +42,6 @@ namespace ScreenTools.App
             collection.AddCommonServices();
             collection.AddViewModels();
             
-            collection.AddSingleton<Func<ApplicationPageNames, PageViewModel>>(
-                sp => pageName => pageName switch
-                {
-                    ApplicationPageNames.Unknown => sp.GetRequiredService<HomePageViewModel>(),
-                    ApplicationPageNames.Home => sp.GetRequiredService<HomePageViewModel>(),
-                    ApplicationPageNames.Gallery => sp.GetRequiredService<GalleryPageViewModel>(),
-                    ApplicationPageNames.Paths => sp.GetRequiredService<PathsPageViewModel>(),
-                    ApplicationPageNames.Settings => sp.GetRequiredService<HomePageViewModel>(),
-                    _ => sp.GetRequiredService<HomePageViewModel>()
-                });
-            
             _serviceProvider = collection.BuildServiceProvider();
             
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
