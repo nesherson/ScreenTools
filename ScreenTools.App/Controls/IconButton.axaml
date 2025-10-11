@@ -5,9 +5,10 @@
   <Design.PreviewWith>
     <Border Padding="20">
       <StackPanel Spacing="20">
-        <IconButton Content="Click Me!" IconText="&#xE2CA;" />
+        <IconButton Content="Click Me!" IconText="&#xE2CA;" IsTextVisible="True" />
         <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" />
         <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" Height="100" />
+        <IconButton Classes="accent" Content="Click!" IconText="&#xE2CA;" IsTextVisible="False" />
         <Button Content="Click Me!" />
         <Button Classes="accent" Content="Click Me!" />
       </StackPanel>
@@ -29,6 +30,7 @@
         <TransformOperationsTransition Property="RenderTransform" Duration="0:0:.075" />
       </Transitions>
     </Setter>
+    
 
     <Setter Property="Template">
       <ControlTemplate>
@@ -44,24 +46,31 @@
                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
           <ContentPresenter.ContentTemplate>
             <DataTemplate DataType="x:Object">
-              <StackPanel Orientation="Horizontal">
+              <StackPanel Orientation="Horizontal"> 
                 <Label 
                   FontFamily="{DynamicResource PhosphorFill}"
                   Content="{Binding $parent[IconButton].IconText}"
                   Foreground="{Binding $parent[IconButton].IconColor}"
-                  Margin="0 0 5 0"
-                  VerticalAlignment="Center"/>
+                  VerticalAlignment="Center" />
                 <ContentPresenter 
                   Content="{Binding}" 
                   VerticalAlignment="Center" 
-                  Foreground="{TemplateBinding Foreground}"/>
+                  Foreground="{TemplateBinding Foreground}" 
+                  Margin="5 0 0 0"
+                  IsVisible="{Binding $parent[IconButton].IsTextVisible}" />
               </StackPanel>
             </DataTemplate>
           </ContentPresenter.ContentTemplate>
         </ContentPresenter>
       </ControlTemplate>
     </Setter>
-
+    
+    <Style Selector="^[IsTextVisible=False]">
+      <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="ToolTip.Tip" Value="{Binding $parent[IconButton].Content}" />
+      </Style>
+    </Style>
+    
     <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
       <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushPointerOver}" />
