@@ -12,6 +12,11 @@
         <Design.DataContext>
                 <app:MainViewModel />
         </Design.DataContext>
+        <Window.Styles>
+                <Style Selector="Button.LogoWrapper:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                        <Setter Property="Background" Value="Transparent" />
+                </Style>
+        </Window.Styles>
         <SplitView IsPaneOpen="{Binding IsPaneOpen}"
                    DisplayMode="CompactInline"
                    OpenPaneLength="250"
@@ -22,14 +27,16 @@
                               <StackPanel Spacing="5"> 
                                 <Button Command="{Binding ToggleSideMenu}"
                                         Background="Transparent"
-                                        IsVisible="{Binding !IsPaneOpen}">
+                                        IsVisible="{Binding !IsPaneOpen}"
+                                        Classes="LogoWrapper">
                                         <Image
                                                 Source="{SvgImage /Assets/Images/logo.svg}"
                                                 Width="20" />
                                 </Button>
                                       <Button Background="Transparent"
                                               IsVisible="{Binding IsPaneOpen}"
-                                              Command="{Binding ToggleSideMenu}">
+                                              Command="{Binding ToggleSideMenu}"
+                                              Classes="LogoWrapper">
                                               <StackPanel Orientation="Horizontal"
                                                           Spacing="10">
                                                       <Image
