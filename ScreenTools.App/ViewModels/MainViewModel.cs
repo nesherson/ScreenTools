@@ -16,6 +16,7 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(HomePageIsActive))]
     [NotifyPropertyChangedFor(nameof(PathsPageIsActive))]
     [NotifyPropertyChangedFor(nameof(GalleryPageIsActive))]
+    [NotifyPropertyChangedFor(nameof(SettingsPageIsActive))]
     private PageViewModel _currentPage;
 
     public MainViewModel()
@@ -40,8 +41,11 @@ public partial class MainViewModel : ViewModelBase
 
     public string Title { get; set; }
     public bool HomePageIsActive => CurrentPage.PageName == ApplicationPageNames.Home;
-    public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
     public bool GalleryPageIsActive => CurrentPage.PageName == ApplicationPageNames.Gallery;
+    
+    public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
+    public bool SettingsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Settings;
+    
     
     [RelayCommand]
     private void ResizeSideMenu()

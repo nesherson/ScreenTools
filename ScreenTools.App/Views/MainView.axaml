@@ -25,7 +25,7 @@
                 <SplitView.Pane>
                       <Border Padding="0 10 0 0">
                               <StackPanel Spacing="5"> 
-                                <Button Command="{Binding ToggleSideMenu}"
+                                <Button Command="{Binding ToggleSideMenuCommand}"
                                         Background="Transparent"
                                         IsVisible="{Binding !IsPaneOpen}"
                                         Classes="LogoWrapper">
@@ -35,7 +35,7 @@
                                 </Button>
                                       <Button Background="Transparent"
                                               IsVisible="{Binding IsPaneOpen}"
-                                              Command="{Binding ToggleSideMenu}"
+                                              Command="{Binding ToggleSideMenuCommand}"
                                               Classes="LogoWrapper">
                                               <StackPanel Orientation="Horizontal"
                                                           Spacing="10">
@@ -69,7 +69,7 @@
                                         IsTextVisible="{Binding IsPaneOpen}"
                                         IconText="&#xE230;" />
                                 <IconButton
-                                        Classes.active="{Binding PathsPageIsActive}"
+                                        Classes.active="{Binding SettingsPageIsActive}"
                                         Command="{Binding GoToSettingsPageCommand}"
                                         Content="Settings"
                                         IsTextVisible="{Binding IsPaneOpen}"
