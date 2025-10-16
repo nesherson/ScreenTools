@@ -26,10 +26,11 @@ namespace ScreenTools.App
         private FilePathRepository _filePathRepository;
         private ILogger<App> _logger;
         private DrawingOverlay? _drawingOverlay;
-        
+        private Window? _mainWindow;
         private bool _isLeftMetaPressed;
-        
         private bool _isDrawingOverlayHidden;
+        private bool _isMainWindow;
+        
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -46,10 +47,6 @@ namespace ScreenTools.App
             
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainView
-                {
-                    DataContext = _serviceProvider.GetRequiredService<MainViewModel>()
-                };
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 desktop.Exit += OnExit;
             }
@@ -158,21 +155,21 @@ namespace ScreenTools.App
             _hook?.Dispose();
         }
         
-        private void NativeMenuItem_OnClickOpenGallery(object? sender, EventArgs e)
+        private void TrayIcon_OnClicked(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                // var window = ActivatorUtilities.CreateInstance<Ga>(_serviceProvider);
-                // window.Show();
-            });
-        }
-        
-        private void NativeMenuItem_OnClickOpenOptions(object? sender, EventArgs e)
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                var window = ActivatorUtilities.CreateInstance<PathsPageView>(_serviceProvider);
-                // window.Show();
+                if (_mainWindow is not null)
+                {
+                    return;
+                }
+                
+                _mainWindow = ActivatorUtilities.CreateInstance<MainView>(_serviceProvider);
+                
+                _mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+                _mainWindow.Activated += (_, _) => _isDrawingOverlayHidden = false; 
+                
+                _mainWindow.Show();
             });
         }
         

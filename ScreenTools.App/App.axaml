@@ -59,11 +59,10 @@
 	<TrayIcon.Icons>
 		<TrayIcons>
 			<TrayIcon Icon="/Assets/app-icon.ico"
-					  ToolTipText="Screen Tools">
+					  ToolTipText="Screen Tools"
+					  Clicked="TrayIcon_OnClicked">
 				<TrayIcon.Menu>
 					<NativeMenu>
-						<NativeMenuItem Header="Gallery" Click="NativeMenuItem_OnClickOpenGallery" />
-						<NativeMenuItem Header="Options" Click="NativeMenuItem_OnClickOpenOptions" />
 						<NativeMenuItem Header="Drawing overlay" Click="NativeMenuItem_OnClickOpenDrawingOverlay" />
 						<NativeMenuItem Header="Take screenshot" Click="NativeMenuItem_OnClickCaptureScreenshot" />
 						<NativeMenuItemSeparator />
