@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ScreenTools.Core;
 using ScreenTools.Infrastructure;
 using SharpHook;
 
@@ -12,10 +15,22 @@ public static class ServiceCollectionExtensions
     public static void AddCommonServices(this IServiceCollection collection)
     {
         collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
+        collection.AddSingleton<IPageFactory, PageFactory>();
         collection.AddTransient<ScreenCaptureService>();
         collection.AddTransient<TextDetectionService>();
         collection.AddTransient<DrawingHistoryService>();
         collection.AddLogging(builder => builder.AddFile("Logs/ScreenTools-{Date}.txt"));
+        
+        collection.AddSingleton<Func<ApplicationPageNames, PageViewModel>>(
+            sp => pageName => pageName switch
+            {
+                ApplicationPageNames.Unknown => sp.GetRequiredService<HomePageViewModel>(),
+                ApplicationPageNames.Home => sp.GetRequiredService<HomePageViewModel>(),
+                ApplicationPageNames.Gallery => sp.GetRequiredService<GalleryPageViewModel>(),
+                ApplicationPageNames.Paths => sp.GetRequiredService<PathsPageViewModel>(),
+                ApplicationPageNames.Settings => sp.GetRequiredService<SettingsPageViewModel>(),
+                _ => sp.GetRequiredService<HomePageViewModel>()
+            });
         
         collection.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddJsonFile("appsettings.json").Build());
@@ -29,7 +44,15 @@ public static class ServiceCollectionExtensions
 
         collection.AddTransient<FilePathRepository>();
         collection.AddTransient<FilePathTypeRepository>();
-        
+    }
+
+    public static void AddViewModels(this IServiceCollection collection)
+    {
+        collection.AddTransient<MainViewModel>();
+        collection.AddTransient<HomePageViewModel>();
+        collection.AddTransient<PathsPageViewModel>();
         collection.AddTransient<DrawingOverlayViewModel>();
+        collection.AddTransient<GalleryPageViewModel>();
+        collection.AddTransient<SettingsPageViewModel>();
     }
 }

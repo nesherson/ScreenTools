@@ -3,23 +3,66 @@
              x:Class="ScreenTools.App.App"
              xmlns:local="clr-namespace:ScreenTools.App"
              RequestedThemeVariant="Default">
+	
+	<Application.DataTemplates>
+		<local:ViewLocator />
+	</Application.DataTemplates>
+	
 	<Application.DataContext>
 		<local:App />
 	</Application.DataContext>
+	
 	<Design.DataContext>
 		<local:App />
 	</Design.DataContext>
+	
 	<Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="Styles/AppDefaultStypes.axaml" />
     </Application.Styles>
+	
+	<Application.Resources>
+		
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Controls/IconButton.axaml"></MergeResourceInclude>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+		
+		<!-- General Styles -->
+		<SolidColorBrush x:Key="PrimaryBackground">#FFFFFF</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryForeground">#696b88</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryHoverBackground">#f0f3ff</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryActiveBackground">#f0f3ff</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryHoverForeground">#2a44ad</SolidColorBrush>
+		<SolidColorBrush x:Key="PrimaryActiveForeground">#2a44ad</SolidColorBrush>
+		
+		<!-- Navigation Button Styles -->
+		<SolidColorBrush x:Key="NavBtnForeground">#4f5d64</SolidColorBrush>
+		<SolidColorBrush x:Key="NavBtnPrimaryHoverBackground">#e8ebec</SolidColorBrush>
+		<SolidColorBrush x:Key="NavBtnPrimaryActiveBackground">#e8ebec</SolidColorBrush>
+		
+		<!-- Split View Styles -->
+		<SolidColorBrush x:Key="SplitViewPaneBackground">#f1f3f4</SolidColorBrush>
+		
+		<LinearGradientBrush x:Key="PrimaryBackgroundGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
+			<GradientStop Offset="0" Color="#FFFFFF"></GradientStop>
+			<GradientStop Offset="1" Color="#f2f2f2"></GradientStop>
+		</LinearGradientBrush>
+		
+		<FontFamily x:Key="Roboto">/Assets/Fonts/Roboto-Regular.ttf#Roboto</FontFamily>
+		<FontFamily x:Key="RobotoBold">/Assets/Fonts/Roboto-Bold.ttf#Roboto</FontFamily>
+		<FontFamily x:Key="Phosphor">/Assets/Fonts/Phosphor.ttf#Phosphor</FontFamily>
+		<FontFamily x:Key="PhosphorFill">/Assets/Fonts/Phosphor-Fill.ttf#Phosphor-Fill</FontFamily>
+	</Application.Resources>
+	
 	<TrayIcon.Icons>
 		<TrayIcons>
 			<TrayIcon Icon="/Assets/app-icon.ico"
-					  ToolTipText="Screen Tools">
+					  ToolTipText="Screen Tools"
+					  Clicked="TrayIcon_OnClicked">
 				<TrayIcon.Menu>
 					<NativeMenu>
-						<NativeMenuItem Header="Gallery" Click="NativeMenuItem_OnClickOpenGallery" />
-						<NativeMenuItem Header="Options" Click="NativeMenuItem_OnClickOpenOptions" />
 						<NativeMenuItem Header="Drawing overlay" Click="NativeMenuItem_OnClickOpenDrawingOverlay" />
 						<NativeMenuItem Header="Take screenshot" Click="NativeMenuItem_OnClickCaptureScreenshot" />
 						<NativeMenuItemSeparator />
@@ -29,4 +72,5 @@
 			</TrayIcon>
 		</TrayIcons>
 	</TrayIcon.Icons>
+	
 </Application>

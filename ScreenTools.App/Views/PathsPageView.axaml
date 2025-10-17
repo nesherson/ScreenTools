@@ -1,18 +1,15 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="ScreenTools.App.OptionsView"
-        xmlns:local="clr-namespace:ScreenTools.App"
-        Width="1280"
-        Height="720"
-        Title="Options"
-        DataContext="{Binding $self}">
-        <Design.DataContext>
-                <local:OptionsView />
-        </Design.DataContext>
-        <Window.Styles>
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ScreenTools.App.PathsPageView"
+             xmlns:local="clr-namespace:ScreenTools.App"
+             x:DataType="local:PathsPageViewModel">
+    <Design.DataContext>
+        <local:PathsPageViewModel />
+    </Design.DataContext>
+    <UserControl.Styles>
                 <Style Selector="Button.BtnPrimary">
                         <Setter Property="Background" Value="#80b3ff" />
                 </Style>
@@ -36,7 +33,7 @@
                         <Setter Property="BorderBrush" Value="Black"  />
                         <Setter Property="CornerRadius" Value="5"  />
                 </Style>
-        </Window.Styles>
+        </UserControl.Styles>
         <StackPanel HorizontalAlignment="Center" Width="600" >
                 <Border BorderBrush="#f2f2f2" BorderThickness="0 0 0 1"  Margin="0 0 0 7">
                         <TextBlock FontSize="20" Text="File paths:" Margin="0 0 0 3"/>
@@ -44,14 +41,14 @@
                 <ItemsControl
                         ItemsSource="{Binding GalleryPaths}">
                         <ItemsControl.DataTemplates>
-                                <DataTemplate DataType="local:FilePathModel">
+                                <DataTemplate DataType="local:FilePathViewModel">
                                         <StackPanel Margin="0 0 0 5">
                                                 <TextBlock 
                                                         Text="{Binding FilePathTypeName, StringFormat=Path {0:C}}" Margin="0 0 0 3"/>
                                                <Border Classes="PathWrapper">
                                                        <Grid ColumnDefinitions="*,Auto">
                                                                <TextBox Text="{Binding Path}" Classes="TbPath" />
-                                                               <Button Grid.Column="1" Classes="BtnPathRemove" Click="BtnRemovePath_OnClick">
+                                                               <Button Grid.Column="1" Classes="BtnPathRemove" Command="{Binding $parent[UserControl].((local:PathsPageViewModel)DataContext).RemovePathOnClickCommand}" CommandParameter="{Binding .}" >
                                                                        <Svg Path="/Assets/x.svg" />
                                                                </Button>
                                                        </Grid>
@@ -61,9 +58,9 @@
                         </ItemsControl.DataTemplates>
                 </ItemsControl>
          <StackPanel Orientation="Horizontal">
-                 <Button Content="Add path" Click="BtnAddPath_OnClick" Classes="BtnPrimary" />
-                 <Button Content="Choose path" Click="BtnChoosePath_OnClick" Classes="BtnPrimary" />
-                 <Button Content="Save paths" Click="BtnSavePaths_OnClick" Classes="BtnPrimary" />
+                 <Button Content="Add path" Classes="BtnPrimary" Command="{Binding AddPathOnClickCommand}"/>
+                 <Button Content="Choose path" Classes="BtnPrimary" Command="{Binding ChoosePathOnClickCommand}" />
+                 <Button Content="Save paths" Classes="BtnPrimary" Command="{Binding SavePathsOnClickCommand}" />
          </StackPanel>
         </StackPanel>
-</Window>
+</UserControl>

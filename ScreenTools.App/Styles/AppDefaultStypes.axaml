@@ -1,0 +1,44 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <Button Content="Hello World" FontSize="32"/>
+        </Border>
+    </Design.PreviewWith>
+    
+    <Style Selector="Window">
+        <Setter Property="FontFamily" Value="{DynamicResource Roboto}" />
+    </Style>
+    
+    <Style Selector=":is(Button)">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    
+    <Style Selector=":is(Button) /template/ ContentPresenter">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"></BrushTransition>
+                <BrushTransition Property="Foreground" Duration="0:0:0.1"></BrushTransition>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <Style Selector=":is(Button).active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavBtnPrimaryActiveBackground}" />
+    </Style>
+    
+    <Style Selector=":is(Button):pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavBtnPrimaryHoverBackground}" />
+    </Style>
+    
+    <Style Selector=":is(Button).transparent:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
+    <Style Selector=":is(Button) Label">
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+</Styles>

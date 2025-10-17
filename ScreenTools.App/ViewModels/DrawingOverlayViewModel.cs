@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.Notifications;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Messaging;
@@ -19,18 +14,16 @@ using ReactiveUI;
 using ScreenTools.Core;
 using ScreenTools.Infrastructure;
 using Point = Avalonia.Point;
-using SystemIOPath = System.IO.Path;
 
 namespace ScreenTools.App;
 
-public class DrawingOverlayViewModel : ViewModelBase
+public class DrawingOverlayViewModel : PageViewModel
 {
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
     private readonly FilePathRepository _filePathRepository;
     private readonly DrawingHistoryService _drawingHistoryService;
     private readonly ILogger<DrawingOverlay> _logger;
-    private readonly IConfiguration _configuration;
 
     private Thickness _windowBorderThickness;
     private bool _isPopupOpen;
@@ -54,15 +47,13 @@ public class DrawingOverlayViewModel : ViewModelBase
         ScreenCaptureService screenCaptureService,
         FilePathRepository filePathRepository,
         DrawingHistoryService drawingHistoryService,
-        ILogger<DrawingOverlay> logger,
-        IConfiguration configuration)
+        ILogger<DrawingOverlay> logger)
     {
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
         _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
-        _configuration = configuration;
 
         _drawingShape = ShapeType.Rectangle;
         LineStrokes = [2, 5, 10, 15, 20];
@@ -176,12 +167,11 @@ public class DrawingOverlayViewModel : ViewModelBase
     public void HandleOnRightMouseButtonPressed(PointerPoint pointerPoint)
     {
         WeakReferenceMessenger.Default
-            .Send(new ShowContextMenuMessage(
-                new ShowContextMenuMessageContent
-                {
-                    IsPasteEnabled = _itemsToCopy?.Count > 0,
-                    OnPaste = async () => await OnPaste(pointerPoint)
-                }));
+            .Send(new ShowContextMenuMessage 
+            {
+                IsPasteEnabled = _itemsToCopy?.Count > 0,
+                OnPaste = async () => await OnPaste(pointerPoint)
+            });
     }
 
     private async Task OnPaste(PointerPoint pointerPoint)
