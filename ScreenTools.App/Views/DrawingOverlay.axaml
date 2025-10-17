@@ -148,65 +148,65 @@
                 </Border>
             </Popup>
         </Grid>
-        <!-- <ItemsControl  -->
-        <!--     Grid.Row="1"  -->
-        <!--     ItemsSource="{Binding Shapes}" > -->
-        <!--     <ItemsControl.Styles> -->
-        <!--         <Style Selector="ContentPresenter" x:DataType="core:ShapeViewModelBase"> -->
-        <!--             <Setter Property="Canvas.Left" Value="{Binding X}"/> -->
-        <!--             <Setter Property="Canvas.Top" Value="{Binding Y}"/> -->
-        <!--         </Style> -->
-        <!--     </ItemsControl.Styles> -->
-        <!--     <ItemsControl.ItemsPanel> -->
-        <!--         <ItemsPanelTemplate> -->
-        <!--             <Canvas x:Name="Canvas" -->
-        <!--                     Initialized="Canvas_OnInitialized" -->
-        <!--                     Background="Transparent" /> -->
-        <!--         </ItemsPanelTemplate> -->
-        <!--     </ItemsControl.ItemsPanel> -->
-        <!--     <ItemsControl.ItemTemplate> -->
-        <!--         <local:ShapeTemplateSelector> -->
-        <!--             <DataTemplate x:Key="RectangleViewModel" DataType="{x:Type core:RectangleViewModel}"> -->
-        <!--                 <Rectangle -->
-        <!--                     Fill="{Binding Fill}" -->
-        <!--                     Height="{Binding Height}" -->
-        <!--                     Width="{Binding Width}" -->
-        <!--                     Stroke="{Binding Stroke}" -->
-        <!--                     StrokeThickness="{Binding StrokeThickness}"> -->
-        <!--                     <Interaction.Behaviors> -->
-        <!--                         <EventTriggerBehavior EventName="PointerPressed"> -->
-        <!--                             <InvokeCommandAction Command="{Binding PointerPressedCommand}" /> -->
-        <!--                         </EventTriggerBehavior> -->
-        <!--                     </Interaction.Behaviors> -->
-        <!--                 </Rectangle> -->
-        <!--             </DataTemplate> -->
-        <!--             <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}"> -->
-        <!--                 <Line  -->
-        <!--                     Stroke="{Binding Stroke}" -->
-        <!--                     StrokeThickness="{Binding StrokeThickness}" -->
-        <!--                     StartPoint="{Binding StartPoint}" -->
-        <!--                     EndPoint="{Binding EndPoint}"/> -->
-        <!--             </DataTemplate> -->
-        <!--             <DataTemplate x:Key="PolylineViewModel" DataType="{x:Type core:PolylineViewModel}"> -->
-        <!--                 <Polyline  -->
-        <!--                     Points="{Binding Points}" -->
-        <!--                     Stroke="{Binding Stroke}" -->
-        <!--                     StrokeThickness="{Binding StrokeThickness}" -->
-        <!--                     StrokeJoin="{Binding StrokeJoin}" -->
-        <!--                     StrokeLineCap="{Binding StrokeLineCap}"/> -->
-        <!--             </DataTemplate> -->
-        <!--             <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}"> -->
-        <!--                 <TextBlock  -->
-        <!--                     Text="{Binding Text}" -->
-        <!--                     FontSize="{Binding FontSize}" -->
-        <!--                     Foreground="{Binding Foreground}" -->
-        <!--                     Background="{Binding Background}"> -->
-        <!--                 </TextBlock> -->
-        <!--             </DataTemplate> -->
-        <!--         </local:ShapeTemplateSelector> -->
-        <!--          -->
-        <!--     </ItemsControl.ItemTemplate> -->
-        <!-- </ItemsControl> -->
+        <ItemsControl
+            Grid.Row="1"
+            ItemsSource="{Binding Shapes}" >
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="core:ShapeViewModelBase">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas x:Name="Canvas"
+                            Initialized="Canvas_OnInitialized"
+                            Background="Transparent" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <local:ShapeTemplateSelector>
+                    <DataTemplate x:Key="RectangleViewModel" DataType="{x:Type core:RectangleViewModel}">
+                        <Rectangle
+                            Fill="{Binding Fill}"
+                            Height="{Binding Height}"
+                            Width="{Binding Width}"
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}">
+                            <Interaction.Behaviors>
+                                <EventTriggerBehavior EventName="PointerPressed">
+                                    <InvokeCommandAction Command="{Binding PointerPressedCommand}" />
+                                </EventTriggerBehavior>
+                            </Interaction.Behaviors>
+                        </Rectangle>
+                    </DataTemplate>
+                    <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">
+                        <Line
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StartPoint="{Binding StartPoint}"
+                            EndPoint="{Binding EndPoint}"/>
+                    </DataTemplate>
+                    <DataTemplate x:Key="PolylineViewModel" DataType="{x:Type core:PolylineViewModel}">
+                        <Polyline
+                            Points="{Binding Points}"
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StrokeJoin="{Binding StrokeJoin}"
+                            StrokeLineCap="{Binding StrokeLineCap}"/>
+                    </DataTemplate>
+                    <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}">
+                        <TextBlock
+                            Text="{Binding Text}"
+                            FontSize="{Binding FontSize}"
+                            Foreground="{Binding Foreground}"
+                            Background="{Binding Background}">
+                        </TextBlock>
+                    </DataTemplate>
+                </local:ShapeTemplateSelector>
+        
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
     </Border>
 </Window>
