@@ -6,14 +6,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
-using Tesseract;
 using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
 namespace ScreenTools.App
