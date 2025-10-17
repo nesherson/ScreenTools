@@ -159,16 +159,16 @@ namespace ScreenTools.App
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                if (_mainWindow is not null)
-                {
+                if (_mainWindow?.IsActive == true)
                     return;
-                }
+
+                if (_mainWindow is not null)
+                    return;
                 
                 _mainWindow = ActivatorUtilities.CreateInstance<MainView>(_serviceProvider);
-                
                 _mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
-                _mainWindow.Activated += (_, _) => _isDrawingOverlayHidden = false; 
-                
+                _mainWindow.Closed += (_, _) => _mainWindow = null;
+
                 _mainWindow.Show();
             });
         }

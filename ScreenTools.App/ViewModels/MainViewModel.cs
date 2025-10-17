@@ -42,7 +42,6 @@ public partial class MainViewModel : ViewModelBase
     public string Title { get; set; }
     public bool HomePageIsActive => CurrentPage.PageName == ApplicationPageNames.Home;
     public bool GalleryPageIsActive => CurrentPage.PageName == ApplicationPageNames.Gallery;
-    
     public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
     public bool SettingsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Settings;
     
