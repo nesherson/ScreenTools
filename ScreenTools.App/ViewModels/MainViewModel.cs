@@ -18,6 +18,9 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(GalleryPageIsActive))]
     [NotifyPropertyChangedFor(nameof(SettingsPageIsActive))]
     private PageViewModel _currentPage;
+    
+    [ObservableProperty]
+    private DialogViewModelBase _currentDialog = new ConfirmDialogViewModel { IsDialogOpen = true };
 
     public MainViewModel()
     {
