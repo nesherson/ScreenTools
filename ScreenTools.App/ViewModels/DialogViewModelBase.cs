@@ -1,5 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace ScreenTools.App;
 
@@ -10,7 +13,6 @@ public partial class DialogViewModelBase : ViewModelBase
 
     protected TaskCompletionSource CloseTask = new();
     
-    
     public async Task WaitAsync()
     {
         await CloseTask.Task;
@@ -18,7 +20,7 @@ public partial class DialogViewModelBase : ViewModelBase
 
     public void Show()
     {
-        if  (CloseTask.Task.IsCompleted)
+        if (CloseTask.Task.IsCompleted)
             CloseTask = new TaskCompletionSource();
         
         IsDialogOpen = true;
@@ -29,5 +31,12 @@ public partial class DialogViewModelBase : ViewModelBase
         IsDialogOpen = false;
         
         CloseTask.TrySetResult();
+    }
+    
+    public void ShowWindowNotifcation(string title, string message, NotificationType type, Action? onClick = null)
+    {
+        WeakReferenceMessenger.Default
+            .Send(new ShowWindowNotificationMessage(
+                new Notification(title, message, type, null, onClick)));
     }
 }

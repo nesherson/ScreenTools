@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace ScreenTools.App;
 
-public partial class MainViewModel : ViewModelBase
+public partial class MainViewModel : ViewModelBase, IDialogProvider
 {
     private readonly IPageFactory _pageFactory;
     [ObservableProperty]
@@ -19,9 +19,9 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(SettingsPageIsActive))]
     private PageViewModel _currentPage;
     
-    [ObservableProperty]
-    private DialogViewModelBase _currentDialog = new ConfirmDialogViewModel { IsDialogOpen = true };
-
+    [ObservableProperty] 
+    private DialogViewModelBase? _dialog;
+    
     public MainViewModel()
     {
         if (!Design.IsDesignMode) 
