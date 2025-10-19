@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
     {
         collection.AddSingleton<SimpleGlobalHook>(_ => new SimpleGlobalHook(GlobalHookType.Keyboard));
         collection.AddSingleton<IPageFactory, PageFactory>();
+        collection.AddSingleton<DialogService>();
         collection.AddTransient<ScreenCaptureService>();
         collection.AddTransient<TextDetectionService>();
         collection.AddTransient<DrawingHistoryService>();
@@ -48,7 +49,7 @@ public static class ServiceCollectionExtensions
 
     public static void AddViewModels(this IServiceCollection collection)
     {
-        collection.AddTransient<MainViewModel>();
+        collection.AddSingleton<MainViewModel>();
         collection.AddTransient<HomePageViewModel>();
         collection.AddTransient<PathsPageViewModel>();
         collection.AddTransient<DrawingOverlayViewModel>();
