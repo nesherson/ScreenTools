@@ -51,6 +51,26 @@
 			<GradientStop Offset="1" Color="#f2f2f2"></GradientStop>
 		</LinearGradientBrush>
 		
+		<LinearGradientBrush x:Key="DangerGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
+			<GradientStop Offset="0" Color="#ff0000"></GradientStop>
+			<GradientStop Offset="1" Color="#aa0000"></GradientStop>
+		</LinearGradientBrush>
+		
+		<LinearGradientBrush x:Key="ActiveGradientText" StartPoint="0%, 0%" EndPoint="100%, 0%">
+			<GradientStop Offset="0" Color="#7C59CD"></GradientStop>
+			<GradientStop Offset="1" Color="#7C59CD"></GradientStop>
+		</LinearGradientBrush>
+		
+		<LinearGradientBrush x:Key="ActiveGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
+			<GradientStop Offset="0" Color="#6633DD"></GradientStop>
+			<GradientStop Offset="1" Color="#431B9F"></GradientStop>
+		</LinearGradientBrush>
+		
+		<LinearGradientBrush x:Key="AlertGradient" StartPoint="0%, 0%" EndPoint="100%, 0%">
+			<GradientStop Offset="0" Color="#ffff00"></GradientStop>
+			<GradientStop Offset="1" Color="#ff8800"></GradientStop>
+		</LinearGradientBrush>
+		
 		<FontFamily x:Key="Roboto">/Assets/Fonts/Roboto-Regular.ttf#Roboto</FontFamily>
 		<FontFamily x:Key="RobotoBold">/Assets/Fonts/Roboto-Bold.ttf#Roboto</FontFamily>
 		<FontFamily x:Key="Phosphor">/Assets/Fonts/Phosphor.ttf#Phosphor</FontFamily>
