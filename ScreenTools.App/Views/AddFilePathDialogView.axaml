@@ -6,7 +6,7 @@
              x:Class="ScreenTools.App.AddFilePathDialogView"
              xmlns:local="clr-namespace:ScreenTools.App"
              x:DataType="local:AddFilePathDialogViewModel"
-             MinWidth="300">
+             MinWidth="400">
     <Design.DataContext>
         <local:AddFilePathDialogViewModel />
     </Design.DataContext>
