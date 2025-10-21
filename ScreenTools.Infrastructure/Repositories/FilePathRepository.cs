@@ -18,6 +18,11 @@ public class FilePathRepository
         await _dbContext.FilePaths.AddAsync(filePath);
     }
     
+    public void Update(FilePath filePath)
+    {
+        _dbContext.FilePaths.Update(filePath);
+    }
+    
     public async Task AddRangeAsync(FilePath[] galleryPaths)
     {
         await _dbContext.FilePaths.AddRangeAsync(galleryPaths);
@@ -40,6 +45,11 @@ public class FilePathRepository
         return await _dbContext.FilePaths
             .Include(fp => fp.FilePathType)
             .FirstOrDefaultAsync(x => x.FilePathType.Abrv == abrv);
+    }
+    
+    public async Task<FilePath?> GetByIdAsync(int id)
+    {
+        return await _dbContext.FilePaths.FirstOrDefaultAsync(x => x.Id == id);
     }
     
     public async Task<int> DeleteAllAsync()

@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
 using System.Reactive.Concurrency;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
-using ScreenTools.Core;
 using ScreenTools.Infrastructure;
 
 namespace ScreenTools.App;
@@ -21,9 +16,14 @@ public partial class PathsPageViewModel : PageViewModel
     private readonly FilePathRepository _filePathRepository;
     private readonly FilePathTypeRepository _filePathTypeRepository;
     private readonly ILogger<PathsPageViewModel> _logger;
+    private readonly DialogService _dialogService;
+    private readonly MainViewModel _mainViewModel;
 
     [ObservableProperty]
     private ObservableCollection<FilePathViewModel> _galleryPaths;
+
+    [ObservableProperty] 
+    private FilePathViewModel? _selectedFilePath;
 
     public PathsPageViewModel()
     {
@@ -32,13 +32,17 @@ public partial class PathsPageViewModel : PageViewModel
     
     public PathsPageViewModel(FilePathRepository filePathRepository,
         FilePathTypeRepository filePathTypeRepository,
-        ILogger<PathsPageViewModel> logger)
+        ILogger<PathsPageViewModel> logger,
+        DialogService dialogService,
+        MainViewModel mainViewModel)
     {
         PageName = ApplicationPageNames.Paths;
         
         _filePathRepository = filePathRepository;
         _filePathTypeRepository = filePathTypeRepository;
         _logger = logger;
+        _dialogService = dialogService;
+        _mainViewModel  = mainViewModel;
         
         RxApp.MainThreadScheduler.ScheduleAsync(async (_, _) => await LoadData());
     }
@@ -66,86 +70,43 @@ public partial class PathsPageViewModel : PageViewModel
     }
 
     [RelayCommand]
-    private void AddPathOnClick()
+    private async Task OpenAddPathDialog()
     {
-        GalleryPaths.Add(new FilePathViewModel
+        var addFilePathDialogViewModel = new AddFilePathDialogViewModel(_filePathTypeRepository,
+            _filePathRepository, _logger)
         {
-            Id = 0, 
-            Path = string.Empty
-        });
+            DialogWidth = 520
+        };
+        
+        await _dialogService.ShowDialog(_mainViewModel, addFilePathDialogViewModel);
+        await LoadData();
     }
-
+    
     [RelayCommand]
-    private async Task ChoosePathOnClick()
+    private async Task OpenEditPathDialog()
     {
-        var folders = await WeakReferenceMessenger.Default
-            .Send(new ShowFolderPickerMessage
-            {
-                AllowMultiple = false,
-                Title = "Choose path"
-            });
-        
-        var path = folders.FirstOrDefault()?.Path.AbsolutePath;
-        
-        if (string.IsNullOrEmpty(path))
+        if (SelectedFilePath is null)
             return;
         
-        GalleryPaths.Add(new FilePathViewModel
-        {
-            Id = 0,
-            Path = Uri.UnescapeDataString(path.Replace("/", "\\"))
-        });
+        var addFilePathDialogViewModel = new AddFilePathDialogViewModel(_filePathTypeRepository, 
+            _filePathRepository, _logger, SelectedFilePath.Id);
+        
+        await _dialogService.ShowDialog(_mainViewModel, addFilePathDialogViewModel);
+        await LoadData();
     }
-
+    
+    
     [RelayCommand]
-    private async Task SavePathsOnClick()
+    private async Task DeletePath()
     {
+        if (SelectedFilePath == null)
+        {
+            return;
+        }
+        
         try
         {
-            if (GalleryPaths.Any(x => Path.IsPathRooted(x.Path) == false))
-            {
-                ShowWindowNotifcation("Error", "The given paths are not valid.", NotificationType.Error);
-                return;
-            }
-
-            var galleryPathsToSave = GalleryPaths
-                .Select(x => new FilePath { Path = x.Path, FilePathTypeId = x.FilePathTypeId })
-                .ToArray();
-
-            var filePathType = await _filePathTypeRepository.FindByAbrv("scr-gallery");
-
-            foreach (var galleryPath in galleryPathsToSave)
-            {
-                galleryPath.FilePathTypeId = filePathType.Id;
-            }
-
-            await _filePathRepository.DeleteAllAsync();
-            await _filePathRepository.AddRangeAsync(galleryPathsToSave);
-            await _filePathRepository.SaveChangesAsync();
-            await LoadData();
-
-            ShowWindowNotifcation("Success", "Paths are successfully saved.", NotificationType.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowWindowNotifcation("Error", "An error occured.", NotificationType.Error);
-            _logger.LogError($"Failed to save gallery paths. Exception: {ex}");
-        }
-    }
-
-    [RelayCommand]
-    private async Task RemovePathOnClick(FilePathViewModel filePathViewModel)
-    {
-        try
-        {
-            if (filePathViewModel.Id == 0)
-            {
-                await LoadData();
-                
-                return;
-            }
-            
-            await _filePathRepository.DeleteByIdAsync(filePathViewModel.Id);
+            await _filePathRepository.DeleteByIdAsync(SelectedFilePath.Id);
             await _filePathRepository.SaveChangesAsync();
             await LoadData();
             

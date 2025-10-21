@@ -1,0 +1,70 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ScreenTools.App.AddFilePathDialogView"
+             xmlns:local="clr-namespace:ScreenTools.App"
+             x:DataType="local:AddFilePathDialogViewModel"
+             Width="{Binding DialogWidth}"
+             MinWidth="400">
+    <Design.DataContext>
+        <local:AddFilePathDialogViewModel />
+    </Design.DataContext>
+    <Border Background="{DynamicResource PrimaryBackground}">
+        <StackPanel>
+            <Border Background="{DynamicResource PrimaryBackgroundGradient}">
+                <TextBlock Text="{Binding Title}"
+                           Padding="10"
+                           FontSize="18" />
+            </Border>
+            <Border Padding="20">
+                <StackPanel Spacing="20">
+                    <StackPanel Orientation="Vertical" Spacing="10">
+                        <TextBlock 
+                            TextWrapping="Wrap" 
+                            FontSize="18"
+                            Text="{Binding Description}"/>
+                        <Grid RowDefinitions="*,*">
+                            <Label Grid.Row="0" Content="File path: "/>
+                            <Grid Grid.Row="1" ColumnDefinitions="*,auto" ColumnSpacing="5">
+                                <TextBox 
+                                    Grid.Column="0" 
+                                    Text="{Binding FilePath}" 
+                                    HorizontalContentAlignment="Stretch" />
+                                <Button 
+                                    Grid.Column="1" 
+                                    Classes="accent" 
+                                    Content="Pick path"
+                                    Command="{Binding PickPathCommand}"/>
+                            </Grid>
+                        </Grid>
+                        <Grid RowDefinitions="*,*">
+                            <Label Grid.Row="0" Content="File path type: "/>
+                            <ComboBox Grid.Row="1"
+                                      HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding FilePathTypes}"
+                                      SelectedValue="{Binding SelectedFileTypePathId}"
+                                      DisplayMemberBinding="{Binding Name}"
+                                      SelectedValueBinding="{Binding Id}"/>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                        <Button
+                            Command="{Binding CancelCommand}"
+                            Content="Cancel"
+                            Classes="danger outline"
+                            MinWidth="70"
+                            HorizontalContentAlignment="Center"/>
+                        <Button
+                            Command="{Binding SaveCommand}"
+                            Content="Save"
+                            Classes="accent"
+                            MinWidth="70"
+                            HorizontalContentAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>
