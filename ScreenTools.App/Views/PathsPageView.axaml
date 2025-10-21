@@ -51,6 +51,8 @@
                           IsReadOnly="True"
                           GridLinesVisibility="All"
                           CanUserResizeColumns="True"
+                          CanUserReorderColumns="False"
+                          CanUserSortColumns="False"
                           BorderThickness="1"
                           BorderBrush="Gray"
                           SelectedItem="{Binding SelectedFilePath}">

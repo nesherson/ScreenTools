@@ -148,7 +148,7 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
             }
             
             await _filePathRepository.SaveChangesAsync();
-            ShowWindowNotifcation("Success", $"Path is successfully {(!IsEdit ? "created" : "updated!")}.", NotificationType.Success); 
+            ShowWindowNotifcation("Success", $"Path is successfully {(!IsEdit ? "created" : "updated")}.", NotificationType.Success); 
         }
         catch (Exception ex)
         {

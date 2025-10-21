@@ -10,6 +10,8 @@ public partial class DialogViewModelBase : ViewModelBase
 {
     [ObservableProperty]
     private bool _isDialogOpen;
+    [ObservableProperty]
+    private double _dialogWidth = double.NaN;
 
     protected TaskCompletionSource CloseTask = new();
     

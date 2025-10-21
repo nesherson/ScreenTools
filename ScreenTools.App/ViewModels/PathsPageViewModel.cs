@@ -72,8 +72,11 @@ public partial class PathsPageViewModel : PageViewModel
     [RelayCommand]
     private async Task OpenAddPathDialog()
     {
-        var addFilePathDialogViewModel = new AddFilePathDialogViewModel(_filePathTypeRepository, 
-            _filePathRepository, _logger);
+        var addFilePathDialogViewModel = new AddFilePathDialogViewModel(_filePathTypeRepository,
+            _filePathRepository, _logger)
+        {
+            DialogWidth = 520
+        };
         
         await _dialogService.ShowDialog(_mainViewModel, addFilePathDialogViewModel);
         await LoadData();
