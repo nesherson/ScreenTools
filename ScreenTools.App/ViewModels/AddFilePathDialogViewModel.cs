@@ -29,7 +29,7 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
     [ObservableProperty]
     private ObservableCollection<FilePathTypeViewModel>? _filePathTypes;
     [ObservableProperty]
-    private int _selectedFileTypePathId;
+    private int? _selectedFileTypePathId;
     [ObservableProperty] 
     private string _filePath;
     [ObservableProperty] 
@@ -116,6 +116,13 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
             
             return;
         }
+
+        if (SelectedFileTypePathId is null)
+        {
+            ShowWindowNotifcation("Error", "File path type is not selected.", NotificationType.Error);
+            
+            return;
+        }
         
         try
         {
@@ -125,7 +132,7 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
                     .GetByIdAsync(_filePathId!.Value);
                 
                 existingFilePath.Path = FilePath;
-                existingFilePath.FilePathTypeId = SelectedFileTypePathId;
+                existingFilePath.FilePathTypeId = SelectedFileTypePathId.Value;
                 
                 _filePathRepository.Update(existingFilePath);
             }
@@ -134,7 +141,7 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
                 var newFilePath = new FilePath
                 {
                     Path = FilePath,
-                    FilePathTypeId = SelectedFileTypePathId
+                    FilePathTypeId = SelectedFileTypePathId.Value
                 };
             
                 await _filePathRepository.AddAsync(newFilePath);
