@@ -103,6 +103,14 @@ public partial class PathsPageViewModel : PageViewModel
         {
             return;
         }
+
+        var confirmDialogViewModel = new ConfirmDialogViewModel();
+        
+        await _dialogService
+            .ShowDialog(_mainViewModel, confirmDialogViewModel);
+
+        if (!confirmDialogViewModel.Confirmed)
+            return;
         
         try
         {

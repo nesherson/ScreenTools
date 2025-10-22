@@ -6,20 +6,20 @@ namespace ScreenTools.App;
 public partial class ConfirmDialogViewModel : DialogViewModelBase
 {
     [ObservableProperty]
-    public string _title = "Confirm";
+    private string _title = "Confirm";
     [ObservableProperty]
-    public string _message = "Are you sure you want to continue?";
+    private string _message = "Are you sure you want to continue?";
     [ObservableProperty]
-    public string _confirmText = "Yes";
+    private string _confirmText = "Yes";
     [ObservableProperty]
-    public string _cancelText = "No";
+    private string _cancelText = "No";
     [ObservableProperty]
-    public string _iconText = "\xe4e0";
+    private string _iconText = "\xe4e0";
     [ObservableProperty]
-    public bool _confirmed;
+    private bool _confirmed;
     
     [RelayCommand]
-    public void Confirm()
+    private void Confirm()
     {
         Confirmed = true;
         
@@ -27,7 +27,7 @@ public partial class ConfirmDialogViewModel : DialogViewModelBase
     }
     
     [RelayCommand]
-    public void Cancel()
+    private void Cancel()
     {
         Confirmed = false;
         
