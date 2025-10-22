@@ -110,7 +110,7 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
     [RelayCommand]
     private async Task Save()
     {
-        if (!Path.IsPathRooted(FilePath))
+        if (!Path.IsPathRooted(FilePath) || !Path.Exists(FilePath))
         {
             ShowWindowNotifcation("Error", "The given paths are not valid.", NotificationType.Error);
             
@@ -123,18 +123,27 @@ public partial class AddFilePathDialogViewModel : DialogViewModelBase
             
             return;
         }
+
+        var existingFilePath = await _filePathRepository.GetByPathAsync(FilePath);
+        
+        if (existingFilePath is not null)
+        {
+            ShowWindowNotifcation("Error", "Entered path already exists.", NotificationType.Error);
+        
+            return;
+        }
         
         try
         {
             if (IsEdit)
             {
-                var existingFilePath = await _filePathRepository
+                var filePathToUpdate = await _filePathRepository
                     .GetByIdAsync(_filePathId!.Value);
                 
-                existingFilePath.Path = FilePath;
-                existingFilePath.FilePathTypeId = SelectedFileTypePathId.Value;
+                filePathToUpdate.Path = FilePath;
+                filePathToUpdate.FilePathTypeId = SelectedFileTypePathId.Value;
                 
-                _filePathRepository.Update(existingFilePath);
+                _filePathRepository.Update(filePathToUpdate);
             }
             else
             {
