@@ -166,6 +166,8 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
     private void HandleShowTextBoxMessage(object recipient, ShowTextBoxMessage message)
     {
         var flyout = new Flyout();
+        flyout.FlyoutPresenterClasses.Add("drawingOverlayTextBoxFlyout");
+        
         var textBox = new TextBox
         {
             Width = 320,
