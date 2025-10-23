@@ -6,9 +6,6 @@ public class TextBlockViewModel : ShapeViewModelBase
     private double _fontSize;
     private string _foreground;
     private string _background;
-    private double _x;
-    private double _y;
-
     public string Text
     {
         get => _text;
@@ -31,17 +28,5 @@ public class TextBlockViewModel : ShapeViewModelBase
     {
         get => _background;
         set => SetProperty(ref _background, value);
-    }
-    
-    public double X
-    {
-        get => _x;
-        set => SetProperty(ref _x, value);
-    }
-    
-    public double Y
-    {
-        get => _y;
-        set => SetProperty(ref _y, value);
     }
 }

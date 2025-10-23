@@ -156,6 +156,10 @@
                     <Setter Property="Canvas.Left" Value="{Binding X}"/>
                     <Setter Property="Canvas.Top" Value="{Binding Y}"/>
                 </Style>
+                <Style Selector="ContentPresenter" x:DataType="core:TextBlockViewModel">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
             </ItemsControl.Styles>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -204,7 +208,6 @@
                         </TextBlock>
                     </DataTemplate>
                 </local:ShapeTemplateSelector>
-        
             </ItemsControl.ItemTemplate>
         </ItemsControl>
     </Grid>
