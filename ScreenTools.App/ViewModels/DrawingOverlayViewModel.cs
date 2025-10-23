@@ -8,7 +8,6 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
@@ -21,7 +20,6 @@ public class DrawingOverlayViewModel : PageViewModel
 {
     private readonly TextDetectionService _textDetectionService;
     private readonly ScreenCaptureService _screenCaptureService;
-    private readonly FilePathRepository _filePathRepository;
     private readonly DrawingHistoryService _drawingHistoryService;
     private readonly ILogger<DrawingOverlay> _logger;
 
@@ -45,13 +43,11 @@ public class DrawingOverlayViewModel : PageViewModel
     
     public DrawingOverlayViewModel(TextDetectionService textDetectionService,
         ScreenCaptureService screenCaptureService,
-        FilePathRepository filePathRepository,
         DrawingHistoryService drawingHistoryService,
         ILogger<DrawingOverlay> logger)
     {
         _textDetectionService = textDetectionService;
         _screenCaptureService = screenCaptureService;
-        _filePathRepository = filePathRepository;
         _drawingHistoryService = drawingHistoryService;
         _logger = logger;
 
@@ -297,7 +293,7 @@ public class DrawingOverlayViewModel : PageViewModel
                             X = _startPoint.X,
                             Y = _startPoint.Y
                         };
-
+                        
                         Shapes.Add(textBlockViewModel);
                     }
                 };
