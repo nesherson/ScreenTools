@@ -11,7 +11,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ScreenTools.Core;
-using ScreenTools.Infrastructure;
 using Point = Avalonia.Point;
 
 namespace ScreenTools.App;
@@ -321,7 +320,7 @@ public class DrawingOverlayViewModel : PageViewModel
                 break;
         }
     }
-
+    
     public void OnPointerMoved(PointerPoint pointerPoint)
     {
         if (_isDragging)

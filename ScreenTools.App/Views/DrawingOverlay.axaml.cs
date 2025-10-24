@@ -77,7 +77,13 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         if (ViewModel is null)
             return;
 
-        canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(canvas));
+        canvas.PointerPressed += (_, pe) =>
+        {
+            if (pe.Source is TextBlock)
+                return;
+            
+            ViewModel.OnPointerPressed(pe.GetCurrentPoint(canvas));
+        };
         canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(canvas));
         canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
     }
@@ -184,7 +190,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
                 flyout.Hide();
             }
         };
-
+        
         flyout.Content = textBox;
         flyout.Closed += (_, _) =>
         {

@@ -163,7 +163,7 @@
             </ItemsControl.Styles>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Canvas x:Name="Canvas"
+                    <Canvas x:Name="DrawingOverlayCanvas"
                             Initialized="Canvas_OnInitialized"
                             Background="Transparent" />
                 </ItemsPanelTemplate>
@@ -177,11 +177,6 @@
                             Width="{Binding Width}"
                             Stroke="{Binding Stroke}"
                             StrokeThickness="{Binding StrokeThickness}">
-                            <Interaction.Behaviors>
-                                <EventTriggerBehavior EventName="PointerPressed">
-                                    <InvokeCommandAction Command="{Binding PointerPressedCommand}" />
-                                </EventTriggerBehavior>
-                            </Interaction.Behaviors>
                         </Rectangle>
                     </DataTemplate>
                     <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">

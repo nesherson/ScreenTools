@@ -19,7 +19,4 @@ public class ShapeViewModelBase : ObservableObject
         get => _y;
         set => SetProperty(ref _y, value);
     }    
-    public ICommand? PointerPressedCommand { get; set; } 
-    public ICommand? PointerMovedCommand { get; set; } 
-    public ICommand? PointerReleasedCommand { get; set; } 
 }
