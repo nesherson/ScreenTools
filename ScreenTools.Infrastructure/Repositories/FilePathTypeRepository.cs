@@ -17,4 +17,10 @@ public class FilePathTypeRepository
         return await _dbContext.FilePathTypes
             .FirstOrDefaultAsync(x => x.Abrv == abrv);
     }
+
+    public async Task<List<FilePathType>> GetAll()
+    {
+        return await _dbContext.FilePathTypes
+            .ToListAsync();
+    }
 }

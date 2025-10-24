@@ -15,7 +15,7 @@
         ExtendClientAreaTitleBarHeightHint="0"
         CanResize="False"
         IsHitTestVisible="True"
-        IsVisible="{Binding IsVisible}">
+        x:DataType="local:DrawingOverlayViewModel">
 	<Window.Resources>
 		<local:BooleanToSolidColorBrushConverter x:Key="BooleanToSolidColorBrushConverter"/>
 	</Window.Resources>
@@ -148,18 +148,22 @@
                 </Border>
             </Popup>
         </Grid>
-        <ItemsControl 
-            Grid.Row="1" 
+        <ItemsControl
+            Grid.Row="1"
             ItemsSource="{Binding Shapes}" >
             <ItemsControl.Styles>
                 <Style Selector="ContentPresenter" x:DataType="core:ShapeViewModelBase">
                     <Setter Property="Canvas.Left" Value="{Binding X}"/>
                     <Setter Property="Canvas.Top" Value="{Binding Y}"/>
                 </Style>
+                <Style Selector="ContentPresenter" x:DataType="core:TextBlockViewModel">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
             </ItemsControl.Styles>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Canvas x:Name="Canvas"
+                    <Canvas x:Name="DrawingOverlayCanvas"
                             Initialized="Canvas_OnInitialized"
                             Background="Transparent" />
                 </ItemsPanelTemplate>
@@ -173,22 +177,17 @@
                             Width="{Binding Width}"
                             Stroke="{Binding Stroke}"
                             StrokeThickness="{Binding StrokeThickness}">
-                            <Interaction.Behaviors>
-                                <EventTriggerBehavior EventName="PointerPressed">
-                                    <InvokeCommandAction Command="{Binding PointerPressedCommand}" />
-                                </EventTriggerBehavior>
-                            </Interaction.Behaviors>
                         </Rectangle>
                     </DataTemplate>
                     <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">
-                        <Line 
+                        <Line
                             Stroke="{Binding Stroke}"
                             StrokeThickness="{Binding StrokeThickness}"
                             StartPoint="{Binding StartPoint}"
                             EndPoint="{Binding EndPoint}"/>
                     </DataTemplate>
                     <DataTemplate x:Key="PolylineViewModel" DataType="{x:Type core:PolylineViewModel}">
-                        <Polyline 
+                        <Polyline
                             Points="{Binding Points}"
                             Stroke="{Binding Stroke}"
                             StrokeThickness="{Binding StrokeThickness}"
@@ -196,7 +195,7 @@
                             StrokeLineCap="{Binding StrokeLineCap}"/>
                     </DataTemplate>
                     <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}">
-                        <TextBlock 
+                        <TextBlock
                             Text="{Binding Text}"
                             FontSize="{Binding FontSize}"
                             Foreground="{Binding Foreground}"
@@ -204,7 +203,6 @@
                         </TextBlock>
                     </DataTemplate>
                 </local:ShapeTemplateSelector>
-                
             </ItemsControl.ItemTemplate>
         </ItemsControl>
     </Grid>

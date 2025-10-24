@@ -18,11 +18,11 @@ public class FilePathRepository
         await _dbContext.FilePaths.AddAsync(filePath);
     }
     
-    public async Task AddRangeAsync(FilePath[] galleryPaths)
+    public void Update(FilePath filePath)
     {
-        await _dbContext.FilePaths.AddRangeAsync(galleryPaths);
+        _dbContext.FilePaths.Update(filePath);
     }
-
+    
     public async Task<List<FilePath>> GetAllAsync(string? includes = null)
     {
         var query = _dbContext.FilePaths.AsQueryable();
@@ -35,18 +35,24 @@ public class FilePathRepository
         return await query.ToListAsync();
     }
 
-    public async Task<FilePath> GetByFilePathTypeAbrvAsync(string abrv)
+    public async Task<FilePath?> GetByFilePathTypeAbrvAsync(string abrv)
     {
         return await _dbContext.FilePaths
             .Include(fp => fp.FilePathType)
             .FirstOrDefaultAsync(x => x.FilePathType.Abrv == abrv);
     }
     
-    public async Task<int> DeleteAllAsync()
+    public async Task<FilePath?> GetByIdAsync(int id)
     {
-        return await _dbContext.FilePaths.ExecuteDeleteAsync();
+        return await _dbContext.FilePaths
+            .FirstOrDefaultAsync(x => x.Id == id);
     }
 
+    public async Task<FilePath?> GetByPathAsync(string path)
+    {
+        return await _dbContext.FilePaths
+            .FirstOrDefaultAsync(x => x.Path == path);
+    }
     public async Task DeleteByIdAsync(int id)
     {
         var itemToRemove = await _dbContext.FilePaths

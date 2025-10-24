@@ -2,25 +2,11 @@
 
 public class RectangleViewModel : ShapeViewModelBase
 {
-    private double _x;
-    private double _y;
     private double _width;
     private double _height;
     private string _fill;
     private string _stroke;
     private double _strokeThickness;
-    
-    public double X
-    {
-        get => _x;
-        set => SetProperty(ref _x, value);
-    }
-    
-    public double Y
-    {
-        get => _y;
-        set => SetProperty(ref _y, value);
-    }    
     
     public double Width
     {

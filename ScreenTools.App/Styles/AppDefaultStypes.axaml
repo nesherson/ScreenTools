@@ -1,0 +1,87 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+          <StackPanel>
+              <Button Content="Hello World" FontSize="32"/>
+              <Button Classes="danger" Content="Danger" />
+          </StackPanel>
+        </Border>
+    </Design.PreviewWith>
+    
+    <Style Selector="Window">
+        <Setter Property="FontFamily" Value="{DynamicResource Roboto}" />
+    </Style>
+    
+    <Style Selector=":is(Button)">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    
+    <Style Selector=":is(Button).danger">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBackground}"></Setter>
+        <Setter Property="Background" Value="{DynamicResource DangerGradient}"></Setter>
+    </Style>
+    
+    <Style Selector=":is(Button).danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBackground}"></Setter>
+        <Setter Property="Background" Value="{DynamicResource DangerHoverGradient}"></Setter>
+    </Style>
+    <Style Selector=":is(Button).danger:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBackground}"></Setter>
+        <Setter Property="Background" Value="{DynamicResource DangerGradient}"></Setter>
+    </Style>
+    
+    <Style Selector=":is(Button).outline">
+        <Setter Property="Foreground" Value="{DynamicResource ActiveGradientText}"></Setter>
+        <Setter Property="Background" Value="{DynamicResource PrimaryBackground}"></Setter>
+        <Setter Property="BorderBrush" Value="{DynamicResource ActiveGradient}"></Setter>
+        
+        <!-- Alert -->
+        <Style Selector="^.alert">
+            <Setter Property="BorderBrush" Value="{DynamicResource AlertGradient}"></Setter>
+            <Setter Property="Foreground" Value="{DynamicResource AlertGradient}"></Setter>
+        </Style>
+        <!-- Danger -->
+        <Style Selector="^.danger">
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerGradient}"></Setter>
+            <Setter Property="Foreground" Value="{DynamicResource DangerGradient}"></Setter>
+        </Style>
+        <!-- Success -->
+        <Style Selector="^.success">
+            <Setter Property="BorderBrush" Value="{DynamicResource SuccessGradient}"></Setter>
+            <Setter Property="Foreground" Value="{DynamicResource SuccessGradient}"></Setter>
+        </Style>
+    </Style>
+    
+    <Style Selector=":is(Button) /template/ ContentPresenter">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1"></BrushTransition>
+                <BrushTransition Property="Foreground" Duration="0:0:0.1"></BrushTransition>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <Style Selector=":is(Button).active /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavBtnPrimaryActiveBackground}" />
+    </Style>
+    
+    <Style Selector=":is(Button):pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource NavBtnPrimaryHoverBackground}" />
+    </Style>
+    
+    <Style Selector=":is(Button).transparent:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
+    <Style Selector=":is(Button) Label">
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+    
+    <Style Selector="FlyoutPresenter.drawingOverlayTextBoxFlyout">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+</Styles>

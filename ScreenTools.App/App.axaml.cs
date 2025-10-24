@@ -1,12 +1,9 @@
 using System;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Controls.Notifications;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using ScreenTools.Infrastructure;
 using SharpHook;
 using SharpHook.Native;
+using ImageFormat = System.Drawing.Imaging.ImageFormat;
 
 namespace ScreenTools.App
 {
@@ -26,10 +24,11 @@ namespace ScreenTools.App
         private FilePathRepository _filePathRepository;
         private ILogger<App> _logger;
         private DrawingOverlay? _drawingOverlay;
-        
+        private Window? _mainWindow;
         private bool _isLeftMetaPressed;
-        
         private bool _isDrawingOverlayHidden;
+        private bool _isMainWindow;
+        
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -40,6 +39,7 @@ namespace ScreenTools.App
             var collection = new ServiceCollection();
             
             collection.AddCommonServices();
+            collection.AddViewModels();
             
             _serviceProvider = collection.BuildServiceProvider();
             
@@ -153,21 +153,21 @@ namespace ScreenTools.App
             _hook?.Dispose();
         }
         
-        private void NativeMenuItem_OnClickOpenGallery(object? sender, EventArgs e)
+        private void TrayIcon_OnClicked(object? sender, EventArgs e)
         {
             Dispatcher.UIThread.Invoke(() =>
             {
-                var window = ActivatorUtilities.CreateInstance<GalleryView>(_serviceProvider);
-                window.Show();
-            });
-        }
-        
-        private void NativeMenuItem_OnClickOpenOptions(object? sender, EventArgs e)
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                var window = ActivatorUtilities.CreateInstance<OptionsView>(_serviceProvider);
-                window.Show();
+                if (_mainWindow?.IsActive == true)
+                    return;
+
+                if (_mainWindow is not null)
+                    return;
+                
+                _mainWindow = ActivatorUtilities.CreateInstance<MainView>(_serviceProvider);
+                _mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+                _mainWindow.Closed += (_, _) => _mainWindow = null;
+
+                _mainWindow.Show();
             });
         }
         

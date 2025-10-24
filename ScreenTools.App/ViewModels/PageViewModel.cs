@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 
 namespace ScreenTools.App;
 
-public class ViewModelBase : ObservableObject
+public partial class PageViewModel : ViewModelBase
 {
     public void ShowWindowNotifcation(string title, string message, NotificationType type, Action? onClick = null)
     {
@@ -13,4 +13,7 @@ public class ViewModelBase : ObservableObject
             .Send(new ShowWindowNotificationMessage(
                 new Notification(title, message, type, null, onClick)));
     }
+    
+    [ObservableProperty]
+    public ApplicationPageNames _pageName;
 }

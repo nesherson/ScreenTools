@@ -77,8 +77,14 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         if (ViewModel is null)
             return;
 
-        canvas.PointerPressed += (_, pe) => ViewModel.OnPointerPressed(pe.GetCurrentPoint(Canvas));
-        canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(Canvas));
+        canvas.PointerPressed += (_, pe) =>
+        {
+            if (pe.Source is TextBlock)
+                return;
+            
+            ViewModel.OnPointerPressed(pe.GetCurrentPoint(canvas));
+        };
+        canvas.PointerMoved += (_, pe) => ViewModel.OnPointerMoved(pe.GetCurrentPoint(canvas));
         canvas.PointerReleased += (_, _) => ViewModel.OnPointerReleased();
     }
 
@@ -154,10 +160,10 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
         var pasteMenuItem = new MenuItem
         {
             Header = "Paste",
-            IsEnabled = message.Content.IsPasteEnabled
+            IsEnabled = message.IsPasteEnabled
         };
 
-        pasteMenuItem.Click += (_, _) => { message.Content.OnPaste?.Invoke(); };
+        pasteMenuItem.Click += (_, _) => { message.OnPaste?.Invoke(); };
 
         flyout.Items.Add(pasteMenuItem);
         flyout.ShowAt(this, true);
@@ -166,6 +172,8 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
     private void HandleShowTextBoxMessage(object recipient, ShowTextBoxMessage message)
     {
         var flyout = new Flyout();
+        flyout.FlyoutPresenterClasses.Add("drawingOverlayTextBoxFlyout");
+        
         var textBox = new TextBox
         {
             Width = 320,
@@ -182,7 +190,7 @@ public partial class DrawingOverlay : ReactiveWindow<DrawingOverlayViewModel>
                 flyout.Hide();
             }
         };
-
+        
         flyout.Content = textBox;
         flyout.Closed += (_, _) =>
         {

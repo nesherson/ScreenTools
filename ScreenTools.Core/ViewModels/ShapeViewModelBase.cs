@@ -5,7 +5,18 @@ namespace ScreenTools.Core;
 
 public class ShapeViewModelBase : ObservableObject
 {
-    public ICommand? PointerPressedCommand { get; set; } 
-    public ICommand? PointerMovedCommand { get; set; } 
-    public ICommand? PointerReleasedCommand { get; set; } 
+    private double _x;
+    private double _y;
+    
+    public double X
+    {
+        get => _x;
+        set => SetProperty(ref _x, value);
+    }
+    
+    public double Y
+    {
+        get => _y;
+        set => SetProperty(ref _y, value);
+    }    
 }

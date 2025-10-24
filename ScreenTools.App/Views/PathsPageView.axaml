@@ -1,0 +1,71 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ScreenTools.App.PathsPageView"
+             xmlns:local="clr-namespace:ScreenTools.App"
+             x:DataType="local:PathsPageViewModel">
+    <Design.DataContext>
+        <local:PathsPageViewModel />
+    </Design.DataContext>
+    <UserControl.Styles>
+                <Style Selector="Button.BtnPrimary">
+                        <Setter Property="Background" Value="#80b3ff" />
+                </Style>
+                <Style Selector="Button.BtnPrimary:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#66a3ff" />
+                </Style>
+                <Style Selector="TextBox.TbPath">
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Margin" Value="0 0 1 0" />
+                </Style>
+                <Style Selector="Button.BtnPathRemove">
+                        <Setter Property="Background" Value="#ff6666" />
+                        <Setter Property="Margin" Value="0 0 1 0" />
+                        <Setter Property="Height" Value="30" />
+                </Style>
+                <Style Selector="Button.BtnPathRemove:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#ff4d4d" />
+                </Style>
+                <Style Selector="Border.PathWrapper">
+                        <Setter Property="BorderThickness" Value="1"  />
+                        <Setter Property="BorderBrush" Value="Black"  />
+                        <Setter Property="CornerRadius" Value="5"  />
+                </Style>
+        </UserControl.Styles>
+        <StackPanel>
+                <Border Margin="0 0 0 10">
+                        <StackPanel>
+                                <TextBlock FontSize="24" Text="File paths" Margin="0 0 0 5"/>
+                                <TextBlock FontSize="14" Text="Overview of the list of file paths that are going to be used for getting images for gallery page." Margin="0 0 0 10"/>
+                                <Button 
+                                        Content="Add" 
+                                        Classes="accent" 
+                                        HorizontalAlignment="Right"
+                                        Padding="12 8"
+                                        Command="{Binding OpenAddPathDialogCommand}"/>
+                        </StackPanel>
+                </Border>
+                <DataGrid ItemsSource="{Binding GalleryPaths}"
+                          IsReadOnly="True"
+                          GridLinesVisibility="All"
+                          CanUserResizeColumns="True"
+                          CanUserReorderColumns="False"
+                          CanUserSortColumns="False"
+                          BorderThickness="1"
+                          BorderBrush="Gray"
+                          SelectedItem="{Binding SelectedFilePath}">
+                        <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                        <MenuItem Header="Edit" Command="{Binding OpenEditPathDialogCommand}"/>
+                                        <MenuItem Header="Delete" Command="{Binding DeletePathCommand}"/>
+                                </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.Columns>
+                                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="*"/>
+                                <DataGridTextColumn Header="Path Type" Binding="{Binding FilePathTypeName}" Width="*"/>
+                        </DataGrid.Columns>
+                </DataGrid>
+        </StackPanel>
+</UserControl>
