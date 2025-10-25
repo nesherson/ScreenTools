@@ -7,7 +7,9 @@ public class ShapeViewModelBase : ObservableObject
 {
     private double _x;
     private double _y;
-    
+
+    public string Name { get; set; }
+
     public double X
     {
         get => _x;
