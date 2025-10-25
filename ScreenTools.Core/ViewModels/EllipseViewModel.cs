@@ -6,42 +6,23 @@ public class EllipseViewModel : ShapeViewModelBase
 {
     private double _x;
     private double _y;
-    private double _radiusX;
-    private double _radiusY;
+    private double _width;
+    private double _height;
     private string _fill;
-    private Point _center;
     
-    public Point Center
+    public double Width
     {
-        get => _center;
-        set => SetProperty(ref _center, value);
+        get => _width;
+        set => SetProperty(ref _width, value);
     }
     
-    public double RadiusX
+    public double Height
     {
-        get => _radiusX;
-        set => SetProperty(ref _radiusX, value);
-    }
-    
-    public double RadiusY
-    {
-        get => _radiusY;
-        set => SetProperty(ref _radiusY, value);
-    }
-    
-    public double X
-    {
-        get => _x;
-        set => SetProperty(ref _x, value);
-    }
-    
-    public double Y
-    {
-        get => _y;
-        set => SetProperty(ref _y, value);
+        get => _height;
+        set => SetProperty(ref _height, value);
     }    
     
-    public string Fill
+    public string? Fill
     {
         get => _fill;
         set => SetProperty(ref _fill, value);
