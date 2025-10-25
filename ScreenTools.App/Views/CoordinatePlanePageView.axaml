@@ -1,0 +1,47 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ScreenTools.App.CoordinatePlanePageView"
+        x:DataType="local:CoordinatePlanePageViewModel"
+        xmlns:local="clr-namespace:ScreenTools.App"
+        xmlns:core="clr-namespace:ScreenTools.Core;assembly=ScreenTools.Core">
+        <Design.DataContext>
+            <local:CoordinatePlanePageViewModel />
+        </Design.DataContext>
+       <ItemsControl
+           ItemsSource="{Binding Shapes}" >
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="core:ShapeViewModelBase">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas x:Name="DrawingOverlayCanvas"
+                            Loaded="Canvas_OnInitialized"
+                            Background="Transparent" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <local:ShapeTemplateSelector>
+                    <DataTemplate x:Key="EllipseViewModel" DataType="{x:Type core:EllipseViewModel}">
+                        <Ellipse
+                            Fill="{Binding Fill}"
+                            Height="{Binding Height}"
+                            Width="{Binding Width}">
+                        </Ellipse>
+                    </DataTemplate>
+                    <DataTemplate x:Key="LineViewModel" DataType="{x:Type core:LineViewModel}">
+                        <Line
+                            Stroke="{Binding Stroke}"
+                            StrokeThickness="{Binding StrokeThickness}"
+                            StartPoint="{Binding StartPoint}"
+                            EndPoint="{Binding EndPoint}"/>
+                    </DataTemplate>
+                </local:ShapeTemplateSelector>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+</UserControl>
