@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -24,7 +24,22 @@ public partial class CoordinatePlanePageViewModel : PageViewModel
 
         const int gridSpacing = 25; 
         
-        // Draw vertical lines
+        // Draw vertial numbers
+        for (double x = 0; x < canvasWidth; x += gridSpacing)
+        {
+            var num = new TextBlockViewModel
+            {
+                Name = "vertical-line",
+                X = x,
+                Y = canvasWidth / 2,
+                Foreground= Colors.Black.ToString(),
+                Text = x.ToString(CultureInfo.InvariantCulture),
+                FontSize = 12
+            };
+        
+            Shapes.Add(num);
+        }
+        
         for (double x = 0; x < canvasWidth; x += gridSpacing)
         {
             var line = new LineViewModel
@@ -55,49 +70,21 @@ public partial class CoordinatePlanePageViewModel : PageViewModel
         
         var canvasHalfWidth = canvasWidth / 2;
         var canvasHalfHeight = canvasHeight / 2;
-        var centralXPoint = Shapes
-            .Where(x => x.Name == "vertical-line")
-            .Where(x =>
-            {
-                if (x is not LineViewModel line)
-                    return false;
-                
-                if (line.StartPoint.X >= canvasHalfWidth - gridSpacing && line.StartPoint.X <= canvasHalfWidth)
-                {
-                    return true;
-                }
-        
-                return line.StartPoint.X >= canvasHalfWidth && line.StartPoint.X <= canvasHalfWidth + gridSpacing;
-            })
-            .MaxBy(x => Math.Abs(canvasHalfWidth - (x as LineViewModel).StartPoint.X)) as LineViewModel;
-        var centralYPoint = Shapes
-            .Where(x => x.Name == "horizontal-line")
-            .Where(x =>
-            {
-                if (x is not LineViewModel line)
-                    return false;
-                
-                if (line.StartPoint.Y >= canvasHalfHeight - gridSpacing && line.StartPoint.Y <= canvasHalfHeight)
-                {
-                    return true;
-                }
-        
-                return line.StartPoint.Y >= canvasHalfHeight && line.StartPoint.Y <= canvasHalfHeight + gridSpacing;
-            })
-            .MaxBy(x => Math.Abs(canvasHalfHeight - (x as LineViewModel).StartPoint.Y)) as LineViewModel;
+        var centralX = Math.Round(canvasHalfWidth / gridSpacing) * gridSpacing;
+        var centralY = Math.Round(canvasHalfHeight / gridSpacing) * gridSpacing;
         
         var xAxis = new LineViewModel
         {
-            StartPoint = new Point(0, centralYPoint.StartPoint.Y),
-            EndPoint = new Point(canvasWidth, centralYPoint.StartPoint.Y),
+            StartPoint = new Point(0, centralY),
+            EndPoint = new Point(canvasWidth, centralY),
             Stroke = "Gray",
             StrokeThickness = 1.5
         };
         
         var yAxis = new LineViewModel
         {
-            StartPoint = new Point(centralXPoint.StartPoint.X, 0),
-            EndPoint = new Point(centralXPoint.StartPoint.X, canvasHeight),
+            StartPoint = new Point(centralX, 0),
+            EndPoint = new Point(centralX, canvasHeight),
             Stroke = "Gray",
             StrokeThickness = 1.5
         };
