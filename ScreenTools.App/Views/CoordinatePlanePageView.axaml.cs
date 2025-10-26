@@ -19,8 +19,12 @@ public partial class CoordinatePlanePageView : UserControl
         if (DataContext is not CoordinatePlanePageViewModel vm)
             return;
         
-        vm.DrawGrid(canvas.Bounds.Width, canvas.Bounds.Height); 
-        
+        vm.DrawGrid(canvas.Bounds.Width, canvas.Bounds.Height);
+
+        canvas.SizeChanged += (o, args) =>
+        {
+            vm.DrawGrid(args.NewSize.Width, args.NewSize.Height);
+        };
         canvas.PointerPressed += (_, pe) =>
         {
             var (x, y) = pe.GetCurrentPoint(canvas).Position; 

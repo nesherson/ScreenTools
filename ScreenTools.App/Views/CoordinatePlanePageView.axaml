@@ -17,6 +17,10 @@
                     <Setter Property="Canvas.Left" Value="{Binding X}"/>
                     <Setter Property="Canvas.Top" Value="{Binding Y}"/>
                 </Style>
+                <Style Selector="ContentPresenter" x:DataType="core:TextBlockViewModel">
+                    <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                </Style>
             </ItemsControl.Styles>
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -40,6 +44,14 @@
                             StrokeThickness="{Binding StrokeThickness}"
                             StartPoint="{Binding StartPoint}"
                             EndPoint="{Binding EndPoint}"/>
+                    </DataTemplate>
+                    <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}">
+                        <TextBlock
+                            Text="{Binding Text}"
+                            FontSize="{Binding FontSize}"
+                            Foreground="{Binding Foreground}"
+                            Background="{Binding Background}">
+                        </TextBlock>
                     </DataTemplate>
                 </local:ShapeTemplateSelector>
             </ItemsControl.ItemTemplate>
