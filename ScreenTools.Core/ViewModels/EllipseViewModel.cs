@@ -1,30 +1,34 @@
-﻿using Avalonia;
-
-namespace ScreenTools.Core;
+﻿namespace ScreenTools.Core;
 
 public class EllipseViewModel : ShapeViewModelBase
 {
-    private double _x;
-    private double _y;
-    private double _width;
-    private double _height;
+    private double _worldWidth;
+    private double _worldHeight;
     private string _fill;
+  
+    public double ScreenWidth => 5; 
+    public double ScreenHeight => 5;
     
-    public double Width
+    public double WorldWidth
     {
-        get => _width;
-        set => SetProperty(ref _width, value);
+        get => _worldWidth;
+        set => SetProperty(ref _worldWidth, value);
     }
     
-    public double Height
+    public double WorldHeight
     {
-        get => _height;
-        set => SetProperty(ref _height, value);
+        get => _worldHeight;
+        set => SetProperty(ref _worldHeight, value);
     }    
+    
+   
     
     public string? Fill
     {
         get => _fill;
         set => SetProperty(ref _fill, value);
     }
+
+    
+ 
 }
