@@ -29,7 +29,9 @@ public partial class CoordinatePlanePageView : UserControl
         
         _vm = vm;
         
-        vm.DrawGrid(0, 0);
+        _vm.Offset = new Point(canvas.Bounds.Width / 2, canvas.Bounds.Height / 2);
+        
+        vm.DrawGrid();
         
         canvas.PointerPressed += (_, pe) =>
         {
@@ -69,7 +71,11 @@ public partial class CoordinatePlanePageView : UserControl
         // 4. Pointer Released to Stop Panning
         canvas.PointerReleased += (s, pe) =>
         {
-            _isPanning = false;
+            if (_isPanning)
+            {
+                _isPanning = false;
+                _vm.RedrawGrid();
+            }
         };
         canvas.PointerWheelChanged += (_, pe) =>
         {

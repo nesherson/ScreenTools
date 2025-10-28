@@ -15,8 +15,13 @@
         <local:WorldToScreenYConverter x:Key="WorldToScreenYConverter" />
         <local:WorldToScreenPointConverter x:Key="WorldToScreenPointConverter" />
     </UserControl.Resources>
-       <ItemsControl
-           ItemsSource="{Binding Shapes}" >
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Grid.Row="0">
+            <Button Command="{Binding ClearEllipsesCommand}" Width="50">Clear</Button>
+        </StackPanel>
+        <ItemsControl
+            Grid.Row="1"
+            ItemsSource="{Binding Shapes}" >
            <ItemsControl.Styles>
                <Style Selector="ItemsControl > ContentPresenter" x:DataType="core:EllipseViewModel">
                    <Setter Property="Canvas.Left" >
@@ -39,7 +44,7 @@
                 <ItemsPanelTemplate>
                     <Canvas x:Name="DrawingOverlayCanvas"
                             Loaded="Canvas_OnInitialized"
-                            Background="Transparent">
+                            Background="WhiteSmoke">
                     </Canvas>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
@@ -75,15 +80,17 @@
                             </Line.EndPoint>
                         </Line>
                     </DataTemplate>
-                    <!-- <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}"> -->
-                    <!--     <TextBlock -->
-                    <!--         Text="{Binding Text}" -->
-                    <!--         FontSize="{Binding FontSize}" -->
-                    <!--         Foreground="{Binding Foreground}" -->
-                    <!--         Background="{Binding Background}"> -->
-                    <!--     </TextBlock> -->
-                    <!-- </DataTemplate> -->
+                    <DataTemplate x:Key="TextBlockViewModel" DataType="{x:Type core:TextBlockViewModel}">
+                        <TextBlock
+                            Text="{Binding Text}"
+                            FontSize="{Binding FontSize}"
+                            Foreground="{Binding Foreground}"
+                            Background="{Binding Background}">
+                        </TextBlock>
+                    </DataTemplate>
                 </local:ShapeTemplateSelector>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+    </Grid>
+      
 </UserControl>
