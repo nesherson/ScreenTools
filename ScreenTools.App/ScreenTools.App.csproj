@@ -52,14 +52,22 @@
     <None Remove="Assets\settings.svg" />
     <AvaloniaResource Include="Assets\settings.svg" />
     <None Remove="Assets\home.svg" />
-    <None Remove="Assets\file.svg" />
-    <None Remove="Assets\image.svg" />
     <None Remove="Assets\Fonts\Phosphor-Fill.ttf" />
     <AvaloniaResource Include="Assets\Fonts\Phosphor-Fill.ttf" />
     <None Remove="Assets\Fonts\Phosphor.ttf" />
     <AvaloniaResource Include="Assets\Fonts\Phosphor.ttf" />
     <None Remove="Assets\Images\logo.svg" />
     <AvaloniaResource Include="Assets\Images\logo.svg" />
+    <None Remove="Assets\image.svg" />
+    <AvaloniaResource Include="Assets\image.svg" />
+    <None Remove="Assets\file.svg" />
+    <AvaloniaResource Include="Assets\file.svg" />
+    <None Remove="Assets\gear.svg" />
+    <AvaloniaResource Include="Assets\gear.svg" />
+    <None Remove="Assets\house.svg" />
+    <AvaloniaResource Include="Assets\house.svg" />
+    <None Remove="Assets\images.svg" />
+    <AvaloniaResource Include="Assets\images.svg" />
   </ItemGroup>
 
   <ItemGroup>

@@ -44,7 +44,8 @@
                                                                   Spacing="10">
                                                               <Image
                                                                       Source="{SvgImage /Assets/Images/logo.svg}"
-                                                                      Width="25" />
+                                                                      Width="25"
+                                                                      VerticalAlignment="Center"/>
                                                               <TextBlock
                                                                       Text="ScreenTools"
                                                                       HorizontalAlignment="Center"
@@ -58,25 +59,25 @@
                                                 Command="{Binding GoToHomePageCommand}"
                                                 Content="Homepage"
                                                 IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xE2C2;"/>
+                                                IconPath="/Assets/house.svg"/>
                                         <IconButton
                                                 Classes.active="{Binding GalleryPageIsActive}"
                                                 Command="{Binding GoToGalleryPageCommand}"
                                                 Content="Gallery"
                                                 IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xE2CA;" />
+                                                IconPath="/Assets/images.svg" />
                                         <IconButton
                                                 Classes.active="{Binding PathsPageIsActive}"
                                                 Command="{Binding GoToPathsPageCommand}"
                                                 Content="Paths"
                                                 IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xE230;" />
+                                                IconPath="/Assets/file.svg" />
                                         <IconButton
                                                 Classes.active="{Binding SettingsPageIsActive}"
                                                 Command="{Binding GoToSettingsPageCommand}"
                                                 Content="Settings"
                                                 IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xE270;" />
+                                                IconPath="/Assets/gear.svg" />
                                 </StackPanel> 
                               </Border>  
                         </SplitView.Pane>
