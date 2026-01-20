@@ -22,7 +22,8 @@ public class ShapeTemplateSelector : IDataTemplate
 
         if (Templates.TryGetValue(type, out var template))
         {
-            return template.Build(param);
+            var test = template.Build(param);
+            return test;
         }
 
         return new TextBlock { Text = $"No template found for {type}" };

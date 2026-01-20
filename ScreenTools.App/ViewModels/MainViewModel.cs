@@ -17,6 +17,7 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     [NotifyPropertyChangedFor(nameof(PathsPageIsActive))]
     [NotifyPropertyChangedFor(nameof(GalleryPageIsActive))]
     [NotifyPropertyChangedFor(nameof(SettingsPageIsActive))]
+    [NotifyPropertyChangedFor(nameof(CoordinatePlanePageIsActive))]
     private PageViewModel _currentPage;
     
     [ObservableProperty] 
@@ -47,6 +48,7 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     public bool GalleryPageIsActive => CurrentPage.PageName == ApplicationPageNames.Gallery;
     public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
     public bool SettingsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Settings;
+    public bool CoordinatePlanePageIsActive => CurrentPage.PageName == ApplicationPageNames.CoordinatePlane;
     
     
     [RelayCommand]
@@ -77,6 +79,12 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     private void GoToSettingsPage()
     {
         CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Settings);
+    }
+    
+    [RelayCommand]
+    private void GoToCoordinatePlanePage()
+    {
+        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.CoordinatePlane);
     }
     
     [RelayCommand]

@@ -7,5 +7,6 @@ public enum ApplicationPageNames
     Gallery,
     Paths,
     Settings,
-    Dummy
+    Dummy,
+    CoordinatePlane
 }

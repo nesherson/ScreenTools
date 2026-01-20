@@ -6,6 +6,12 @@ public class TextBlockViewModel : ShapeViewModelBase
     private double _fontSize;
     private string _foreground;
     private string _background;
+
+    public TextBlockViewModel()
+    {
+        FontSize = 14;
+        Foreground = "#000000";
+    }
     public string Text
     {
         get => _text;
