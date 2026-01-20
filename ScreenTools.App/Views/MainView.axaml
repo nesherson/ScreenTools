@@ -72,12 +72,6 @@
                                                 IsTextVisible="{Binding IsPaneOpen}"
                                                 IconText="&#xE230;" />
                                         <IconButton
-                                                Classes.active="{Binding CoordinatePlanePageIsActive}"
-                                                Command="{Binding GoToCoordinatePlanePageCommand}"
-                                                Content="Coordinate plane"
-                                                IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xEE64;" />
-                                        <IconButton
                                                 Classes.active="{Binding SettingsPageIsActive}"
                                                 Command="{Binding GoToSettingsPageCommand}"
                                                 Content="Settings"

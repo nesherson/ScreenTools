@@ -31,7 +31,6 @@ public static class ServiceCollectionExtensions
                 ApplicationPageNames.Gallery => sp.GetRequiredService<GalleryPageViewModel>(),
                 ApplicationPageNames.Paths => sp.GetRequiredService<PathsPageViewModel>(),
                 ApplicationPageNames.Settings => sp.GetRequiredService<SettingsPageViewModel>(),
-                ApplicationPageNames.CoordinatePlane => sp.GetRequiredService<CoordinatePlanePageViewModel>(),
                 _ => sp.GetRequiredService<HomePageViewModel>()
             });
         
@@ -57,6 +56,5 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<DrawingOverlayViewModel>();
         collection.AddTransient<GalleryPageViewModel>();
         collection.AddTransient<SettingsPageViewModel>();
-        collection.AddTransient<CoordinatePlanePageViewModel>();
     }
 }
