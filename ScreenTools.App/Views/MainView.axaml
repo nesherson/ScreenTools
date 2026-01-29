@@ -71,12 +71,6 @@
                                                 Content="Paths"
                                                 IsTextVisible="{Binding IsPaneOpen}"
                                                 IconText="&#xE230;" />
-                                        <IconButton
-                                                Classes.active="{Binding SettingsPageIsActive}"
-                                                Command="{Binding GoToSettingsPageCommand}"
-                                                Content="Settings"
-                                                IsTextVisible="{Binding IsPaneOpen}"
-                                                IconText="&#xE270;" />
                                 </StackPanel> 
                               </Border>  
                         </SplitView.Pane>

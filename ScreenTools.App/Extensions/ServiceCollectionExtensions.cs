@@ -29,7 +29,6 @@ public static class ServiceCollectionExtensions
                 ApplicationPageNames.Home => sp.GetRequiredService<HomePageViewModel>(),
                 ApplicationPageNames.Gallery => sp.GetRequiredService<GalleryPageViewModel>(),
                 ApplicationPageNames.Paths => sp.GetRequiredService<PathsPageViewModel>(),
-                ApplicationPageNames.Settings => sp.GetRequiredService<SettingsPageViewModel>(),
                 _ => sp.GetRequiredService<HomePageViewModel>()
             });
         
@@ -54,6 +53,5 @@ public static class ServiceCollectionExtensions
         collection.AddTransient<PathsPageViewModel>();
         collection.AddTransient<DrawingOverlayViewModel>();
         collection.AddTransient<GalleryPageViewModel>();
-        collection.AddTransient<SettingsPageViewModel>();
     }
 }

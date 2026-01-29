@@ -16,7 +16,6 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     [NotifyPropertyChangedFor(nameof(HomePageIsActive))]
     [NotifyPropertyChangedFor(nameof(PathsPageIsActive))]
     [NotifyPropertyChangedFor(nameof(GalleryPageIsActive))]
-    [NotifyPropertyChangedFor(nameof(SettingsPageIsActive))]
     private PageViewModel _currentPage;
     
     [ObservableProperty] 
@@ -46,7 +45,6 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     public bool HomePageIsActive => CurrentPage.PageName == ApplicationPageNames.Home;
     public bool GalleryPageIsActive => CurrentPage.PageName == ApplicationPageNames.Gallery;
     public bool PathsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Paths;
-    public bool SettingsPageIsActive => CurrentPage.PageName == ApplicationPageNames.Settings;
     
     
     [RelayCommand]
@@ -71,12 +69,6 @@ public partial class MainViewModel : ViewModelBase, IDialogProvider
     private void GoToGalleryPage()
     {
         CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Gallery);
-    }
-    
-    [RelayCommand]
-    private void GoToSettingsPage()
-    {
-        CurrentPage = _pageFactory.GetPageViewModel(ApplicationPageNames.Settings);
     }
     
     [RelayCommand]
