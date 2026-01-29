@@ -97,6 +97,24 @@ namespace ScreenTools.App
             });
         }
 
+        private void OpenApp()
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                if (_mainWindow?.IsActive == true)
+                    return;
+
+                if (_mainWindow is not null)
+                    return;
+                
+                _mainWindow = ActivatorUtilities.CreateInstance<MainView>(_serviceProvider);
+                _mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+                _mainWindow.Closed += (_, _) => _mainWindow = null;
+
+                _mainWindow.Show();
+            });
+        }
+
         private async void Hook_KeyPressed(object? sender, KeyboardHookEventArgs e)
         {
             if (e.Data.KeyCode == KeyCode.VcF6)
@@ -155,20 +173,12 @@ namespace ScreenTools.App
         
         private void TrayIcon_OnClicked(object? sender, EventArgs e)
         {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                if (_mainWindow?.IsActive == true)
-                    return;
-
-                if (_mainWindow is not null)
-                    return;
-                
-                _mainWindow = ActivatorUtilities.CreateInstance<MainView>(_serviceProvider);
-                _mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
-                _mainWindow.Closed += (_, _) => _mainWindow = null;
-
-                _mainWindow.Show();
-            });
+            OpenApp();
+        }
+        
+        private void NativeMenuItem_OnClickOpenApp(object? sender, EventArgs e)
+        {
+            OpenApp();
         }
         
         private void NativeMenuItem_OnClickOpenDrawingOverlay(object? sender, EventArgs e)

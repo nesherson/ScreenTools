@@ -5,10 +5,10 @@
   <Design.PreviewWith>
     <Border Padding="20">
       <StackPanel Spacing="20">
-        <IconButton Content="Click Me!" IconText="&#xE2CA;" IsTextVisible="True" />
-        <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" />
-        <IconButton Classes="accent" Content="Click Me!" IconText="&#xE2CA;" Height="100" />
-        <IconButton Classes="accent" Content="Click!" IconText="&#xE2CA;" IsTextVisible="False" />
+        <IconButton Content="Click Me!" IconPath="/Assets/image.svg" IsTextVisible="True" />
+        <IconButton Classes="accent" Content="Click Me!" IconPath="/Assets/image.svg" />
+        <IconButton Classes="accent" Content="Click Me!" IconPath="/Assets/image.svg" Height="100" />
+        <IconButton Classes="accent" Content="Click!" IconPath="/Assets/image.svg" IsTextVisible="False" />
         <Button Content="Click Me!" />
         <Button Classes="accent" Content="Click Me!" />
       </StackPanel>
@@ -46,12 +46,13 @@
                           VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
           <ContentPresenter.ContentTemplate>
             <DataTemplate DataType="x:Object">
-              <StackPanel Orientation="Horizontal"> 
-                <Label 
-                  FontFamily="{DynamicResource PhosphorFill}"
-                  Content="{Binding $parent[IconButton].IconText}"
-                  Foreground="{Binding $parent[IconButton].IconColor}"
-                  VerticalAlignment="Center" />
+              <StackPanel Orientation="Horizontal">
+                <Svg Path="{Binding $parent[IconButton].IconPath}" Width="20"></Svg> 
+                <!-- <Label  -->
+                <!--   FontFamily="{DynamicResource PhosphorFill}" -->
+                <!--   Content="{Binding $parent[IconButton].IconText}" -->
+                <!--   Foreground="{Binding $parent[IconButton].IconColor}" -->
+                <!--   VerticalAlignment="Center" /> -->
                 <ContentPresenter 
                   Content="{Binding}" 
                   VerticalAlignment="Center" 

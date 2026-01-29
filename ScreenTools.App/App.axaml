@@ -84,6 +84,7 @@
 					  Clicked="TrayIcon_OnClicked">
 				<TrayIcon.Menu>
 					<NativeMenu>
+						<NativeMenuItem Header="Open app" Click="NativeMenuItem_OnClickOpenApp" />
 						<NativeMenuItem Header="Drawing overlay" Click="NativeMenuItem_OnClickOpenDrawingOverlay" />
 						<NativeMenuItem Header="Take screenshot" Click="NativeMenuItem_OnClickCaptureScreenshot" />
 						<NativeMenuItemSeparator />

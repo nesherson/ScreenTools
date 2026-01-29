@@ -7,8 +7,8 @@ namespace ScreenTools.App.Controls;
 
 public class IconButton : Button
 {
-    public static readonly StyledProperty<string> IconTextProperty = AvaloniaProperty.Register<IconButton, string>(
-        nameof(IconText));
+    public static readonly StyledProperty<string> IconPathProperty = AvaloniaProperty.Register<IconButton, string>(
+        nameof(IconPath));
     
     public static readonly StyledProperty<IBrush> IconColorProperty = AvaloniaProperty.Register<IconButton, IBrush>(
         nameof(IconColor), SolidColorBrush.Parse("#4f5d64"));
@@ -16,10 +16,10 @@ public class IconButton : Button
     public static readonly StyledProperty<bool> IsTextVisibleProperty = AvaloniaProperty.Register<IconButton, bool>(
         nameof(IsTextVisible), true);
 
-    public string IconText
+    public string IconPath
     {
-        get => GetValue(IconTextProperty);
-        set => SetValue(IconTextProperty, value);
+        get => GetValue(IconPathProperty);
+        set => SetValue(IconPathProperty, value);
     }
     
     public IBrush IconColor
