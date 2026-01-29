@@ -72,12 +72,6 @@
                                                 Content="Paths"
                                                 IsTextVisible="{Binding IsPaneOpen}"
                                                 IconPath="/Assets/file.svg" />
-                                        <IconButton
-                                                Classes.active="{Binding SettingsPageIsActive}"
-                                                Command="{Binding GoToSettingsPageCommand}"
-                                                Content="Settings"
-                                                IsTextVisible="{Binding IsPaneOpen}"
-                                                IconPath="/Assets/gear.svg" />
                                 </StackPanel> 
                               </Border>  
                         </SplitView.Pane>
