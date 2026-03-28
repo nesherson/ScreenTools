@@ -6,6 +6,5 @@ public enum ApplicationPageNames
     Home,
     Gallery,
     Paths,
-    Settings,
     Dummy
 }
