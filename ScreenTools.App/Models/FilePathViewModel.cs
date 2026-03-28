@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using CommunityToolkit.Mvvm.ComponentModel;
-using ReactiveUI;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ScreenTools.Core;
 
 namespace ScreenTools.App;

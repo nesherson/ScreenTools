@@ -1,7 +1,5 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using Avalonia.Input;
 using CommunityToolkit.Mvvm.Messaging;
 
 namespace ScreenTools.App;
@@ -15,7 +13,7 @@ public partial class MainView : Window
         
         _notificationManager = new WindowNotificationManager(GetTopLevel(this));
         
-        this.AttachDevTools();
+        // this.AttachDevTools();
         
         WeakReferenceMessenger.Default
             .Register<ShowWindowNotificationMessage>(this, HandleShowWindowNotificationMessage);

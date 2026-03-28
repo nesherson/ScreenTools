@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using Tesseract;
-using ImageFormat = Tesseract.ImageFormat;
 
 namespace ScreenTools.App;
 

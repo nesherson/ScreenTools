@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using ScreenTools.Core;
 
 namespace ScreenTools.Infrastructure;
